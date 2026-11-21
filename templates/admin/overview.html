@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:18px 0 28px}
+.stat{border:1px solid #dbe5ee;border-radius:12px;padding:22px;background:#fff;color:#15324d}
+.stat strong{display:block;font-size:26px;margin-top:8px}
+.report-table{width:100%;border-collapse:collapse;background:white}
+.report-table th,.report-table td{padding:12px;text-align:left;border-bottom:1px solid #e0e8ef}
+.report-table th{background:#edf4f8}
+.table-wrap{overflow:auto}
+</style>
+<p>This report is visible only to staff accounts. Figures are computed from saved database records.</p>
+<section class="stats">
+<div class="stat">Registered users (non-staff)<strong>{{ registered_users }}</strong></div>
+<div class="stat">All accounts (including staff)<strong>{{ all_accounts }}</strong></div>
+<div class="stat">Saved expense transactions<strong>{{ expense_records }}</strong></div>
+<div class="stat">Total recorded expenses (Nrs)<strong>{{ total_expenses|floatformat:2 }}</strong></div>
+</section>
+<h2>Users and their expenses — all recorded dates</h2>
+<div class="table-wrap"><table class="report-table"><thead><tr><th>User</th><th>Email</th><th>Registered</th><th>Expense records</th><th>Total expenses (Nrs)</th></tr></thead><tbody>
+{% for person in users %}<tr>
+<td><a href="{% url 'admin:auth_user_change' person.pk %}">{{ person.get_full_name|default:person.username }}</a></td>
+<td>{{ person.email }}</td><td>{{ person.date_joined|date:"Y-m-d" }}</td>
+<td>{{ person.expense_count }}</td><td>{{ person.expense_total|floatformat:2 }}</td>
+</tr>{% empty %}<tr><td colspan="5">No registered accounts yet.</td></tr>{% endfor %}
+</tbody></table></div>
+<p style="margin-top:22px"><a href="{% url 'admin:accounts_expensetransaction_changelist' %}">View transaction records</a> · <a href="{% url 'admin:index' %}">Back to administration</a></p>
+{% endblock %}

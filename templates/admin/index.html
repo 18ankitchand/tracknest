@@ -1,0 +1,8 @@
+{% extends "admin/index.html" %}
+{% block content %}
+<div style="padding:16px 20px; border-radius:10px; background:#e9f4ff; margin-bottom:18px; color:#102a43;">
+  <strong>TrackNest reports</strong>
+  <p style="margin:8px 0 0"><a href="{% url 'admin_overview' %}">View all users and their recorded expenses</a></p>
+</div>
+{{ block.super }}
+{% endblock %}

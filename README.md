@@ -1,80 +1,60 @@
-## 💸 TrackNest v2 – Smart Expense Tracker
-d
-**TrackNest** is a modern web application built to help users track their spending and income efficiently. Now powered by a **smart AI assistant**, SpenSyd goes beyond simple tracking—it analyzes your financial data to give you instant insights. With a clean UI, secure authentication, and intuitive categorization, SpenSyd gives you the control to manage your finances with confidence.
+# TrackNest / Expanse Tracker — Django authentication, monthly budgets and email alerts
 
-## ✨ Features
-
-- 🤖 **AI Financial Assistant**: Ask questions about your spending, get monthly summaries, and receive financial insights powered by Google Gemini.
-- ✅ Add **Expenses** with categories
-- ✅ Add **Incomes** with categories
-- ✅ View and manage detailed **Transaction Records**
-- ✅ Organize all entries using **Category Labels**
-- ✅ Responsive and modern UI
-- ✅ Reset data
-
----
-## 📸 Screenshots
-
-![Screenshot](https://github.com/user-attachments/assets/c:\\Users\\chhet\\OneDrive\\Pictures\\Screenshots\\Screenshot%202026-05-05%20140853.png)
-![Screenshot](https://github.com/user-attachments/assets/c:\\Users\\chhet\\OneDrive\\Pictures\\Screenshots\\Screenshot%202026-05-05%20140759.png)
-![Screenshot](https://github.com/user-attachments/assets/c:\\Users\\chhet\\OneDrive\\Pictures\\Screenshots\\Screenshot%202026-05-05%20140931.png)
-![Screenshot](https://github.com/user-attachments/assets/c:\\Users\\chhet\\OneDrive\\Pictures\\Screenshots\\Screenshot%202026-05-05%20141013.png)
-
-## 🔧 Tech Stack
-
-- **Frontend**: React, React Router, Framer Motion, CSS
-- **Backend**: Node.js, Express
-- **Database**: MongoDB
-
-## 🧪 Testing Guide (NEW!)
-
-### Unit Testing
-
-**Frontend (Vitest + RTL)**:
+## Local setup
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py makemigrations accounts
+python manage.py migrate
+python manage.py runserver
 ```
-cd client
-npm test          # Run tests
-npm run test:ui   # UI mode
-npm run coverage  # Coverage report
-```
+Open http://127.0.0.1:8000/. Existing sign-in/sign-up and dashboard UI are preserved.
 
-**Backend (Jest + Supertest)**:
-```
-cd server
-npm test          # Run tests + coverage
-npm run test:watch # Watch mode
-```
+## Budget behavior
+The registered user's email is stored in Django's User.email. Transaction records and monthly budget limits are stored per authenticated user in SQLite. When an accepted expense brings this month's spending exactly to the limit, TrackNest blocks subsequent expense records and queues a limit-reached email. An expense that would exceed the limit is rejected and not saved. The alert is sent only once per user/month. The budget may be increased by the user. Budget enforcement applies only to TrackNest records, never external payments.
 
-### System/E2E Testing (Cypress)
+## Email testing
+By default Django uses the console email backend. The alert appears in the `runserver` terminal; **no real email is sent**.
+
+To send real email, configure SMTP credentials via environment variables (do not commit passwords):
 ```
-npx cypress open  # Interactive GUI
-npm run test:e2e  # Headless run
+DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+DJANGO_EMAIL_HOST=smtp.gmail.com
+DJANGO_EMAIL_PORT=587
+DJANGO_EMAIL_USE_TLS=1
+DJANGO_EMAIL_HOST_USER=your-sender@gmail.com
+DJANGO_EMAIL_HOST_PASSWORD=your-app-password
+DJANGO_DEFAULT_FROM_EMAIL=your-sender@gmail.com
 ```
-Start servers first: `server dev` (backend:3000), `client dev` (frontend:5173).
+For Gmail, use an app password on an eligible account with 2-Step Verification, not your regular Gmail password. In production, use a transactional email provider and a background task queue, rather than sending SMTP in the request callback. Add email verification to ensure addresses belong to registrants before sending alerts.
 
-### All Tests
+## Caveats
+This is a development starter, not a deployed service. Email delivery, concurrency behavior (especially SQLite), and Django runtime have not been verified here. The email is queued on transaction commit, but the current synchronous callback can still fail after a transaction is saved; production should use an outbox and worker. Income/expense data is saved; dashboard forecasting and AI assistant remain demos. Set DEBUG=0, a strong SECRET_KEY, secure cookies and HTTPS before deployment. Do not assume the registered email is verified.
+
+## Updated interface and administrator reporting
+- The Sign In and Create Account screens have a new two-column responsive layout. Technical marketing copy such as “Secure Django REST API & Forecasting” has been removed from the login screen.
+- Registered users and saved expenses are already represented by Django's `auth.User` and `accounts.ExpenseTransaction`; SQLite stores records in `db.sqlite3` after migrations. The ZIP intentionally does **not** contain any real user data.
+- An administrator can view user counts, saved expense counts, and total expenses in Nrs at **http://127.0.0.1:8000/admin/overview/**. The report includes historical recorded expense amounts across all dates, not just the current month. Income is not counted as an expense. Staff accounts are included in the full accounts total but excluded from the registered-user count.
+- The regular Django administration at `/admin/` has searchable user, transaction, profile and monthly budget views. Transaction and budget records are read-only there to avoid bypassing validation and budget rules.
+- Users cannot access the admin overview without a staff account. Ordinary user financial APIs still filter to `request.user`.
+
+### Set up the database and admin login
+```bash
+python manage.py makemigrations accounts
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
 ```
-npm run test:all
+Open the website at `http://127.0.0.1:8000/` and sign up to create user records. Then log into the admin using the superuser account at `/admin/overview/`. The site does not create or ship any fake user accounts.
+
+### Tests
+```bash
+python manage.py check
+python manage.py test accounts
 ```
+These tests verify administrator access, global sums, per-user totals, user data isolation, and budget rejection. Install requirements and run these tests locally; Python syntax checks alone do not prove Django runtime behavior. SQLite transaction locking is not equivalent to PostgreSQL row-level locking under concurrency.
 
-**Example Tests Added**:
-- `client/src/components/__tests__/NavBar.test.jsx`
-- `server/tests/expenses.test.js`
-- `cypress/e2e/expenses.cy.js`
-
-Extend with more tests! Coverage reports generated automatically.
-
-## 🚀 Quick Start
-
-1. Backend: `cd server && npm run dev`
-2. Frontend: `cd client && npm run dev`
-3. Test: See above!
-
-## 📂 Project Structure
-```
-Tracknest/
-├── client/          # React frontend + Vitest
-├── server/          # Express backend + Jest
-├── cypress/         # E2E tests
-├── TODO.md          # Testing progress
-└── README.md
+### Preview
+`tracknest_auth_design_preview.html` is an optional static browser preview of the redesigned sign-in/sign-up screen. It has no running database or working login by itself. Use the Django server URL to exercise actual authentication.
