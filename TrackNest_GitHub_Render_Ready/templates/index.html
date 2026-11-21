@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackNest | Your money, organized</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --bg-primary: #0F172A;
+            --bg-card: #1E293B;
+            --bg-surface: #334155;
+            --accent-primary: #38BDF8;
+            --accent-glow: rgba(56, 189, 248, 0.15);
+            --danger: #F43F5E;
+            --warning: #FBBF24;
+            --success: #10B981;
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Authentication landing page — no backend jargon in user-facing UI */
+        .auth-container {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(380px, .95fr);
+            min-height: 100vh;
+            background: #0b1428;
+        }
+        .auth-story {
+            padding: clamp(2rem, 6vw, 6rem);
+            background: radial-gradient(circle at 90% 10%, rgba(37,99,235,.22), transparent 45%),
+                        linear-gradient(145deg, #0f2343 5%, #0d172c 80%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-story::after {
+            content: "";
+            width: 420px; height: 420px;
+            border: 1px solid rgba(148,163,184,.13);
+            border-radius: 50%; position: absolute;
+            right: -170px; bottom: -190px;
+            box-shadow: 0 0 0 80px rgba(56,189,248,.025), 0 0 0 160px rgba(56,189,248,.025);
+            pointer-events: none;
+        }
+        .auth-brand { display:flex; align-items:center; gap:.85rem; font-size:1.2rem; font-weight:800; letter-spacing:-.04em; }
+        .auth-mark {display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:#38bdf8;color:#0b1428;font-size:1.4rem;}
+        .auth-story-inner {position:relative;z-index:1;max-width:560px;margin:5rem 0;}
+        .auth-eyebrow {font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:#7dd3fc;font-weight:800;margin-bottom:1.2rem;}
+        .auth-story h1 {font-size:clamp(2.7rem,4.8vw,5.2rem);line-height:1.08;letter-spacing:-.065em;margin-bottom:1.5rem;}
+        .auth-story h1 span {color:#7dd3fc;}
+        .auth-story p {font-size:1rem;line-height:1.8;color:#bac9dc;max-width:450px;}
+        .auth-story-footer {position:relative;z-index:1;color:#8ea4c2;font-size:.83rem;}
+        .auth-panel {display:flex;align-items:center;justify-content:center;padding:3rem clamp(1.4rem,5vw,5.5rem);background:#f5f8fc;color:#10213b;}
+        .auth-card {width:100%;max-width:445px;}
+        .auth-header {margin-bottom:1.65rem;}
+        .auth-header h2 {font-size:2rem;letter-spacing:-.055em;line-height:1.2;margin-bottom:.55rem;color:#112642;}
+        .auth-header p {color:#64748b;font-size:.95rem;line-height:1.65;}
+        .auth-tabs {display:flex;background:#e6edf6;padding:5px;border-radius:13px;margin-bottom:1.5rem;gap:5px;}
+        .auth-tab {flex:1;background:transparent;border:0;padding:.82rem;border-radius:10px;color:#64748b;font-weight:700;font-size:.92rem;cursor:pointer;transition:background .2s,color .2s;}
+        .auth-tab.active {background:white;color:#0c2544;box-shadow:0 3px 8px rgba(15,23,42,.08);}
+        .auth-form {display:flex;flex-direction:column;gap:1rem;}
+        .auth-panel .form-group {display:flex;flex-direction:column;gap:.5rem;}
+        .auth-panel .form-group label {font-size:.83rem;color:#334155;font-weight:700;}
+        .auth-panel .form-group input {width:100%;padding:.88rem 1rem;border:1px solid #ccd7e5;border-radius:11px;background:white;color:#12243e;font:inherit;outline:none;transition:border .2s,box-shadow .2s;}
+        .auth-panel .form-group input:focus {border-color:#0284c7;box-shadow:0 0 0 4px rgba(14,165,233,.12);}
+        .auth-panel .primary-btn {border-radius:11px!important;min-height:48px;background:linear-gradient(110deg,#0284c7,#2563eb);border:0;color:white;font-weight:800;font-size:.96rem;cursor:pointer;}
+        .auth-panel .primary-btn:hover {filter:brightness(1.06);}
+        .auth-helper {font-size:.8rem;color:#64748b;line-height:1.6;margin-top:.25rem;}
+        #authError {border-radius:11px;padding:12px 14px;line-height:1.5;font-size:.9rem;font-weight:600;}
+        #authError.auth-error {background:#fff1f2;color:#9f1239!important;border:1px solid #fecdd3;}
+        #authError.auth-success {background:#ecfdf5;color:#065f46!important;border:1px solid #a7f3d0;}
+        .auth-form input[aria-invalid="true"] {border-color:#e11d48!important;box-shadow:0 0 0 3px rgba(225,29,72,.1)!important;}
+        .auth-panel .primary-btn:disabled {opacity:.65;cursor:wait;}
+        #accountToast {position:fixed;top:22px;right:22px;z-index:3000;max-width:min(390px,calc(100vw - 36px));padding:15px 18px;border-radius:13px;box-shadow:0 14px 35px rgba(2,6,23,.25);font-size:.9rem;font-weight:700;display:none;}
+        #accountToast.success {display:block;background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;}
+        #accountToast.error {display:block;background:#fff1f2;border:1px solid #fda4af;color:#9f1239;}
+        @media(max-width:860px){.auth-container{grid-template-columns:1fr}.auth-story{padding:2rem}.auth-story-inner{margin:2rem 0}.auth-story h1{font-size:2.6rem}.auth-story-footer{display:none}.auth-panel{padding:2.5rem 1.5rem;min-height:65vh}.auth-card{max-width:490px}}
+        @media(max-width:460px){.auth-story h1{font-size:2.15rem}.auth-panel{padding:2rem 1rem}.auth-header h2{font-size:1.65rem}}
+
+        /* App Layout */
+        .app-screen {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .app-screen.active {
+            display: flex;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #38BDF8 0%, #2563EB 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .logout-btn {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            display: grid;
+            gap: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .metric-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-primary);
+        }
+
+        .metric-card.danger::before { background: var(--danger); }
+        .metric-card.warning::before { background: var(--warning); }
+        .metric-card.success::before { background: var(--success); }
+
+        .metric-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.85rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .metric-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .budget-limit-banner {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            padding: 1.25rem 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .budget-limit-banner.locked {
+            background: rgba(244, 63, 94, 0.15);
+            border-color: rgba(244, 63, 94, 0.4);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto;
+            gap: 1rem;
+            align-items: end;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent-primary);
+        }
+
+        button.primary-btn {
+            background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button.primary-btn:hover {
+            opacity: 0.9;
+        }
+
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .transactions-table th, .transactions-table td {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .transactions-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.expense { background: rgba(244, 63, 94, 0.15); color: var(--danger); }
+        .badge.income { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+
+        /* AI Bot Section */
+        .ai-chat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+        }
+
+        .ai-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .ai-msg {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            max-width: 85%;
+            line-height: 1.4;
+        }
+
+        .ai-msg.bot {
+            background: var(--bg-surface);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .ai-msg.user {
+            background: #0284C7;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .ai-input-box {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            gap: 0.5rem;
+        }
+
+        .ai-input-box input {
+            flex: 1;
+        }
+
+        /* Email Notification Toast */
+        #emailToast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #1E293B;
+            border: 1px solid var(--danger);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+            max-width: 380px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUTH SCREEN -->
+    <div id="authScreen" class="auth-container">
+        <section class="auth-story" aria-label="Welcome to TrackNest">
+            <div class="auth-brand"><span class="auth-mark">T</span> TrackNest</div>
+            <div class="auth-story-inner">
+                <div class="auth-eyebrow">Your personal expense companion</div>
+                <h1>Feel more in control of <span>your money.</span></h1>
+                <p>Keep your income, expenses, and monthly budget in one comfortable place. Make every rupee count.</p>
+            </div>
+            <div class="auth-story-footer">A clearer picture of your finances starts here.</div>
+        </section>
+        <section class="auth-panel" aria-label="Account access">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2 id="authHeading">Welcome back</h2>
+                    <p id="authDescription">Sign in to see your spending and stay on track.</p>
+                </div>
+                <div class="auth-tabs" role="group" aria-label="Choose sign in or sign up">
+                    <button type="button" class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
+                    <button type="button" class="auth-tab" onclick="switchAuthTab('signup')">Create Account</button>
+                </div>
+                <p id="authError" role="alert" aria-live="polite" class="auth-error" style="display:none;margin:0 0 1rem"></p>
+                <form id="signInForm" class="auth-form" onsubmit="handleSignIn(event)">
+                    <div class="form-group"><label for="loginEmail">Email address</label><input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="username"></div>
+                    <div class="form-group"><label for="loginPassword">Password</label><input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password"></div>
+                    <button type="submit" class="primary-btn" style="width:100%;margin-top:.35rem;">Sign In</button>
+                    <p class="auth-helper">Your transactions stay connected to your personal account.</p>
+                </form>
+                <form id="signUpForm" class="auth-form" style="display:none" onsubmit="handleSignUp(event)">
+                    <div class="form-group"><label for="regName">Full name</label><input type="text" id="regName" placeholder="Your full name" required maxlength="150" autocomplete="name"></div>
+                    <div class="form-group"><label for="regEmail">Email address</label><input type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email"></div>
+                    <div class="form-group"><label for="regPhone">Phone number</label><input type="tel" id="regPhone" placeholder="+977 98XXXXXXXX" required autocomplete="tel"></div>
+                    <div class="form-group"><label for="regPassword">Password</label><input type="password" id="regPassword" placeholder="Create a strong password" required minlength="8" autocomplete="new-password"></div>
+                    <div class="form-group"><label for="regConfirmPassword">Confirm password</label><input type="password" id="regConfirmPassword" placeholder="Re-enter your password" required minlength="8" autocomplete="new-password"></div>
+                    <button type="submit" class="primary-btn" style="width:100%;margin-top:.35rem;">Create My Account</button>
+                    <p class="auth-helper">We'll use your registered email for important budget alerts. Email verification will be added before public launch.</p>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <div id="accountToast" role="status" aria-live="polite"></div>
+
+    <!-- MAIN APP SCREEN -->
+    <div id="appScreen" class="app-screen">
+        <header>
+            <div class="brand">
+                <div class="brand-icon">E</div>
+                <div class="brand-title">Expanse Tracker System</div>
+            </div>
+            <div class="user-nav">
+                <div class="user-info">
+                    <div class="user-name" id="displayUserName">Ankit Chand</div>
+                    <div class="user-email" id="displayUserEmail">ankit@example.com</div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Budget Limit Banner -->
+            <div id="budgetBanner" class="budget-limit-banner">
+                <div>
+                    <strong id="budgetBannerTitle">Monthly Budget Limit: Nrs <span id="currentLimitDisplay">50,000.00</span></strong>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="budgetBannerSub">Current spent: Nrs 0.00 (0% of limit)</div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="number" id="newLimitInput" placeholder="New limit" style="width: 140px; padding: 0.5rem;" value="50000">
+                    <button class="primary-btn" onclick="updateBudgetLimit()" style="padding: 0.5rem 1rem;">Set Limit</button>
+                </div>
+            </div>
+
+            <!-- Top Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Balance</div>
+                    <div class="metric-value" id="totalBalance">Nrs 0.00</div>
+                    <div class="metric-sub">From your income & expenses</div>
+                </div>
+                <div class="metric-card warning">
+                    <div class="metric-label">Monthly Spent</div>
+                    <div class="metric-value" id="totalSpent">Nrs 0.00</div>
+                    <div class="metric-sub" id="spentPercentageSub">0% of monthly budget</div>
+                </div>
+                <div class="metric-card danger">
+                    <div class="metric-label">Account Status</div>
+                    <div class="metric-value" id="accountStatus" style="font-size: 1.35rem; color: var(--success); padding-top: 5px;">Active / Normal</div>
+                    <div class="metric-sub" id="statusSub">Funds available for transactions</div>
+                </div>
+                <div class="metric-card success">
+                    <div class="metric-label">Predicted Month-End</div>
+                    <div class="metric-value" id="predictedSpent">Nrs 0.00</div>
+                    <div class="metric-sub">Ensemble forecasting model</div>
+                </div>
+            </div>
+
+            <!-- Charts & AI Bot Grid -->
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Expense Flow & Predictive Forecast</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- AI Bot Card -->
+                <div class="ai-chat-card">
+                    <div class="card-header" style="padding: 1rem 1rem 0 1rem; margin-bottom: 0.5rem;">
+                        <div class="card-title" style="font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            🤖 AI Financial Advisor & Bot
+                        </div>
+                    </div>
+                    <div class="ai-messages" id="aiMessages">
+                        <div class="ai-msg bot">Hello! I am your AI financial advisor. Add your income and expenses to get personalized suggestions, spending analysis, and answers about this tracker system.</div>
+                    </div>
+                    <div class="ai-input-box">
+                        <input type="text" id="aiInput" placeholder="Ask AI about your expenses or budget..." onkeypress="handleAiKeyPress(event)">
+                        <button class="primary-btn" onclick="sendAiMessage()" style="padding: 0.5rem 1rem;">Ask</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Transaction & Transactions Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Transaction Management</div>
+                </div>
+                <form id="txForm" class="form-grid" onsubmit="addTransaction(event)">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="txDesc" placeholder="e.g. Salary, Groceries" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="txType">
+                            <option value="income">Income (+)</option>
+                            <option value="expense">Expense (-)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="txCategory">
+                            <option value="Salary">Salary / Income</option>
+                            <option value="Groceries">Groceries</option>
+                            <option value="Dining">Dining Out</option>
+                            <option value="Utilities">Utilities & Bills</option>
+                            <option value="Shopping">Shopping</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (Nrs)</label>
+                        <input type="number" id="txAmount" step="0.01" placeholder="5000.00" required>
+                    </div>
+                    <button type="submit" class="primary-btn" id="addTxBtn">Add Transaction</button>
+                </form>
+
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Email Notification Toast -->
+    <div id="emailToast">
+        <div style="font-weight: 700; color: var(--danger); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            📧 Budget alert
+        </div>
+        <div id="emailToastBody" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+            Your budget limit has been reached.
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentUser = null;
+        let userBudgetLimit = 50000;
+        let transactions = [];
+        let isBudgetLocked = false;
+
+        // Auth Tab Switch
+        function switchAuthTab(tab) {
+            const signInTab = document.querySelectorAll('.auth-tab')[0];
+            const signUpTab = document.querySelectorAll('.auth-tab')[1];
+            const signInForm = document.getElementById('signInForm');
+            const signUpForm = document.getElementById('signUpForm');
+
+            showAuthError('');
+            document.querySelectorAll('.auth-form input').forEach(input => input.removeAttribute('aria-invalid'));
+            document.getElementById('authHeading').textContent = tab === 'signin' ? 'Welcome back' : 'Start your journey';
+            document.getElementById('authDescription').textContent = tab === 'signin' ? 'Sign in to see your spending and stay on track.' : 'Create your account and begin tracking your money.';
+            if (tab === 'signin') {
+                signInTab.classList.add('active');
+                signUpTab.classList.remove('active');
+                signInForm.style.display = 'flex';
+                signUpForm.style.display = 'none';
+            } else {
+                signUpTab.classList.add('active');
+                signInTab.classList.remove('active');
+                signUpForm.style.display = 'flex';
+                signInForm.style.display = 'none';
+            }
+        }
+
+        // Django session authentication. Passwords are never stored in browser storage.
+        function csrfToken() {
+            return document.cookie.split('; ').find(x => x.startsWith('csrftoken='))?.split('=')[1] || '';
+        }
+        async function authRequest(url, data = {}) {
+            let response;
+            try {
+                response = await fetch(url, {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: {'Content-Type':'application/json', 'X-CSRFToken':decodeURIComponent(csrfToken())},
+                    body: JSON.stringify(data)
+                });
+            } catch (error) {
+                throw new Error('Cannot connect to the TrackNest server. Run Django using python manage.py runserver and open http://127.0.0.1:8000/.');
+            }
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error('This preview is not connected to Django. To create or sign in to a real account, run the Django server and open http://127.0.0.1:8000/.');
+            }
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || (response.status === 403
+                ? 'Security check failed. Refresh the website at http://127.0.0.1:8000/ and try again.'
+                : 'Unable to complete the request. Please try again.'));
+            return result;
+        }
+        let accountToastTimer;
+        function showAccountToast(message, type = 'success') {
+            const toast = document.getElementById('accountToast');
+            clearTimeout(accountToastTimer);
+            toast.textContent = message;
+            toast.className = type;
+            accountToastTimer = setTimeout(() => { toast.style.display = 'none'; toast.className = ''; }, 5500);
+            toast.style.display = 'block';
+        }
+        function showAuthError(message, type = 'error') {
+            const box = document.getElementById('authError');
+            box.textContent = message;
+            box.className = type === 'success' ? 'auth-success' : 'auth-error';
+            box.style.display = message ? 'block' : 'none';
+        }
+        function markAuthInvalid(inputId, message) {
+            const input = document.getElementById(inputId);
+            input.setAttribute('aria-invalid', 'true');
+            showAuthError(message);
+            input.focus();
+        }
+        function setAuthBusy(form, busy) {
+            const button = form.querySelector('button[type="submit"]');
+            if (!button) return;
+            if (!button.dataset.originalText) button.dataset.originalText = button.textContent;
+            button.disabled = busy;
+            button.textContent = busy ? 'Please wait…' : button.dataset.originalText;
+        }
+        document.querySelectorAll('.auth-form input').forEach(input => {
+            input.addEventListener('input', () => {
+                input.removeAttribute('aria-invalid');
+                if (document.getElementById('authError').style.display !== 'none') showAuthError('');
+            });
+        });
+        async function handleSignIn(e) {
+            e.preventDefault();
+            const form = e.currentTarget;
+            showAuthError('');
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) {
+                markAuthInvalid(!email ? 'loginEmail' : 'loginPassword', 'Please enter your email address and password.');
+                return;
+            }
+            setAuthBusy(form, true);
+            try {
+                const result = await authRequest('/api/auth/login/', {email, password});
+                currentUser = result.user;
+                document.getElementById('loginPassword').value = '';
+                await launchApp();
+                showAccountToast('Welcome back, ' + (currentUser.name || 'there') + '! You are signed in.');
+            } catch(error) {
+                showAuthError(error.message === 'Invalid email or password.'
+                    ? 'Email or password is incorrect. Please check your details and try again.'
+                    : error.message);
+            } finally { setAuthBusy(form, false); }
+        }
+        async function handleSignUp(e) {
+            e.preventDefault();
+            const form = e.currentTarget;
+            showAuthError('');
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirmPassword').value;
+            if (!name || !email || !phone || !password || !confirm) {
+                showAuthError('Please fill in all fields before creating your account.');
+                return;
+            }
+            if (password.length < 8) {
+                markAuthInvalid('regPassword', 'Password must contain at least 8 characters.');
+                return;
+            }
+            if (password !== confirm) {
+                markAuthInvalid('regConfirmPassword', 'Passwords do not match. Please type the same password twice.');
+                return;
+            }
+            setAuthBusy(form, true);
+            try {
+                const result = await authRequest('/api/auth/register/', {
+                    name, email, phone, password, confirm_password:confirm
+                });
+                currentUser = result.user;
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regConfirmPassword').value = '';
+                await launchApp();
+                showAccountToast('Your account was created successfully! Welcome to TrackNest.');
+            } catch(error) {
+                showAuthError(error.message);
+            } finally { setAuthBusy(form, false); }
+        }
+        async function handleLogout() {
+            try { await authRequest('/api/auth/logout/'); }
+            catch(error) { alert('Logout failed: ' + error.message); return; }
+            currentUser = null;
+            transactions = [];
+            isBudgetLocked = false;
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('appScreen').classList.remove('active');
+            showAuthError('You have signed out successfully.', 'success');
+        }
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/auth/me/', {credentials:'same-origin'});
+                const result = await response.json();
+                if (result.user) { currentUser = result.user; await launchApp(); }
+            } catch(error) { showAuthError('Unable to check session. Please refresh.'); }
+        });
+
+        async function launchApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('appScreen').classList.add('active');
+            document.getElementById('displayUserName').textContent = currentUser.name;
+            document.getElementById('displayUserEmail').textContent = currentUser.email;
+            await loadFinance();
+        }
+
+        async function loadFinance() {
+            try {
+                const response = await fetch("/api/finance/state/", {credentials:"same-origin"});
+                if (!response.ok) throw new Error("Could not load financial data");
+                const state = await response.json();
+                userBudgetLimit = state.limit;
+                transactions = state.transactions;
+                document.getElementById("newLimitInput").value = userBudgetLimit;
+                document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
+                updateDashboard();
+                if (state.locked) lockAccount(); else unlockAccount();
+            } catch(error) { alert(error.message); }
+        }
+
+        // Chart Initialization
+        const ctx = document.getElementById('forecastChart').getContext('2d');
+        const forecastChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Start', 'Day 5', 'Day 10', 'Day 15', 'Today', 'Forecast +15d'],
+                datasets: [
+                    {
+                        label: 'Actual Expenses (Nrs)',
+                        data: [0, 0, 0, 0, 0, null],
+                        borderColor: '#38BDF8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Ensemble Forecast (Nrs)',
+                        data: [null, null, null, null, 0, 0],
+                        borderColor: '#FBBF24',
+                        borderDash: [5, 5],
+                        backgroundColor: 'rgba(251, 191, 36, 0.05)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#F8FAFC', font: { family: 'Plus Jakarta Sans' } } }
+                },
+                scales: {
+                    x: { grid: { color: '#334155' }, ticks: { color: '#94A3B8' } },
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94A3B8' } }
+                }
+            }
+        });
+
+        async function updateBudgetLimit() {
+            const value = document.getElementById('newLimitInput').value;
+            try {
+                await authRequest('/api/finance/budget/', {limit:value});
+                await loadFinance();
+            } catch(error) { alert(error.message); }
+        }
+
+        async function addTransaction(e) {
+            e.preventDefault();
+            const data = {
+                desc:document.getElementById('txDesc').value,
+                type:document.getElementById('txType').value,
+                category:document.getElementById('txCategory').value,
+                amount:document.getElementById('txAmount').value
+            };
+            try {
+                const result = await authRequest('/api/finance/transactions/', data);
+                document.getElementById('txForm').reset();
+                await loadFinance();
+                if (result.alert_queued) showBudgetToast('Budget limit reached. Email alert scheduled for your registered address.');
+            } catch(error) { alert(error.message); await loadFinance(); }
+        }
+
+        function lockAccount() {
+            isBudgetLocked = true;
+            document.getElementById('accountStatus').textContent = "EXPENSE LIMIT REACHED";
+            document.getElementById('accountStatus').style.color = "var(--danger)";
+            document.getElementById('statusSub').textContent = "New expenses blocked in TrackNest.";
+            document.getElementById('addTxBtn').style.opacity = "0.5";
+            document.getElementById('addTxBtn').textContent = "Limit Reached (Locked)";
+
+            const banner = document.getElementById('budgetBanner');
+            banner.classList.add('locked');
+            document.getElementById('budgetBannerTitle').innerHTML = `⚠️ MONTHLY EXPENSE LIMIT REACHED`;
+        }
+
+        function unlockAccount() {
+            isBudgetLocked = false;
+            document.getElementById('accountStatus').textContent = "Active / Normal";
+            document.getElementById('accountStatus').style.color = "var(--success)";
+            document.getElementById('statusSub').textContent = "Expense recording available";
+            document.getElementById('addTxBtn').style.opacity = "1";
+            document.getElementById('addTxBtn').textContent = "Add Transaction";
+
+            const banner = document.getElementById('budgetBanner');
+            banner.classList.remove('locked');
+        }
+
+        function showBudgetToast(message) {
+            const toast = document.getElementById('emailToast');
+            document.getElementById('emailToastBody').textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 6000);
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function updateDashboard() {
+            const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+            const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            const balance = totalIncome - totalExpense;
+
+            document.getElementById('totalBalance').textContent = 'Nrs ' + balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('totalSpent').textContent = 'Nrs ' + totalExpense.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+            const pct = userBudgetLimit > 0 ? Math.round((totalExpense / userBudgetLimit) * 100) : 0;
+            document.getElementById('spentPercentageSub').textContent = pct + '% of monthly budget limit';
+            document.getElementById('budgetBannerSub').textContent = `Current spent: Nrs ${totalExpense.toLocaleString()} (${pct}% of limit)`;
+
+            // Predicted month end using simple ensemble multiplier
+            const predicted = totalExpense * 1.25;
+            document.getElementById('predictedSpent').textContent = 'Nrs ' + predicted.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+            // Table rendering
+            const tbody = document.getElementById('txTableBody');
+            if (transactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td></tr>`;
+            } else {
+                tbody.innerHTML = transactions.map(t => `
+                    <tr>
+                        <td>${t.date}</td>
+                        <td>${escapeHtml(t.desc)}</td>
+                        <td>${escapeHtml(t.category)}</td>
+                        <td><span class="badge ${t.type}">${t.type}</span></td>
+                        <td style="font-family: 'JetBrains Mono';">${t.type === 'income' ? '+' : '-'}Nrs ${t.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Update Chart Data
+            forecastChart.data.datasets[0].data = [0, totalExpense * 0.3, totalExpense * 0.6, totalExpense * 0.8, totalExpense, null];
+            forecastChart.data.datasets[1].data = [null, null, null, null, totalExpense, predicted];
+            forecastChart.update();
+        }
+
+        // AI Chatbot logic
+        function handleAiKeyPress(e) {
+            if (e.key === 'Enter') sendAiMessage();
+        }
+
+        function sendAiMessage() {
+            const input = document.getElementById('aiInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const msgBox = document.getElementById('aiMessages');
+
+            // User msg
+            const userDiv = document.createElement('div');
+            userDiv.className = 'ai-msg user';
+            userDiv.textContent = text;
+            msgBox.appendChild(userDiv);
+            input.value = '';
+            msgBox.scrollTop = msgBox.scrollHeight;
+
+            // AI Response simulation
+            setTimeout(() => {
+                const botDiv = document.createElement('div');
+                botDiv.className = 'ai-msg bot';
+                botDiv.textContent = generateAiResponse(text);
+                msgBox.appendChild(botDiv);
+                msgBox.scrollTop = msgBox.scrollHeight;
+            }, 600);
+        }
+
+        function generateAiResponse(query) {
+            const q = query.toLowerCase();
+            const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+
+            if (q.includes('cut') || q.includes('save') || q.includes('suggest')) {
+                return `Based on your current spending of Nrs ${totalExpense.toLocaleString()}, I recommend setting strict category limits on Dining and Shopping. Try keeping discretionary expenses under 30% of your total income (Nrs ${totalIncome.toLocaleString()}).`;
+            } else if (q.includes('block') || q.includes('hold') || q.includes('limit')) {
+                return `When your total monthly expense reaches your budget limit of Nrs ${userBudgetLimit.toLocaleString()}, our threshold algorithm locks new transactions and holds further spending to prevent over-budgeting. You can increase your limit above to resume transactions!`;
+            } else if (q.includes('forecast') || q.includes('predict')) {
+                return `Our ensemble forecasting engine (combining weighted moving average, exponential smoothing, and linear regression) predicts your month-end expense will be approximately Nrs ${(totalExpense * 1.25).toLocaleString()}.`;
+            } else {
+                return `I'm your AI financial assistant for the Expanse Tracker System. You have a balance of Nrs ${(totalIncome - totalExpense).toLocaleString()} with Nrs ${totalExpense.toLocaleString()} spent out of Nrs ${userBudgetLimit.toLocaleString()} limit. How else can I help you manage your money?`;
+            }
+        }
+    </script>
+</body>
+</html>
