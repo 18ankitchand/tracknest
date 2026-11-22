@@ -394,12 +394,20 @@ function tnSpendingCount(value) {
 }
 async function loadSpendingOverview() {
   // Show an immediate picture from already authenticated finance state, and
-  // replace it with the full backend overview when its API responds.
-  if(Array.isArray(transactions)) {
-    renderSpendingOverview(buildSpendingOverviewFromTransactions(transactions), false);
-  }
+  // reconcile it with the full analytics endpoint when available.
+  const local=Array.isArray(transactions)
+    ? buildSpendingOverviewFromTransactions(transactions) : null;
+  if(local) renderSpendingOverview(local, false);
   try {
     const result=await premiumGet('/api/finance/spending-overview/');
+    // Protect against unexpectedly empty API responses when the finance state
+    // already confirms current-month expenses. Keep a visible explanation.
+    if(local && local.monthly_transactions>0 && result.monthly_transactions===0) {
+      $tn('tnSpendingInsightNote').textContent=
+        'Displaying your saved expense records. The full analytics totals did not match your transactions.';
+      console.warn('Spending overview mismatch with finance state', result);
+      return;
+    }
     renderSpendingOverview(result, true);
   } catch(error) {
     const note=$tn('tnSpendingInsightNote');
