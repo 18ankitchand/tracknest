@@ -1017,9 +1017,18 @@
             <div class="tn-page-heading"><span class="section-label">Account information</span><h1 class="dashboard-heading">My Profile</h1><p class="dashboard-description">Manage the name and phone number associated with your account.</p></div>
             <section class="card"><form id="tnProfileForm" class="tn-settings-form" onsubmit="savePremiumProfile(event)">
               <div class="form-group"><label for="tnProfileName">Full name</label><input id="tnProfileName" maxlength="150" required></div>
-              <div class="form-group"><label for="tnProfileEmail">Registered email</label><input id="tnProfileEmail" type="email" readonly><small>For security, email changes require a verified-email workflow and are not enabled yet.</small></div>
+              <div class="form-group"><label for="tnProfileEmail">Registered email</label><input id="tnProfileEmail" type="email" readonly><small>Your email changes only after you confirm the verification link sent to the new address.</small></div>
               <div class="form-group"><label for="tnProfilePhone">Phone number</label><input id="tnProfilePhone" type="tel" maxlength="20" required></div>
               <button class="primary-btn" type="submit">Save profile</button></form></section>
+            <section class="card"><h3 class="card-title">Change password</h3><form class="tn-settings-form" onsubmit="changePremiumPassword(event)">
+              <div class="form-group"><label for="tnOldPassword">Current password</label><input id="tnOldPassword" type="password" required autocomplete="current-password"></div>
+              <div class="form-group"><label for="tnNewPassword">New password</label><input id="tnNewPassword" type="password" minlength="8" required autocomplete="new-password"></div>
+              <button class="primary-btn" type="submit">Update password</button></form></section>
+            <section class="card"><h3 class="card-title">Change registered email</h3><p class="card-description">A verification link will be sent to the new email. Real email delivery must be configured.</p>
+              <form class="tn-settings-form" onsubmit="requestPremiumEmailChange(event)">
+                <div class="form-group"><label for="tnNewEmail">New email address</label><input id="tnNewEmail" type="email" required></div>
+                <div class="form-group"><label for="tnVerifyPassword">Current password</label><input id="tnVerifyPassword" type="password" required></div>
+                <button type="submit" class="primary-btn">Send verification link</button></form></section>
           </section>
         </main>
     </div>
@@ -1233,6 +1242,10 @@
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
                 if (state.locked) lockAccount(); else unlockAccount();
+                if(typeof loadPremiumAnalytics === 'function') {
+                    Promise.all([loadPremiumAnalytics(),loadPremiumBudgets(),loadPremiumNotifications()])
+                        .catch(error=>console.error('Premium refresh failed',error));
+                }
             } catch(error) { alert(error.message); }
         }
 
@@ -1314,6 +1327,7 @@
             closeTrackNestMenu();
             window.scrollTo({top:0,behavior:'instant'});
             if (section === 'forecast' && typeof forecastChart !== 'undefined') requestAnimationFrame(() => forecastChart.resize());
+            if (section === 'reports' && typeof premiumCharts !== 'undefined') requestAnimationFrame(() => Object.values(premiumCharts).forEach(chart=>chart&&chart.resize()));
             if(typeof loadPremiumSection === 'function') loadPremiumSection(section);
         }
         window.addEventListener('popstate', () => navigateTrackNest(window.location.hash.slice(1), false));
@@ -1620,9 +1634,6 @@
             forecastChart.update();
             renderTrackNestPageTables();
             renderTrackNestCharts();
-            if(typeof loadPremiumAnalytics === "function") loadPremiumAnalytics().catch(console.error);
-            if(typeof loadPremiumBudgets === "function") loadPremiumBudgets().catch(console.error);
-            if(typeof loadPremiumNotifications === "function") loadPremiumNotifications().catch(console.error);
         }
 
 
