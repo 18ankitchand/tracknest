@@ -129,6 +129,9 @@ def start_checkout(request):
     amount = money(data.get("amount"))
     description = str(data.get("description", "")).strip()
     category = str(data.get("category", "")).strip()
+    notes = str(data.get("notes", "")).strip()
+    if len(notes) > 1000:
+        return JsonResponse({"error": "Notes must be no longer than 1,000 characters."}, status=400)
     if not amount or not 1 <= len(description) <= 200 or not 1 <= len(category) <= 60:
         return JsonResponse({"error": "Enter a description, category and valid amount."}, status=400)
 
@@ -151,7 +154,7 @@ def start_checkout(request):
                 return JsonResponse({"error": "eSewa checkout blocked: category budget would be exceeded."}, status=409)
         payment = EsewaPayment.objects.create(
             user=request.user, month=month, amount=amount, description=description,
-            category=category, transaction_uuid="tn-" + uuid.uuid4().hex
+            category=category, notes=notes, transaction_uuid="tn-" + uuid.uuid4().hex
         )
     return JsonResponse({"checkout_url": reverse("tn_esewa_checkout", args=[payment.transaction_uuid]),
                          "transaction_uuid": payment.transaction_uuid})
@@ -206,7 +209,8 @@ def finalize(payment, provider_result):
             user=item.user, date=recorded_date, kind="expense",
             description=item.description, category=item.category,
             amount=item.amount, payment_method="eSewa (Sandbox)",
-            notes="Verified sandbox eSewa test payment. No actual funds transferred.",
+            notes=(item.notes + "\n" if item.notes else "") +
+                  "Verified sandbox eSewa test payment. No actual funds transferred.",
         )
         item.expense = expense
         item.status = "COMPLETE"
