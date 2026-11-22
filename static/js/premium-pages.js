@@ -165,7 +165,7 @@ async function loadPremiumBudgets(){
      '<div class="tn-tile-row"><small>'+Number(b.percentage).toFixed(1)+'% used</small><span>'+
      '<button class="edit-transaction-btn" onclick="editPremiumBudget('+b.id+')">Edit</button>'+
      '<button class="tn-delete-btn" onclick="deletePremiumBudget('+b.id+')">Delete</button></span></div></div>';
-  }).join(''):'<p class="tn-premium-empty">No category budgets yet. Create an expense category first, then add a budget.</p>';
+  }).join(''):'<p class="tn-premium-empty">No category budgets yet. Choose an expense category above, enter a monthly limit, and save your first category budget.</p>';
 }
 function editPremiumBudget(id){
   const b=premiumBudgets.find(x=>x.id===id);if(!b)return;
