@@ -181,6 +181,17 @@ class EsewaSandboxTests(TestCase):
         self.client.logout()
         self.assertEqual(self.client.get("/api/payments/esewa/summary/").status_code, 401)
 
+    def test_expenses_page_stacks_expense_history_after_add_expense(self):
+        self.configure_budget("100")
+        response = self.client.get("/expenses/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertLess(html.index('class="card tn-workspace-card tn-expense-form-card"'),
+                        html.index('class="card tn-workspace-card tn-expense-history-card"'))
+        self.assertIn("grid-template-columns:minmax(0,1fr);gap:20px;align-items:start", html)
+        self.assertContains(response, 'id="expensePageRows"')
+        self.assertContains(response, 'id="expenseFilterSearch"')
+
     def test_expenses_page_has_side_by_side_layout_and_no_demo_word_in_visible_labels(self):
         self.configure_budget("100")
         response = self.client.get("/expenses/")
