@@ -87,12 +87,12 @@ function renderPremiumCategorySelectors(){
   // The Expenses form has built-in categories, while custom Category rows may be empty.
   // Show both so users can budget existing/default expense categories without visiting Categories first.
   const known=premiumCategories.filter(c=>c.type==='expense');
-  const names=[...new Set([
+  const categoryNames=[...new Set([
     ...Array.from($tn('expenseEntryCategory').options).map(option=>option.value).filter(Boolean),
     ...transactions.filter(t=>t.type==='expense').map(t=>t.category).filter(Boolean),
     ...known.map(c=>c.name)
   ])].sort((a,b)=>a.localeCompare(b));
-  select.innerHTML='<option value="">Select category</option>'+names.map(name=>{
+  select.innerHTML='<option value="">Select category</option>'+categoryNames.map(name=>{
     const saved=known.find(c=>c.name.toLowerCase()===name.toLowerCase());
     const value=saved?String(saved.id):'name:'+name;
     return '<option value="'+escapeHtml(value)+'">'+escapeHtml(name)+'</option>';
