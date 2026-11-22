@@ -1613,6 +1613,7 @@ font-size:.83rem;cursor:pointer}
                 }
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
+                if (typeof updateBudgetProtectionGuide === 'function') updateBudgetProtectionGuide();
                 if (!document.getElementById('tnPage-income').hidden && typeof loadIncomeOverview === 'function') {
                     loadIncomeOverview().catch(error => console.error('Income insights could not load',error));
                 }
@@ -2249,6 +2250,6 @@ font-size:.83rem;cursor:pointer}
             }
         }
     </script>
-    <script src="{% static 'js/premium-pages.js' %}?v=20261122-spending-repair-1"></script>
+    <script src="{% static 'js/premium-pages.js' %}?v=20261122-income-forecast-budget-1"></script>
 </body>
 </html>
