@@ -1057,6 +1057,10 @@
                 userBudgetLimit = state.limit;
                 transactions = state.transactions;
                 document.getElementById("newLimitInput").value = userBudgetLimit;
+                // Restore a stable target after previous locked-state rendering.
+                if (!document.getElementById("currentLimitDisplay")) {
+                    document.getElementById('budgetBannerTitle').innerHTML = 'Monthly Budget Limit: Nrs <span id="currentLimitDisplay"></span>';
+                }
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
                 if (state.locked) lockAccount(); else unlockAccount();
@@ -1291,11 +1295,11 @@
             document.getElementById('accountStatus').style.color = "var(--danger)";
             document.getElementById('statusSub').textContent = "New expenses blocked in TrackNest.";
             document.getElementById('addTxBtn').style.opacity = "0.5";
-            document.getElementById('addTxBtn').textContent = "Limit Reached (Locked)";
+            if (editingTransactionId === null) document.getElementById('addTxBtn').textContent = "Limit Reached (Locked)";
 
             const banner = document.getElementById('budgetBanner');
             banner.classList.add('locked');
-            document.getElementById('budgetBannerTitle').innerHTML = `⚠️ MONTHLY EXPENSE LIMIT REACHED`;
+            document.getElementById('budgetBannerTitle').textContent = '⚠️ Monthly expense limit reached: Nrs ' + userBudgetLimit.toLocaleString('en-US', {minimumFractionDigits: 2});
         }
 
         function unlockAccount() {
@@ -1304,10 +1308,12 @@
             document.getElementById('accountStatus').style.color = "var(--success)";
             document.getElementById('statusSub').textContent = "Expense recording available";
             document.getElementById('addTxBtn').style.opacity = "1";
-            document.getElementById('addTxBtn').textContent = "Add Transaction";
+            if (editingTransactionId === null) document.getElementById('addTxBtn').textContent = "Add Transaction";
 
             const banner = document.getElementById('budgetBanner');
             banner.classList.remove('locked');
+            document.getElementById('budgetBannerTitle').innerHTML = 'Monthly Budget Limit: Nrs <span id="currentLimitDisplay"></span>';
+            document.getElementById('currentLimitDisplay').textContent = userBudgetLimit.toLocaleString('en-US', {minimumFractionDigits: 2});
         }
 
         function showBudgetToast(message) {
