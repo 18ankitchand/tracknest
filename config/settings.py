@@ -71,3 +71,23 @@ EMAIL_HOST_USER = _mail_user
 EMAIL_HOST_PASSWORD = _mail_password
 EMAIL_TIMEOUT = 15
 DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", _mail_user or "TrackNest <no-reply@example.com>")
+
+# eSewa ePay V2 (sandbox only). Never enable live payments with demo credentials.
+# Store test credentials in private ~/.tracknest/esewa.json or environment variables.
+_esewa_local = {}
+_esewa_file = Path.home() / ".tracknest" / "esewa.json"
+if _esewa_file.is_file():
+    try:
+        if os.name == "posix" and _esewa_file.stat().st_mode & 0o077:
+            raise ValueError("eSewa config permissions must be 600")
+        _esewa_local = json.loads(_esewa_file.read_text(encoding="utf-8"))
+        if not isinstance(_esewa_local, dict):
+            raise ValueError("Invalid eSewa config format")
+    except (OSError, ValueError):
+        logging.getLogger(__name__).warning("eSewa sandbox configuration unavailable.")
+        _esewa_local = {}
+ESEWA_SANDBOX_ENABLED = os.environ.get("TRACKNEST_ESEWA_SANDBOX", str(_esewa_local.get("enabled", "false"))).lower() in ("1", "true")
+ESEWA_PRODUCT_CODE = os.environ.get("TRACKNEST_ESEWA_PRODUCT_CODE", _esewa_local.get("product_code", "EPAYTEST"))
+ESEWA_SECRET_KEY = os.environ.get("TRACKNEST_ESEWA_SECRET_KEY", _esewa_local.get("secret_key", ""))
+# Prevent inadvertently using the test merchant against live checkout.
+ESEWA_SANDBOX_READY = bool(ESEWA_SANDBOX_ENABLED and ESEWA_SECRET_KEY and ESEWA_PRODUCT_CODE)
