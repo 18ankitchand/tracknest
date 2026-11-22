@@ -184,3 +184,15 @@ The UAT integration is intentionally **disabled if `DEBUG=False`**, even if some
 **Important:** This works with a shared public *test merchant*, not your own merchant account. eSewa test transactions do not transfer money, do not pay arbitrary bills, and cannot be verified against the production gateway. eSewa may require a publicly reachable HTTPS callback instead of `127.0.0.1`; local browser end-to-end testing depends on eSewa accepting the localhost return URL. Provider sandbox behavior has not yet been verified from this project.
 
 For real-money merchant checkout, obtain eSewa's approved merchant account and production credentials, implement production auditing and reconciliation, and test on HTTPS. Do not promote this test-only code by switching provider URLs.
+
+---
+
+## Expense form → Continue to Payment → eSewa Demo (reference video flow)
+
+The Expenses form now has an **eSewa Demo (test payment)** option in its Payment method dropdown. With this option selected, the usual **Save Expense** button becomes **Continue to Payment**. Clicking it opens a TrackNest payment review dialog; selecting **Continue to Payment** in that dialog starts a pending checkout and forwards the signed merchant POST to the official eSewa UAT site automatically.
+
+The customer signs in **on eSewa's site**, enters the publicly provided demo verification code, reviews the test payment, and continues. After eSewa returns, TrackNest verifies the signature and the independent payment-status API before saving exactly one expense. If canceled, invalid, or unverified, no paid expense is added. The amount, description, category and optional notes are retained. A demo payment is recorded on its verification date, so the checkout requires the date input set to today.
+
+Cash, Bank Transfer, Card, Mobile Wallet and Other continue using direct/manual Save Expense and do not open eSewa. Only test-merchant payments are supported; there are no real-money transfers. Existing user accounts, transactions and monthly budgets remain intact. Additive migration `accounts/migrations/0004_esewa_notes.py` stores notes on pending eSewa checkouts.
+
+The uploaded reference recording shows a **Continue to Payment → eSewa sign-in → OTP → final Continue → result** journey. TrackNest redirects to the official provider rather than recreating or collecting its wallet login credentials. Browser UAT redirects and Gmail delivery must still be verified manually on the user's Mac, especially if eSewa refuses a localhost return URL.
