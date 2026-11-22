@@ -12,6 +12,7 @@ from .models import EsewaPayment, ExpenseTransaction, MonthlyBudget
 
 
 @override_settings(
+    DEBUG=True,
     ESEWA_SANDBOX_READY=True,
     ESEWA_PRODUCT_CODE="EPAYTEST",
     ESEWA_SECRET_KEY="fake-local-test-secret",
