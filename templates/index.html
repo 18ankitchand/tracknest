@@ -1391,19 +1391,22 @@
         function updateDashboard() {
             const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
             const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            const monthKey = trackNestToday().slice(0, 7);
+            const monthlyExpense = transactions.filter(t => t.type === 'expense' && t.date.startsWith(monthKey))
+                .reduce((acc, t) => acc + t.amount, 0);
             const balance = totalIncome - totalExpense;
 
             document.getElementById('totalBalance').textContent = 'Nrs ' + balance.toLocaleString('en-US', {minimumFractionDigits: 2});
-            document.getElementById('totalSpent').textContent = 'Nrs ' + totalExpense.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('totalSpent').textContent = 'Nrs ' + monthlyExpense.toLocaleString('en-US', {minimumFractionDigits: 2});
 
-            const pct = userBudgetLimit > 0 ? Math.round((totalExpense / userBudgetLimit) * 100) : 0;
+            const pct = userBudgetLimit > 0 ? Math.round((monthlyExpense / userBudgetLimit) * 100) : 0;
             document.getElementById('spentPercentageSub').textContent = pct + '% of monthly budget limit';
-            document.getElementById('budgetBannerSub').textContent = `Current spent: Nrs ${totalExpense.toLocaleString()} (${pct}% of limit)`;
+            document.getElementById('budgetBannerSub').textContent = `Current spent: Nrs ${monthlyExpense.toLocaleString()} (${pct}% of limit)`;
             document.getElementById('budgetProgressFill').style.width = Math.min(100, Math.max(0, pct)) + '%';
             document.getElementById('budgetProgress').setAttribute('aria-valuenow', String(Math.min(100, Math.max(0, pct))));
 
             // Predicted month end using simple ensemble multiplier
-            const predicted = totalExpense * 1.25;
+            const predicted = monthlyExpense * 1.25;
             document.getElementById('predictedSpent').textContent = 'Nrs ' + predicted.toLocaleString('en-US', {minimumFractionDigits: 2});
 
             // Table rendering
@@ -1435,8 +1438,8 @@
             }
 
             // Update Chart Data
-            forecastChart.data.datasets[0].data = [0, totalExpense * 0.3, totalExpense * 0.6, totalExpense * 0.8, totalExpense, null];
-            forecastChart.data.datasets[1].data = [null, null, null, null, totalExpense, predicted];
+            forecastChart.data.datasets[0].data = [0, monthlyExpense * 0.3, monthlyExpense * 0.6, monthlyExpense * 0.8, monthlyExpense, null];
+            forecastChart.data.datasets[1].data = [null, null, null, null, monthlyExpense, predicted];
             forecastChart.update();
             renderTrackNestPageTables();
         }
