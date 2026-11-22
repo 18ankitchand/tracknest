@@ -994,7 +994,7 @@ font-size:.83rem;cursor:pointer}
             <div class="tn-expense-stats">
               <div class="card tn-expense-stat"><span>Online Expenses</span><strong id="tnOnlinePaidTotal">Nrs 0.00</strong><small>eSewa, Card &amp; Bank Transfer</small></div>
               <div class="card tn-expense-stat"><span>Cash &amp; Other Expenses</span><strong id="tnOfflinePaidTotal">Nrs 0.00</strong><small>Cash, Other and legacy wallet records</small></div>
-              <div class="card tn-expense-stat"><span>Recorded Transactions</span><strong id="tnExpensePaymentCount">0</strong><small id="tnPaymentBreakdown">0 online · 0 cash/other</small></div>
+              <div class="card tn-expense-stat"><span>Total Expenses</span><strong id="tnTotalExpenseAmount">Nrs 0.00</strong><small id="tnExpenseTransactionCount">in 0 transactions</small></div>
             </div>
             <p class="tn-payment-grouping-note">Online includes eSewa, Card and Bank Transfer. Only eSewa payments are verified by the provider; card and bank expenses are user-recorded.</p>
             <div class="tn-expense-columns">
@@ -1627,10 +1627,12 @@ font-size:.83rem;cursor:pointer}
                 'Nrs ' + Number(info.online_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
             document.getElementById('tnOfflinePaidTotal').textContent =
                 'Nrs ' + Number(info.offline_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-            document.getElementById('tnExpensePaymentCount').textContent =
-                Number((info.online_count || 0) + (info.offline_count || 0)).toLocaleString('en-US');
-            document.getElementById('tnPaymentBreakdown').textContent =
-                (info.online_count || 0) + ' online · ' + (info.offline_count || 0) + ' cash/other';
+            document.getElementById('tnTotalExpenseAmount').textContent =
+                'Nrs ' + Number(info.total_expense_amount || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+            const transactionCount = Number(info.total_expense_count || 0);
+            document.getElementById('tnExpenseTransactionCount').textContent =
+                'in ' + transactionCount.toLocaleString('en-US') +
+                (transactionCount === 1 ? ' transaction' : ' transactions');
         }
         function updateExpenseMethodStyle() {
             const method = document.getElementById('expenseEntryPayment').value;
