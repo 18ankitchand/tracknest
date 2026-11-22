@@ -1,5 +1,6 @@
 import json
 import re
+import logging
 from django.contrib.auth import authenticate, login, logout, password_validation
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -14,6 +15,8 @@ from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 from .models import Profile, MonthlyBudget, ExpenseTransaction
+
+logger = logging.getLogger(__name__)
 
 def payload(request):
  try:
@@ -162,6 +165,17 @@ def add_financial_transaction(request):
             budget.save(update_fields=["limit_alert_sent"])
             email = request.user.email
             limit = budget.limit
-            transaction.on_commit(lambda: send_limit_email(email, limit, month))
+            budget_id = budget.pk
+
+            def notify_after_commit():
+                try:
+                    send_limit_email(email, limit, month)
+                except Exception:
+                    # Sending mail is independent of saving the expense.
+                    # Leave the notification eligible for a future retry.
+                    logger.exception("TrackNest budget email delivery failed for budget %s", budget_id)
+                    MonthlyBudget.objects.filter(pk=budget_id).update(limit_alert_sent=False)
+
+            transaction.on_commit(notify_after_commit)
             alert_queued = True
     return JsonResponse({"transaction": serialize_tx(tx), "alert_queued": alert_queued}, status=201)
