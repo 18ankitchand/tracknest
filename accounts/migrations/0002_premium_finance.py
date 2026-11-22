@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AddField(model_name="monthlybudget", name="notified_level", field=models.PositiveSmallIntegerField(default=0)),
         migrations.AddField(
             model_name='expensetransaction',
             name='payment_method',
