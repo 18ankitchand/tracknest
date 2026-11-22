@@ -1,4 +1,6 @@
 import os
+import json
+import logging
 from pathlib import Path
 import dj_database_url
 BASE_DIR=Path(__file__).resolve().parent.parent
@@ -37,11 +39,34 @@ SESSION_COOKIE_HTTPONLY=True
 CSRF_COOKIE_SAMESITE='Lax'
 SESSION_COOKIE_SAMESITE='Lax'
 
-# Console backend is for local testing only; SMTP sends actual email when configured.
-EMAIL_BACKEND = os.environ.get("DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "")
+# On macOS, the optional local sender configuration lives outside the Git repository.
+# ~/.tracknest/email.json must be readable only by the account owner (chmod 600).
+# Environment variables take precedence (use these when deploying to a host).
+_local_mail = {}
+_local_mail_file = Path.home() / ".tracknest" / "email.json"
+if _local_mail_file.is_file():
+    try:
+        if os.name == "posix" and _local_mail_file.stat().st_mode & 0o077:
+            raise ValueError("Email settings file must be private (chmod 600).")
+        _local_mail = json.loads(_local_mail_file.read_text(encoding="utf-8"))
+        if not isinstance(_local_mail, dict):
+            raise ValueError("Email settings must be a JSON object.")
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        logging.getLogger(__name__).warning("Local email configuration unavailable: %s", exc)
+        _local_mail = {}
+
+_mail_user = os.environ.get("DJANGO_EMAIL_HOST_USER", _local_mail.get("email", ""))
+_mail_password = os.environ.get("DJANGO_EMAIL_HOST_PASSWORD", _local_mail.get("app_password", ""))
+_use_real_mail = bool(_mail_user and _mail_password)
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend" if _use_real_mail
+    else "django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "smtp.gmail.com" if _use_real_mail else "")
 EMAIL_PORT = int(os.environ.get("DJANGO_EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.environ.get("DJANGO_EMAIL_USE_TLS", "1") == "1"
-EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("DJANGO_EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "TrackNest <no-reply@example.com>")
+EMAIL_HOST_USER = _mail_user
+EMAIL_HOST_PASSWORD = _mail_password
+EMAIL_TIMEOUT = 15
+DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", _mail_user or "TrackNest <no-reply@example.com>")
