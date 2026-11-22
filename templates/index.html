@@ -1546,7 +1546,11 @@ font-size:.83rem;cursor:pointer}
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
                 if (!document.getElementById('tnPage-expense').hidden && typeof loadSpendingOverview === 'function') {
-                    loadSpendingOverview().catch(error => console.warn('Spending insights could not load', error));
+                    loadSpendingOverview().catch(error => {
+                        console.error('Spending insights error', error);
+                        const note=document.getElementById('tnSpendingInsightNote');
+                        if(note) note.textContent='Spending insights could not load: '+error.message+'. Refresh the page to retry.';
+                    });
                 }
                 if (state.locked) lockAccount(); else unlockAccount();
                 if (!budgetConfigured) {
@@ -2172,6 +2176,6 @@ font-size:.83rem;cursor:pointer}
             }
         }
     </script>
-    <script src="{% static 'js/premium-pages.js' %}"></script>
+    <script src="{% static 'js/premium-pages.js' %}?v=20261122-spending-repair-1"></script>
 </body>
 </html>
