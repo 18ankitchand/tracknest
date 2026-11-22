@@ -1214,6 +1214,7 @@
                 if(localStorage.getItem('tracknest_sidebar_collapsed')==='true') document.getElementById('appScreen').classList.add('tn-collapsed');
             }
             await loadFinance();
+            if(typeof loadPremiumModules === "function") await loadPremiumModules();
             navigateTrackNest(window.location.hash.slice(1) || "dashboard", false);
         }
 
@@ -1294,7 +1295,7 @@
         }
 
         function navigateTrackNest(section, updateHistory = true) {
-            const pages = ['dashboard','income','expense','transactions','budget','forecast','advisor'];
+            const pages = ['dashboard','income','expense','transactions','budget','forecast','advisor','categories','reports','goals','notifications','settings','profile'];
             if (!pages.includes(section)) section = 'dashboard';
             document.querySelectorAll('[data-tn-page]').forEach(page => {
                 page.hidden = page.dataset.tnPage !== section;
@@ -1312,9 +1313,8 @@
             }
             closeTrackNestMenu();
             window.scrollTo({top:0,behavior:'instant'});
-            if (section === 'forecast' && typeof forecastChart !== 'undefined') {
-                requestAnimationFrame(() => forecastChart.resize());
-            }
+            if (section === 'forecast' && typeof forecastChart !== 'undefined') requestAnimationFrame(() => forecastChart.resize());
+            if(typeof loadPremiumSection === 'function') loadPremiumSection(section);
         }
         window.addEventListener('popstate', () => navigateTrackNest(window.location.hash.slice(1), false));
         window.addEventListener('hashchange', () => navigateTrackNest(window.location.hash.slice(1), false));
@@ -1329,7 +1329,9 @@
                 desc: document.getElementById(prefix + 'Desc').value.trim(),
                 category: document.getElementById(prefix + 'Category').value,
                 amount: document.getElementById(prefix + 'Amount').value,
-                date: document.getElementById(prefix + 'Date').value
+                date: document.getElementById(prefix + 'Date').value,
+                payment_method: document.getElementById(prefix + 'Payment').value,
+                notes: document.getElementById(prefix + 'Notes').value
             };
             button.disabled = true;
             try {
@@ -1450,7 +1452,9 @@
                 type:document.getElementById('txType').value,
                 category:document.getElementById('txCategory').value,
                 amount:document.getElementById('txAmount').value,
-                date:document.getElementById('txDate').value
+                date:document.getElementById('txDate').value,
+                payment_method:document.getElementById('txPayment').value,
+                notes:document.getElementById('txNotes').value
             };
             const isEditing = editingTransactionId !== null;
             const button = document.getElementById('addTxBtn');
@@ -1489,6 +1493,8 @@
             categoryInput.value = record.category;
             document.getElementById('txAmount').value = Number(record.amount).toFixed(2);
             document.getElementById('txDate').value = record.date;
+            document.getElementById('txPayment').value = record.payment_method || 'Cash';
+            document.getElementById('txNotes').value = record.notes || '';
             document.getElementById('addTxBtn').textContent = 'Save Changes';
             document.getElementById('cancelTxEdit').style.display = 'inline-flex';
             document.getElementById('editTransactionNotice').style.display = 'block';
@@ -1575,24 +1581,34 @@
             const query = document.getElementById('txSearch').value.trim().toLocaleLowerCase();
             const from = document.getElementById('txDateFrom').value;
             const to = document.getElementById('txDateTo').value;
+            const categoryFilter = document.getElementById('tnTransactionCategoryFilter').value;
             const visibleTransactions = transactions.filter(t => {
                 if (trackNestRecordFilter !== 'all' && t.type !== trackNestRecordFilter) return false;
                 if (from && t.date < from) return false;
                 if (to && t.date > to) return false;
+                if (categoryFilter && t.category !== categoryFilter) return false;
                 return !query || (t.desc + ' ' + t.category).toLocaleLowerCase().includes(query);
             });
+            const sort = document.getElementById('tnTransactionSort').value;
+            visibleTransactions.sort((a,b)=>sort==='oldest'? a.date.localeCompare(b.date):
+                sort==='amount-desc'?b.amount-a.amount:sort==='amount-asc'?a.amount-b.amount:b.date.localeCompare(a.date));
+            const pages = Math.max(1,Math.ceil(visibleTransactions.length / 10));
+            premiumTransactionPage=Math.min(Math.max(1,premiumTransactionPage),pages);
+            const pageTransactions=visibleTransactions.slice((premiumTransactionPage-1)*10,premiumTransactionPage*10);
+            document.getElementById('tnPaginationLabel').textContent = 'Page '+premiumTransactionPage+' of '+pages;
             document.getElementById('txFilterCount').textContent = visibleTransactions.length +
                 ' of ' + transactions.length + ' transaction(s) shown';
             if (visibleTransactions.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No ${trackNestRecordFilter === 'all' ? 'transactions' : trackNestRecordFilter + ' records'} yet. Add a transaction above to get started.</td></tr>`;
             } else {
-                tbody.innerHTML = visibleTransactions.map(t => `
+                tbody.innerHTML = pageTransactions.map(t => `
                     <tr>
                         <td>${t.date}</td>
                         <td>${escapeHtml(t.desc)}</td>
                         <td>${escapeHtml(t.category)}</td>
                         <td><span class="badge ${t.type}">${t.type}</span></td>
                         <td style="font-family: 'JetBrains Mono';">${t.type === 'income' ? '+' : '-'}Nrs ${t.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                        <td>${escapeHtml(t.payment_method || 'Cash')}</td>
                         <td><button type="button" class="edit-transaction-btn" onclick="editTransaction(${Number(t.id)})" aria-label="Edit ${escapeHtml(t.desc)}">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})" aria-label="Delete ${escapeHtml(t.desc)}">Delete</button></td>
                     </tr>
                 `).join('');
@@ -1604,6 +1620,9 @@
             forecastChart.update();
             renderTrackNestPageTables();
             renderTrackNestCharts();
+            if(typeof loadPremiumAnalytics === "function") loadPremiumAnalytics().catch(console.error);
+            if(typeof loadPremiumBudgets === "function") loadPremiumBudgets().catch(console.error);
+            if(typeof loadPremiumNotifications === "function") loadPremiumNotifications().catch(console.error);
         }
 
 
@@ -1642,6 +1661,11 @@
                   backgroundColor:names.length?['#6557e9','#38a3f5','#12af90','#f4ab48','#f16c82','#9b7af4','#75b8d9']:['#e6eaf2'],borderWidth:0,hoverOffset:6}]},
                 options:{responsive:true,maintainAspectRatio:false,cutout:'69%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8}}}}
             });
+        }
+
+        function changePremiumTransactionPage(delta) {
+            premiumTransactionPage=Math.max(1,premiumTransactionPage+delta);
+            updateDashboard();
         }
 
         // AI Chatbot logic
@@ -1690,5 +1714,6 @@
             }
         }
     </script>
+    <script src="{% static 'js/premium-pages.js' %}"></script>
 </body>
 </html>
