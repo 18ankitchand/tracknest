@@ -119,6 +119,51 @@ class EsewaSandboxTests(TestCase):
         self.assertContains(response, "Invalid or mismatched", status_code=200)
         self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
 
+    def test_signed_success_callback_verifies_with_provider_before_recording(self):
+        from .esewa import SIGNED_RESPONSE_FIELDS, signature
+        self.configure_budget()
+        self.start("60")
+        payment = EsewaPayment.objects.get(user=self.user)
+        provider = self.verified_payload(payment)
+        fields = {
+            "transaction_code": "DEMO-REF",
+            "status": "COMPLETE",
+            "total_amount": "60.00",
+            "transaction_uuid": payment.transaction_uuid,
+            "product_code": "EPAYTEST",
+            "signed_field_names": SIGNED_RESPONSE_FIELDS,
+        }
+        signed_message = ",".join(f"{name}={fields[name]}" for name in SIGNED_RESPONSE_FIELDS.split(","))
+        fields["signature"] = signature(signed_message)
+        encoded = base64.b64encode(json.dumps(fields).encode()).decode()
+        with patch("accounts.esewa.status_from_esewa", return_value=provider):
+            response = self.client.get("/payments/esewa/success/", {"data": encoded})
+        self.assertContains(response, "payment verified", status_code=200)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+
+    def test_missing_signed_callback_fields_cannot_create_expense(self):
+        from .esewa import SIGNED_RESPONSE_FIELDS
+        self.configure_budget()
+        self.start("60")
+        payment = EsewaPayment.objects.get(user=self.user)
+        fields = {
+            "status": "COMPLETE",
+            "transaction_uuid": payment.transaction_uuid,
+            "product_code": "EPAYTEST",
+            "total_amount": "60.00",
+            "signed_field_names": SIGNED_RESPONSE_FIELDS,
+            "signature": "irrelevant",
+        }
+        data = base64.b64encode(json.dumps(fields).encode()).decode()
+        response = self.client.get("/payments/esewa/success/", {"data": data})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
+
+    def test_invalid_base64_payment_callback_returns_error_not_server_exception(self):
+        self.configure_budget()
+        response = self.client.get("/payments/esewa/success/", {"data": "not-valid-@@"})
+        self.assertEqual(response.status_code, 400)
+
     def test_user_cannot_verify_another_users_payment(self):
         self.configure_budget()
         self.start()
