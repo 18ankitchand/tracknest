@@ -105,7 +105,7 @@ def response_signature_valid(data, payment):
             or money(data.get("total_amount")) != payment.amount
             or data.get("status") != "COMPLETE"):
         return False
-    if any(not isinstance(data.get(field), str) for field in SIGNED_RESPONSE_FIELDS.split(",")):
+    if any(field not in data or isinstance(data[field], (dict, list, type(None))) for field in SIGNED_RESPONSE_FIELDS.split(",")):
         return False
     signed_message = ",".join(f"{field}={data[field]}" for field in SIGNED_RESPONSE_FIELDS.split(","))
     return hmac.compare_digest(str(data.get("signature", "")), signature(signed_message))
