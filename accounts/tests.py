@@ -127,6 +127,65 @@ class BudgetEmailTests(TestCase):
         self.assertFalse(self.budget.limit_alert_sent)
 
 
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_lowering_budget_to_current_spending_emails_registered_user_once(self):
+        from django.core import mail
+        ExpenseTransaction.objects.create(
+            user=self.user, date=self.month, kind="expense",
+            description="Bills", category="Utilities", amount=Decimal("15.00"),
+        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                "/api/finance/budget/",
+                data='{"limit":"15.00"}', content_type="application/json",
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["alert_queued"])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["alert@example.com"])
+        self.assertIn("limit reached", mail.outbox[0].subject.lower())
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                "/api/finance/budget/",
+                data='{"limit":"15.00"}', content_type="application/json",
+            )
+        self.assertFalse(response.json()["alert_queued"])
+        self.assertEqual(len(mail.outbox), 1)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_email_rearms_if_budget_is_raised_then_reached_again(self):
+        from django.core import mail
+        ExpenseTransaction.objects.create(
+            user=self.user, date=self.month, kind="expense",
+            description="Bills", category="Utilities", amount=Decimal("15.00"),
+        )
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post("/api/finance/budget/", data='{"limit":"15.00"}',
+                             content_type="application/json")
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post("/api/finance/budget/", data='{"limit":"20.00"}',
+                             content_type="application/json")
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post("/api/finance/budget/", data='{"limit":"15.00"}',
+                                        content_type="application/json")
+        self.assertTrue(response.json()["alert_queued"])
+        self.assertEqual(len(mail.outbox), 2)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend")
+    def test_unconfigured_mail_does_not_claim_alert_delivered(self):
+        ExpenseTransaction.objects.create(
+            user=self.user, date=self.month, kind="expense",
+            description="Bills", category="Utilities", amount=Decimal("15.00"),
+        )
+        response = self.client.post("/api/finance/budget/", data='{"limit":"15.00"}',
+                                    content_type="application/json")
+        self.assertFalse(response.json()["alert_queued"])
+        self.assertFalse(MonthlyBudget.objects.get(pk=self.budget.pk).limit_alert_sent)
+        state = self.client.get("/api/finance/state/")
+        self.assertFalse(state.json()["email_delivery_configured"])
+
+
+
 class TransactionManagementTests(TestCase):
     def setUp(self):
         from django.utils import timezone
