@@ -1659,9 +1659,10 @@ font-size:.83rem;cursor:pointer}
             const description = document.getElementById('expenseEntryDesc').value.trim();
             const category = document.getElementById('expenseEntryCategory').value;
             const amount = document.getElementById('expenseEntryAmount').value;
+            const notes = document.getElementById('expenseEntryNotes').value;
             try {
                 // No expense is created here: only a pending checkout is reserved.
-                const result = await authRequest('/api/payments/esewa/start/', {description, category, amount});
+                const result = await authRequest('/api/payments/esewa/start/', {description, category, amount, notes});
                 window.location.assign(result.checkout_url);
             } catch(error) {
                 document.getElementById('tnEsewaReviewDialog').close();
