@@ -92,6 +92,7 @@ class EsewaPayment(models.Model):
     transaction_uuid = models.CharField(max_length=64, unique=True)
     description = models.CharField(max_length=200)
     category = models.CharField(max_length=60)
+    notes = models.TextField(blank=True, default="")
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     month = models.DateField()
     status = models.CharField(max_length=16, default="PENDING")

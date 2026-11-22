@@ -86,7 +86,51 @@ class EsewaSandboxTests(TestCase):
         self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
         response = self.client.get(result.json()["checkout_url"])
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Sandbox")
+        self.assertContains(response, "eSewa Demo")
+
+    def test_continue_checkout_forwards_to_real_demo_gateway_without_saving_expense(self):
+        self.configure_budget("100")
+        response = self.start("35.00")
+        self.assertEqual(response.status_code, 200)
+        payment = EsewaPayment.objects.get(user=self.user)
+        checkout = self.client.get(response.json()["checkout_url"])
+        self.assertEqual(checkout.status_code, 200)
+        self.assertContains(checkout, 'id="esewaCheckout"')
+        self.assertContains(checkout, "https://rc-epay.esewa.com.np/api/epay/main/v2/form")
+        self.assertContains(checkout, "requestSubmit()")
+        self.assertContains(checkout, "Continue to eSewa Demo")
+        self.assertEqual(payment.status, "PENDING")
+        self.assertFalse(ExpenseTransaction.objects.filter(user=self.user).exists())
+
+    def test_checkout_preserves_notes_in_verified_expense(self):
+        self.configure_budget("100")
+        response = self.post("/api/payments/esewa/start/", {
+            "description": "Electricity bill demo",
+            "category": "Utilities",
+            "amount": "30.00",
+            "notes": "November meter reading",
+        })
+        self.assertEqual(response.status_code, 200)
+        payment = EsewaPayment.objects.get(user=self.user)
+        self.assertEqual(payment.notes, "November meter reading")
+        with patch("accounts.esewa.status_from_esewa", return_value=self.verified_payload(payment)):
+            result = self.post(f"/api/payments/esewa/{payment.transaction_uuid}/verify/", {})
+        self.assertTrue(result.json()["complete"])
+        payment.refresh_from_db()
+        self.assertIsNotNone(payment.expense)
+        self.assertIn("November meter reading", payment.expense.notes)
+        self.assertIn("sandbox", payment.expense.notes.lower())
+
+    def test_oversize_notes_rejected_before_payment(self):
+        self.configure_budget("100")
+        response = self.post("/api/payments/esewa/start/", {
+            "description": "Example",
+            "category": "Utilities",
+            "amount": "30.00",
+            "notes": "x" * 1001,
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(EsewaPayment.objects.filter(user=self.user).exists())
 
     def test_verified_complete_records_expense_once_and_emails_at_limit(self):
         self.configure_budget()

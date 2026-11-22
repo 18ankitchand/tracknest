@@ -1,9 +1,38 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>eSewa Sandbox Checkout — TrackNest</title>
-<style>body{font:16px system-ui;background:#f7f9fc;color:#172237;display:grid;place-items:center;min-height:100vh}main{background:white;padding:32px;border-radius:17px;max-width:480px;box-shadow:0 10px 40px #12243a18}button{background:#15a96c;color:white;padding:13px 20px;border:none;border-radius:10px;font-weight:bold;cursor:pointer}small{display:block;margin-top:16px;color:#69798e;line-height:1.6}</style></head><body><main><h1>eSewa Sandbox Payment</h1><p>{{ payment.description }} — Nrs {{ payment.amount }}</p><p>This is the <strong>test environment</strong>, not a real-money payment.</p>
-<form id="esewaCheckout" action="{{ action }}" method="post">
-{% for name,value in fields.items %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
-<button type="submit">Continue to eSewa sandbox</button></form>
-<small>You will be redirected to eSewa's test checkout. TrackNest records an expense only after verification. This checkout is for payments to the configured test merchant, not arbitrary bills or wallet transfers.</small>
-<p><a href="/expenses/">Cancel and return to expenses</a></p>
-</main></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Opening eSewa Demo — TrackNest</title>
+  <style>
+    body{font:16px system-ui,sans-serif;background:#f7f9fc;color:#172237;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px}
+    main{background:white;padding:32px;border-radius:18px;width:min(480px,100%);box-sizing:border-box;box-shadow:0 10px 40px #12243a18}
+    .logo{display:grid;place-items:center;width:48px;height:48px;border-radius:13px;background:#19a86f;color:#fff;font-weight:900;font-size:26px}
+    h1{font-size:1.5rem;margin-bottom:10px}p{line-height:1.55}
+    button{background:#159b64;color:white;padding:13px 20px;border:0;border-radius:10px;font-weight:750;cursor:pointer}
+    small{display:block;margin-top:16px;color:#69798e;line-height:1.6}
+    a{color:#5d51df}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="logo" aria-hidden="true">e</div>
+    <h1>Opening eSewa Demo…</h1>
+    <p>Connecting you to the official eSewa UAT checkout for <strong>{{ payment.description }}</strong>.</p>
+    <p><strong>Nrs {{ payment.amount }}</strong> · Test payment only</p>
+    <form id="esewaCheckout" action="{{ action }}" method="post">
+      {% for name,value in fields.items %}
+      <input type="hidden" name="{{ name }}" value="{{ value }}">
+      {% endfor %}
+      <button type="submit">Continue to eSewa Demo</button>
+    </form>
+    <small>If the checkout doesn't open automatically, click the button above. TrackNest will save the expense only after verifying a successful eSewa test payment.</small>
+    <p><a href="/expenses/">Cancel and return to Expenses</a></p>
+  </main>
+  <script>
+    // Checkout begins only after the user clicks Continue to Payment on TrackNest.
+    // Post the signed merchant form to the official UAT gateway; don't create an expense here.
+    document.getElementById('esewaCheckout').requestSubmit();
+  </script>
+</body>
+</html>
