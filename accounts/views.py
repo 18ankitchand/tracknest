@@ -116,7 +116,7 @@ def financial_state(request):
     month = month_start(timezone.localdate())
     budget = get_budget(request.user, month)
     spent = monthly_spent(request.user, month)
-    txs = ExpenseTransaction.objects.filter(user=request.user).order_by("-date", "-pk")[:500]
+    txs = ExpenseTransaction.objects.filter(user=request.user).select_related("esewa_payment").order_by("-date", "-pk")[:500]
     email_ready = bool(request.user.email and settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
                        and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD)
     from .esewa import pending_reserved, configured
@@ -145,6 +145,10 @@ def set_budget(request):
         budget = get_budget(request.user, month)
         budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)
         spent = monthly_spent(request.user, month)
+        from .esewa import pending_reserved
+        outstanding = pending_reserved(request.user, month)
+        if outstanding and value < spent + outstanding:
+            return JsonResponse({"error": "Budget cannot be lowered below recorded spending plus pending eSewa checkouts. Verify or resolve those payments first."}, status=409)
         budget.limit = value
         budget.is_set_by_user = True
         # Moving back below the limit allows one new 100% email when reached again.
