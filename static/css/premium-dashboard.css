@@ -257,3 +257,12 @@ color:#5c4de3;background:#eeebff;font-weight:800}
 #appScreen #tnPage-forecast .tn-disclaimer{line-height:1.7;padding:13px 18px}
 @media(max-width:1180px){#appScreen .tn-forecast-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:580px){#appScreen .tn-forecast-summary{grid-template-columns:minmax(0,1fr)}}
+
+/* Lightweight accessible backup charts when external Chart.js cannot load. */
+#appScreen .tn-spending-fallback[hidden]{display:none!important}
+#appScreen .tn-spending-fallback{position:relative;height:100%;max-height:310px;overflow-y:auto;display:grid;gap:10px;align-content:start;padding:6px 0}
+#appScreen .tn-fallback-spending-row{display:grid;grid-template-columns:minmax(52px,80px) minmax(0,1fr) minmax(90px,120px);align-items:center;gap:10px;color:#b8c9e2;font-size:.73rem}
+#appScreen .tn-fallback-spending-track{height:11px;border-radius:8px;background:#293956;overflow:hidden}
+#appScreen .tn-fallback-spending-track i{display:block;background:#7b70ff;border-radius:8px;height:100%;min-width:0}
+#appScreen .tn-fallback-spending-row strong{text-align:right;color:#edf3ff;font-size:.74rem;white-space:nowrap}
+@media(max-width:520px){#appScreen .tn-fallback-spending-row{grid-template-columns:55px minmax(0,1fr) 78px;gap:5px;font-size:.65rem}#appScreen .tn-fallback-spending-row strong{font-size:.65rem}}

@@ -336,6 +336,54 @@ function downloadPremiumReport(format){
 }
 
 
+/* Fall back to the same authenticated transaction state that powers summary cards.
+   This prevents an empty overview if the separate analytics request is unavailable. */
+function buildSpendingOverviewFromTransactions(records) {
+  const today = new Date();
+  const todayKey = trackNestToday();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  const prev = new Date(today.getFullYear(), today.getMonth()-1, 1);
+  const fmt = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const monthKey = d => fmt(d).slice(0,7);
+  const firstKey=monthKey(first), prevKey=monthKey(prev);
+  const amountsByDate=new Map(), amountsByMonth=new Map(), byCategory=new Map();
+  let currentCount=0, previousCount=0;
+  for(const transaction of records){
+    if(transaction.type!=='expense') continue;
+    const day=String(transaction.date || '').slice(0,10);
+    const value=Number(transaction.amount);
+    if(day.length!==10 || day>todayKey || !Number.isFinite(value) || value<=0) continue;
+    amountsByDate.set(day,(amountsByDate.get(day)||0)+value);
+    const month=day.slice(0,7);
+    amountsByMonth.set(month,(amountsByMonth.get(month)||0)+value);
+    if(month===firstKey){
+      currentCount++;
+      const category=transaction.category || 'Other';
+      byCategory.set(category,(byCategory.get(category)||0)+value);
+    } else if(month===prevKey){previousCount++;}
+  }
+  const daySeries = count => Array.from({length:count},(_,i)=>{
+    const date=new Date(today.getFullYear(),today.getMonth(),today.getDate()-(count-1-i));
+    const day=fmt(date);
+    return {date:day,label:date.toLocaleDateString('en-US',{day:'2-digit',month:'short'}),amount:amountsByDate.get(day)||0};
+  });
+  const sixMonths=Array.from({length:6},(_,i)=>{
+    const date=new Date(today.getFullYear(),today.getMonth()-(5-i),1);
+    return {month:monthKey(date),label:date.toLocaleDateString('en-US',{month:'short',year:'numeric'}),
+      amount:amountsByMonth.get(monthKey(date))||0};
+  });
+  const categories=[...byCategory].map(([name,amount])=>({name,amount})).sort((a,b)=>b.amount-a.amount);
+  const currentTotal=amountsByMonth.get(firstKey)||0, prevTotal=amountsByMonth.get(prevKey)||0;
+  const budget = (typeof userBudgetLimit==='number' && budgetConfigured && userBudgetLimit>0)
+    ? userBudgetLimit : null;
+  return {periods:{'7d':daySeries(7),'30d':daySeries(30),'6m':sixMonths},
+    current_total:currentTotal,previous_total:prevTotal,
+    monthly_transactions:currentCount,previous_transactions:previousCount,
+    daily_average:currentTotal/today.getDate(),
+    budget_used_percent:budget?100*currentTotal/budget:null,
+    top_category:categories[0]||null,categories};
+}
+
 /* Clear, user-data-backed Spending Overview with daily and monthly exploration. */
 let tnSpendingData = null;
 let tnSpendingPeriod = '7d';
@@ -345,7 +393,30 @@ function tnSpendingCount(value) {
   return n+' transaction'+(n===1?'':'s');
 }
 async function loadSpendingOverview() {
-  const result=await premiumGet('/api/finance/spending-overview/');
+  // Show an immediate picture from already authenticated finance state, and
+  // reconcile it with the full analytics endpoint when available.
+  const local=Array.isArray(transactions)
+    ? buildSpendingOverviewFromTransactions(transactions) : null;
+  if(local) renderSpendingOverview(local, false);
+  try {
+    const result=await premiumGet('/api/finance/spending-overview/');
+    // Protect against unexpectedly empty API responses when the finance state
+    // already confirms current-month expenses. Keep a visible explanation.
+    if(local && local.monthly_transactions>0 && result.monthly_transactions===0) {
+      $tn('tnSpendingInsightNote').textContent=
+        'Displaying your saved expense records. The full analytics totals did not match your transactions.';
+      console.warn('Spending overview mismatch with finance state', result);
+      return;
+    }
+    renderSpendingOverview(result, true);
+  } catch(error) {
+    const note=$tn('tnSpendingInsightNote');
+    if(note) note.textContent='Showing spending from your saved transactions. The full overview could not refresh: '+
+      (error.message || 'Please refresh the page.');
+    console.error('TrackNest Spending Overview API failed',error);
+  }
+}
+function renderSpendingOverview(result, fromServer) {
   tnSpendingData=result;
   $tn('tnInsightsMonthTotal').textContent=tnFormatSpending(result.current_total);
   $tn('tnInsightsPreviousTotal').textContent=tnFormatSpending(result.previous_total);
@@ -380,7 +451,7 @@ function changeSpendingPeriod(period) {
     button.classList.toggle('active',selected);
     button.setAttribute('aria-pressed',String(selected));
   }
-  if(!tnSpendingData || typeof Chart==='undefined') return;
+  if(!tnSpendingData) return;
   const items=tnSpendingData.periods[period]||[];
   const total=items.reduce((acc,p)=>acc+Number(p.amount),0);
   const labels=items.map(p=>p.label);
@@ -392,6 +463,28 @@ function changeSpendingPeriod(period) {
     ? (isMonthly ? 'Each bar is the total recorded for that month.' : 'Hover over a bar to see the amount spent that day.')+
       ' Amounts reflect saved expenses, not forecasts.'
     : 'No expenses recorded in this period yet. Select a different range or add an expense.';
+  const fallback=$tn('tnSpendingTrendFallback');
+  if(typeof Chart==='undefined') {
+    // Do not show a blank chart if the external charting library is blocked/offline.
+    if(fallback) {
+      fallback.hidden=false;
+      fallback.replaceChildren();
+      const max=Math.max(1,...values);
+      for(let i=0;i<items.length;i++) {
+        const row=document.createElement('div');row.className='tn-fallback-spending-row';
+        const name=document.createElement('span');name.textContent=labels[i];
+        const bar=document.createElement('div');bar.className='tn-fallback-spending-track';
+        const fill=document.createElement('i');fill.style.width=(100*values[i]/max)+'%';
+        bar.appendChild(fill);
+        const amount=document.createElement('strong');amount.textContent=tnFormatSpending(values[i]);
+        row.append(name,bar,amount);fallback.appendChild(row);
+      }
+    }
+    $tn('tnSpendingTrendChart').hidden=true;
+    return;
+  }
+  if(fallback){fallback.hidden=true;fallback.replaceChildren();}
+  $tn('tnSpendingTrendChart').hidden=false;
   destroyPremiumChart('tnSpendingTrendChart');
   premiumCharts.tnSpendingTrendChart=new Chart($tn('tnSpendingTrendChart'),{
     type:'bar',
@@ -414,12 +507,13 @@ function changeSpendingPeriod(period) {
   });
 }
 function renderSpendingCategories(categories) {
-  if(typeof Chart==='undefined') return;
   const list=$tn('tnSpendingCategoryList');
   list.replaceChildren();
   const palette=['#7b70ff','#38bdf8','#26ce9c','#ffbe5c','#f5809e','#aa9dfa','#72ced8'];
   const total=categories.reduce((sum,c)=>sum+Number(c.amount),0);
   $tn('tnSpendingCategoryCenter').textContent=total>0?tnFormatSpending(total):'No expenses';
+  if(typeof Chart!=='undefined') {
+  $tn('tnSpendingCategoryChart').hidden=false;
   destroyPremiumChart('tnSpendingCategoryChart');
   premiumCharts.tnSpendingCategoryChart=new Chart($tn('tnSpendingCategoryChart'),{
     type:'doughnut',data:{
@@ -431,6 +525,10 @@ function renderSpendingCategories(categories) {
        plugins:{legend:{display:false},
          tooltip:{enabled:categories.length>0,callbacks:{label:ctx=>ctx.label+': '+tnFormatSpending(ctx.parsed)}}}}
   });
+  } else {
+    $tn('tnSpendingCategoryChart').hidden=true;
+    $tn('tnSpendingCategoryCenter').textContent=total>0?'Category totals shown below':'No expenses';
+  }
   if(!categories.length){
     const p=document.createElement('p');p.textContent='No spending categories yet.';list.appendChild(p);return;
   }
