@@ -1197,10 +1197,33 @@ font-size:.83rem;cursor:pointer}
               </form>
               <div id="tnCategoryBudgetList" class="tn-premium-grid"></div>
             </section>
-            <section class="card tn-budget-note"><h3 class="card-title">How budget protection works</h3>
-              <p>Below 80%: normal. From 80%: warning. From 90%: critical. At 100%: TrackNest blocks additional expense recording. Income recording remains available.</p>
-              <p>Budget limits apply to records inside TrackNest, not outside payments.</p>
-              <button class="tn-view-all" onclick="navigateTrackNest('expense')" type="button">View expenses →</button></section>
+            <section class="card tn-budget-protection" aria-labelledby="tnBudgetProtectionTitle">
+              <div class="tn-budget-protection-heading">
+                <div><span class="section-label">BUDGET THRESHOLD ALGORITHM</span>
+                  <h3 class="card-title" id="tnBudgetProtectionTitle">How budget protection works</h3>
+                  <p>TrackNest continuously compares your recorded monthly expenses with the limit you set.</p>
+                </div>
+                <span class="tn-budget-live-status" id="tnBudgetProtectionStatus" role="status">Checking spending…</span>
+              </div>
+              <div class="tn-budget-live-track">
+                <div class="tn-budget-live-label"><strong id="tnBudgetProtectionUsage">0% used</strong><span id="tnBudgetProtectionRemaining">Loading your remaining budget</span></div>
+                <div class="tn-budget-track" id="tnBudgetProtectionBar" role="progressbar" aria-label="Monthly spending threshold" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <div id="tnBudgetProtectionFill"></div>
+                  <i class="tn-budget-tick tick-80" aria-hidden="true"></i><i class="tn-budget-tick tick-90" aria-hidden="true"></i>
+                </div>
+                <div class="tn-budget-scale"><span>0%</span><span>80% warning</span><span>90% critical</span><span>100% limit</span></div>
+              </div>
+              <div class="tn-budget-threshold-steps" aria-label="Budget monitoring stages">
+                <div class="tn-threshold-step normal" data-budget-threshold="normal"><span class="tn-step-icon">✓</span><strong>Normal</strong><em>Below 80%</em><p>Expense recording is available.</p></div>
+                <div class="tn-threshold-step warning" data-budget-threshold="warning"><span class="tn-step-icon">!</span><strong>Warning</strong><em>80%–below 90%</em><p>Receive a spending warning.</p></div>
+                <div class="tn-threshold-step critical" data-budget-threshold="critical"><span class="tn-step-icon">!</span><strong>Critical</strong><em>90%–below 100%</em><p>Receive an urgent budget alert.</p></div>
+                <div class="tn-threshold-step limit" data-budget-threshold="limit"><span class="tn-step-icon">×</span><strong>Limit reached</strong><em>100% or above</em><p>New expenses are blocked in TrackNest.</p></div>
+              </div>
+              <div class="tn-budget-protection-footer">
+                <p><strong>Calculation:</strong> (This month's recorded expenses ÷ Your monthly budget) × 100. Income recording remains available. eSewa checkouts are checked against this in-app limit; external payments cannot be blocked.</p>
+                <button class="tn-view-all" onclick="navigateTrackNest('expense')" type="button">Review expense history →</button>
+              </div>
+            </section>
           </section>
           <section class="tn-page" id="tnPage-forecast" data-tn-page="forecast" hidden>
             <div class="tn-page-heading"><span class="section-label">Expense insights</span><h1 class="dashboard-heading">Forecast & trends</h1><p class="dashboard-description">Review the current spending projection alongside recorded expenses.</p></div>
@@ -1210,12 +1233,28 @@ font-size:.83rem;cursor:pointer}
               <div class="card tn-forecast-tile"><span>Next month forecast</span><strong id="tnForecastNextPrediction">Not enough data</strong><small id="tnForecastNextLabel">Linear Regression</small></div>
               <div class="card tn-forecast-tile"><span>Historical backtest error</span><strong id="tnForecastMAE">Not available</strong><small>Mean absolute error (MAE)</small></div>
             </div>
-            <div class="card" id="forecastSection">
-              <div class="card-header"><div>
-                <div class="section-label">Time series forecasting</div><div class="card-title">Linear Regression expense forecast</div>
-                <p class="card-description">Actual completed months and estimated future spending from your historical records.</p>
-              </div></div>
-              <div class="chart-container"><canvas id="forecastChart" role="img" aria-label="Historical expense totals and linear regression monthly forecast"></canvas></div>
+            <div class="card tn-forecast-visual" id="forecastSection">
+              <div class="tn-forecast-visual-heading"><div>
+                <div class="section-label">TIME SERIES FORECASTING · LINEAR REGRESSION</div>
+                <h2 class="card-title">Past spending vs. predicted spending</h2>
+                <p class="card-description">Compare recorded monthly totals with a fitted future trend. The dotted line is an estimate, not an actual transaction.</p>
+              </div><span class="tn-forecast-model-badge" id="tnForecastModelState">Checking historical data</span></div>
+              <div class="tn-forecast-legend" aria-label="Forecast chart legend">
+                <span><i class="tn-legend-actual"></i> Actual recorded expenses</span>
+                <span><i class="tn-legend-estimate"></i> Linear Regression estimate</span>
+              </div>
+              <div class="tn-forecast-chart-area"><canvas id="forecastChart" role="img" aria-label="Monthly actual expense bars and future Linear Regression predictions"></canvas></div>
+              <div class="tn-forecast-interpretation">
+                <div><small>Spending trend</small><strong id="tnForecastTrend">Waiting for history</strong><span id="tnForecastSlopeNote">Based on spending change per completed month</span></div>
+                <div><small>Model training</small><strong id="tnForecastTrainingSummary">Not enough history</strong><span>Only fully completed calendar months train the model</span></div>
+                <div><small>Prediction quality</small><strong id="tnForecastValidation">No historical backtest yet</strong><span>MAE = mean absolute difference from actual amounts</span></div>
+              </div>
+              <p class="tn-forecast-chart-note" id="tnForecastChartNote">The chart will display actual expenses even before enough history exists to make a forecast.</p>
+            </div>
+            <div class="tn-forecast-steps" aria-label="How Time Series Forecasting works">
+              <div><span>01</span><strong>Collect monthly totals</strong><small>Group your completed months of actual expenses.</small></div>
+              <div><span>02</span><strong>Fit Linear Regression</strong><small>Learn a line: predicted expenses = intercept + slope × month.</small></div>
+              <div><span>03</span><strong>Forecast and evaluate</strong><small>Estimate upcoming expenses; measure historical error when possible.</small></div>
             </div>
             <p class="tn-disclaimer" id="tnForecastExplanation" role="status">Forecast needs expenses in at least three completed months. This model cannot guarantee future spending.</p>
             <p class="tn-disclaimer">Method: Ordinary Least Squares Linear Regression on completed monthly expense totals. The incomplete current month is excluded from training. This is an estimate, not a spending limit or payment authorization.</p>
@@ -1884,14 +1923,16 @@ font-size:.83rem;cursor:pointer}
         // Chart Initialization
         const ctx = document.getElementById('forecastChart').getContext('2d');
         const forecastChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: { labels: [], datasets: [
-                {label: 'Actual completed months', data: [], borderColor: '#38BDF8',
-                 backgroundColor: 'rgba(56, 189, 248, 0.13)', fill: true,
-                 tension: 0.25, spanGaps: false, pointRadius: 4},
-                {label: 'Linear Regression forecast', data: [], borderColor: '#FBBF24',
-                 borderDash: [7, 5], backgroundColor: 'rgba(251, 191, 36, 0.08)',
-                 fill: false, tension: 0.15, spanGaps: false, pointRadius: 5}
+                {type:'bar',label: 'Actual expenses', data: [],
+                 backgroundColor:'rgba(56,189,248,.78)',hoverBackgroundColor:'#38BDF8',
+                 borderRadius:8,maxBarThickness:58,order:2},
+                {type:'line',label: 'Linear Regression estimate', data: [],
+                 borderColor: '#FBBF24', borderWidth:3,
+                 borderDash: [8, 6], backgroundColor:'#FBBF24',
+                 fill: false, tension: 0.15, spanGaps: false, pointRadius:5,
+                 pointHoverRadius:7,order:1}
             ] },
             options: {responsive:true,maintainAspectRatio:false,
                 plugins:{legend:{labels:{color:'#F8FAFC'}},
