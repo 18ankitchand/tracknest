@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from accounts import views, premium_api
+from accounts import views, premium_api, financial_assistant
 from accounts.admin_views import overview
 
 admin.site.site_header = "TrackNest administration"
@@ -30,6 +30,7 @@ urlpatterns = [
     path("api/auth/me/", views.me),
     path("api/finance/state/", views.financial_state),
     path("api/finance/analytics/", premium_api.analytics),
+    path("api/assistant/ask/", financial_assistant.financial_assistant),
     path("api/finance/export.csv", premium_api.export_csv),
     path("api/finance/export.pdf", premium_api.export_pdf),
     path("api/categories/", premium_api.categories_list),
