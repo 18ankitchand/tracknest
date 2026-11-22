@@ -18,6 +18,7 @@ urlpatterns = [
     path("api/finance/state/", views.financial_state),
     path("api/finance/analytics/", premium_api.analytics),
     path("api/finance/export.csv", premium_api.export_csv),
+    path("api/finance/export.pdf", premium_api.export_pdf),
     path("api/categories/", premium_api.categories_list),
     path("api/categories/change/", premium_api.categories_change),
     path("api/category-budgets/", premium_api.category_budget_list),
