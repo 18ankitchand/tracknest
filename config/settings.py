@@ -27,6 +27,7 @@ LANGUAGE_CODE='en-us'
 TIME_ZONE='Asia/Kathmandu'
 USE_TZ=True
 STATIC_URL='static/'
+STATICFILES_DIRS=[BASE_DIR/'static']
 STATIC_ROOT=BASE_DIR/'staticfiles'
 STORAGES={'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
 SECURE_PROXY_SSL_HEADER=('HTTP_X_FORWARDED_PROTO','https')
