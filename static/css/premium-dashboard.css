@@ -213,3 +213,37 @@ color:#5c4de3;background:#eeebff;font-weight:800}
 #appScreen #tnPage-expense .tn-expense-empty-history small{color:#96a8c2!important}
 #appScreen #tnPage-expense .tn-expense-pay-submit{background:#2d65ec!important;color:#fff!important}
 #appScreen #tnPage-expense .tn-expense-pay-submit:hover{background:#2459d6!important}
+
+/* Spending Overview — visually readable on dark and light pages alike. */
+#appScreen #tnPage-expense .tn-spending-insights{background:#19253b!important;color:#eef4ff!important;padding:26px!important;border:1px solid #334561!important;border-radius:20px!important;margin-top:23px}
+#appScreen .tn-spending-topline{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+#appScreen .tn-insights-eyebrow{display:inline-block;color:#a39bff;letter-spacing:.12em;font-size:.74rem;font-weight:850;margin-bottom:9px}
+#appScreen #tnPage-expense .tn-spending-topline h2{font-size:1.25rem;font-weight:800;color:#f0f5ff!important;line-height:1.4;margin:0 0 7px}
+#appScreen .tn-insights-subtitle{font-size:.82rem;color:#a7b9d2;line-height:1.6}
+#appScreen .tn-spending-periods{display:flex;align-items:center;gap:4px;background:#0f1b30;border:1px solid #354a6b;border-radius:11px;padding:5px}
+#appScreen .tn-spending-periods button{border:0;background:transparent;color:#aebfd7;font:inherit;font-size:.76rem;font-weight:700;padding:9px 13px;border-radius:8px;cursor:pointer;white-space:nowrap}
+#appScreen .tn-spending-periods button.active{background:#6b63e9;color:white;box-shadow:0 4px 12px #15165040}
+#appScreen .tn-spending-periods button:hover:not(.active){background:#233451;color:white}
+#appScreen .tn-insights-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:23px 0}
+#appScreen .tn-insight-metric{background:#101d32;border:1px solid #304562;border-radius:13px;padding:17px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+#appScreen .tn-insight-metric>span{color:#aebbd0;font-size:.77rem}
+#appScreen .tn-insight-metric strong{color:#f5f7ff;font-size:clamp(1rem,1.7vw,1.4rem);font-weight:800;overflow-wrap:anywhere}
+#appScreen .tn-insight-metric small{color:#9babca;font-size:.7rem;line-height:1.5}
+#appScreen .tn-spending-visual-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(270px,1fr);gap:16px}
+#appScreen .tn-spending-trend-panel,#appScreen .tn-spending-category-panel{background:#111f34;border:1px solid #304360;border-radius:15px;padding:21px;min-width:0}
+#appScreen .tn-spending-chart-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#appScreen .tn-spending-visual-grid h3{color:#ecf3ff;font-size:.99rem;font-weight:800}
+#appScreen .tn-spending-chart-heading span{color:#aebfd8;font-size:.77rem}
+#appScreen .tn-spending-chart-area{height:310px;position:relative;margin:20px 0 10px}
+#appScreen .tn-chart-footnote{color:#9fb0c9;font-size:.72rem;line-height:1.6}
+#appScreen .tn-spending-category-panel>p{color:#99abc5;font-size:.76rem;margin-top:6px}
+#appScreen .tn-spending-donut-area{height:205px;max-width:280px;margin:17px auto;position:relative}
+#appScreen .tn-spending-donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#e9effb;font-size:clamp(.78rem,1.1vw,.99rem);font-weight:800;pointer-events:none;max-width:135px}
+#appScreen .tn-spending-category-list{display:grid;gap:11px;margin-top:11px}
+#appScreen .tn-spending-cat-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.75rem;color:#c6d3e7}
+#appScreen .tn-spending-cat-label{display:flex;gap:8px;align-items:center;min-width:0;overflow-wrap:anywhere}
+#appScreen .tn-spending-cat-label i{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+#appScreen .tn-spending-cat-value{font-weight:750;color:#eff4ff;text-align:right;white-space:nowrap}
+#appScreen .tn-spending-insight-note{margin-top:17px;border-radius:10px;border:1px solid #334f73;background:#152b48;color:#c4d5ec;font-size:.78rem;padding:13px 16px;line-height:1.65}
+@media(max-width:1160px){#appScreen .tn-insights-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#appScreen .tn-spending-visual-grid{grid-template-columns:1fr}}
+@media(max-width:620px){#appScreen #tnPage-expense .tn-spending-insights{padding:16px!important}#appScreen .tn-insights-metrics{grid-template-columns:1fr 1fr;gap:9px}#appScreen .tn-insight-metric{padding:12px}#appScreen .tn-insight-metric strong{font-size:1.03rem}#appScreen .tn-spending-trend-panel,#appScreen .tn-spending-category-panel{padding:14px}#appScreen .tn-spending-chart-area{height:240px}#appScreen .tn-spending-periods{width:100%;justify-content:space-between}}
