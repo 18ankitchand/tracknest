@@ -206,3 +206,15 @@ The Expenses screen now uses the user's supplied **three summary cards + two-col
 The interface intentionally uses `eSewa` for the primary payment method and buttons rather than a promotional “demo” label. **A clearly visible test-environment notice remains mandatory**: the checkout is still the public eSewa UAT endpoint, not real-money bill pay. Real payments will only be supported after merchant authorization, payment reconciliation and full production hardening. No user credentials are collected by TrackNest.
 
 The Expenses payment summary route `GET /api/payments/esewa/summary/` is authenticated and counts only the current user's `COMPLETE` payments with a verified linked expense. Pending and canceled attempts never inflate the amounts. The form supports manual expense entries for Cash, Bank Transfer, Card, Mobile Wallet or Other. Empty descriptions automatically receive a neutral expense description using the selected category. Existing income, budgets, authentication and data remain unchanged.
+
+---
+
+## Online and Cash/Other expense grouping
+
+The Expenses summary cards group only the logged-in user's saved **expense** transactions:
+
+- **Online Expenses**: eSewa (verified checkout record), Card and Bank Transfer. Card and Bank Transfer are user-entered, not bank-verified.
+- **Cash & Other Expenses**: Cash, Other, and any historical Mobile Wallet transactions that were previously saved. No existing transaction rows are deleted or modified.
+- **Recorded Transactions**: total count of both groups with an online/offline breakdown.
+
+Mobile Wallet is removed from new expense, income and transaction-edit payment method dropdowns, and the backend rejects it for new or updated transactions. Past Mobile Wallet records remain in the database and count with the second group. The original owner-only `/api/payments/esewa/summary/` endpoint retains `paid_total` and `successful_count` for verified eSewa records and now additionally provides online and offline totals and counts. This grouping does not initiate or verify card/bank transfers.
