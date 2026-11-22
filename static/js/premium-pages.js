@@ -336,6 +336,54 @@ function downloadPremiumReport(format){
 }
 
 
+/* Fall back to the same authenticated transaction state that powers summary cards.
+   This prevents an empty overview if the separate analytics request is unavailable. */
+function buildSpendingOverviewFromTransactions(records) {
+  const today = new Date();
+  const todayKey = trackNestToday();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  const prev = new Date(today.getFullYear(), today.getMonth()-1, 1);
+  const fmt = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const monthKey = d => fmt(d).slice(0,7);
+  const firstKey=monthKey(first), prevKey=monthKey(prev);
+  const amountsByDate=new Map(), amountsByMonth=new Map(), byCategory=new Map();
+  let currentCount=0, previousCount=0;
+  for(const transaction of records){
+    if(transaction.type!=='expense') continue;
+    const day=String(transaction.date || '').slice(0,10);
+    const value=Number(transaction.amount);
+    if(day.length!==10 || day>todayKey || !Number.isFinite(value) || value<=0) continue;
+    amountsByDate.set(day,(amountsByDate.get(day)||0)+value);
+    const month=day.slice(0,7);
+    amountsByMonth.set(month,(amountsByMonth.get(month)||0)+value);
+    if(month===firstKey){
+      currentCount++;
+      const category=transaction.category || 'Other';
+      byCategory.set(category,(byCategory.get(category)||0)+value);
+    } else if(month===prevKey){previousCount++;}
+  }
+  const daySeries = count => Array.from({length:count},(_,i)=>{
+    const date=new Date(today.getFullYear(),today.getMonth(),today.getDate()-(count-1-i));
+    const day=fmt(date);
+    return {date:day,label:date.toLocaleDateString('en-US',{day:'2-digit',month:'short'}),amount:amountsByDate.get(day)||0};
+  });
+  const sixMonths=Array.from({length:6},(_,i)=>{
+    const date=new Date(today.getFullYear(),today.getMonth()-(5-i),1);
+    return {month:monthKey(date),label:date.toLocaleDateString('en-US',{month:'short',year:'numeric'}),
+      amount:amountsByMonth.get(monthKey(date))||0};
+  });
+  const categories=[...byCategory].map(([name,amount])=>({name,amount})).sort((a,b)=>b.amount-a.amount);
+  const currentTotal=amountsByMonth.get(firstKey)||0, prevTotal=amountsByMonth.get(prevKey)||0;
+  const budget = (typeof userBudgetLimit==='number' && budgetConfigured && userBudgetLimit>0)
+    ? userBudgetLimit : null;
+  return {periods:{'7d':daySeries(7),'30d':daySeries(30),'6m':sixMonths},
+    current_total:currentTotal,previous_total:prevTotal,
+    monthly_transactions:currentCount,previous_transactions:previousCount,
+    daily_average:currentTotal/today.getDate(),
+    budget_used_percent:budget?100*currentTotal/budget:null,
+    top_category:categories[0]||null,categories};
+}
+
 /* Clear, user-data-backed Spending Overview with daily and monthly exploration. */
 let tnSpendingData = null;
 let tnSpendingPeriod = '7d';
@@ -345,7 +393,22 @@ function tnSpendingCount(value) {
   return n+' transaction'+(n===1?'':'s');
 }
 async function loadSpendingOverview() {
-  const result=await premiumGet('/api/finance/spending-overview/');
+  // Show an immediate picture from already authenticated finance state, and
+  // replace it with the full backend overview when its API responds.
+  if(Array.isArray(transactions)) {
+    renderSpendingOverview(buildSpendingOverviewFromTransactions(transactions), false);
+  }
+  try {
+    const result=await premiumGet('/api/finance/spending-overview/');
+    renderSpendingOverview(result, true);
+  } catch(error) {
+    const note=$tn('tnSpendingInsightNote');
+    if(note) note.textContent='Showing spending from your saved transactions. The full overview could not refresh: '+
+      (error.message || 'Please refresh the page.');
+    console.error('TrackNest Spending Overview API failed',error);
+  }
+}
+function renderSpendingOverview(result, fromServer) {
   tnSpendingData=result;
   $tn('tnInsightsMonthTotal').textContent=tnFormatSpending(result.current_total);
   $tn('tnInsightsPreviousTotal').textContent=tnFormatSpending(result.previous_total);
