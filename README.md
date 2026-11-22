@@ -114,3 +114,15 @@ Alert notifications are saved to the app database even when SMTP isn't configure
 - Currency conversion is not implemented; all financial values are NPR.
 - Charts use recorded financial data; the original linear-multiplier forecast is not a trained or validated prediction model.
 - GitHub Actions verifies migrations and Django tests. Manual desktop and mobile browser tests are still necessary.
+
+### TrackNest financial assistant
+
+The Financial Advisor page now calls `POST /api/assistant/ask/` with an authenticated JSON body such as `{"message":"How much did I spend this month?"}`. Its reply is calculated on the Django server from the logged-in user's saved transactions, monthly and category budgets, and savings-goal allocations.
+
+The assistant can explain income, expenses, remaining budget, category spending, recent transactions, savings-goal progress and basic saving suggestions. Each response can link to the relevant workspace. It **cannot** create, edit, delete or transfer money, and does not send financial data to third-party AI services.
+
+**Important:** This is a local, rules-based financial insights assistant, **not** a generative large language model. It cannot understand arbitrary complex language or provide personalized regulated financial advice. An optional hosted LLM with consent, privacy safeguards, token budgets and a securely stored API key can be added later if needed. This version requires no API credentials.
+
+Suggested questions: "Show my recent transactions", "What is my remaining monthly budget?", "Where do I spend the most?", "What is my income this month?", and "How are my savings goals going?" The chat history is held only in the visible browser panel and can be cleared without changing records.
+
+Run tests with `python manage.py test accounts.tests_assistant` in the existing virtual environment.
