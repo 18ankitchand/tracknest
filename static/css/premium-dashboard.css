@@ -1,0 +1,155 @@
+/* TrackNest Premium Dashboard — deliberately scoped to the signed-in application.
+   Login and create-account styles remain unchanged. */
+#appScreen{--tn-bg:#f7f9fc;--tn-card:#fff;--tn-ink:#111827;--tn-muted:#64748b;
+--tn-line:#e7ecf3;--tn-purple:#5954e8;--tn-blue:#3877f6;--tn-green:#0ea66b;--tn-red:#ef5261;
+background:var(--tn-bg)!important;color:var(--tn-ink)!important;min-height:100vh;
+display:none;position:relative;font-family:'Plus Jakarta Sans',sans-serif}
+#appScreen.active{display:block}
+#appScreen .tn-sidebar{transform:none!important;visibility:visible!important;position:fixed!important;inset:0 auto 0 0!important;
+width:253px!important;background:#111827!important;border:0!important;border-right:1px solid #202b3c!important;
+box-shadow:none!important;z-index:75!important;padding:22px 12px!important;transition:width .22s ease,transform .22s ease!important}
+#appScreen .tn-sidebar-head{padding:2px 10px 22px!important;border-color:#293448!important}
+#appScreen .tn-sidebar-logo{background:linear-gradient(135deg,#6b63fb,#347bf5)!important;box-shadow:0 6px 20px #4351c733}
+#appScreen .tn-sidebar-brand strong{color:#fff}
+#appScreen .tn-sidebar-brand small{color:#a4b2c7!important}
+#appScreen .tn-sidebar-section{color:#798ba7!important;font-size:.64rem!important;margin:23px 12px 8px!important}
+#appScreen .tn-sidebar-nav{gap:4px!important}
+#appScreen .tn-nav-item{color:#b7c2d2!important;border:0!important;border-radius:11px!important;
+padding:11px 13px!important;gap:12px!important;min-height:44px!important;
+transition:background .16s,transform .16s!important}
+#appScreen .tn-nav-item:hover{background:#25324a!important;color:white!important;transform:translateX(2px)}
+#appScreen .tn-nav-item.active{background:linear-gradient(115deg,#6659ed,#3b70ec)!important;
+color:#fff!important;box-shadow:0 7px 16px #3e45bc22}
+#appScreen .tn-nav-icon{width:19px!important;height:19px!important;flex:0 0 19px!important}
+#appScreen .tn-nav-label strong{color:inherit!important;font-size:.84rem!important;font-weight:650!important}
+#appScreen .tn-nav-label small,#appScreen .tn-sidebar-note{display:none!important}
+#appScreen .tn-sidebar-close{display:none!important}
+#appScreen header{margin-left:253px!important;position:sticky!important;top:0!important;z-index:50!important;
+background:#fff!important;color:#19263e!important;border-bottom:1px solid var(--tn-line)!important;
+padding:14px clamp(20px,3vw,42px)!important;min-height:78px!important;box-shadow:0 2px 9px #182c4b05!important}
+#appScreen .brand-icon{background:linear-gradient(135deg,#6758ee,#3385f5)!important;border-radius:12px!important;
+box-shadow:none!important;width:37px!important;height:37px!important}
+#appScreen .brand-title{color:#182336!important;letter-spacing:-.04em!important}
+#appScreen .tn-menu-button{border-color:#e3e7f0!important;color:#42536b!important;background:#f5f7fb!important;
+box-shadow:none!important}
+#appScreen .tn-menu-button:hover{border-color:#7768f0!important;color:#6355e7!important}
+#appScreen .tn-menu-button span{background:currentColor!important}
+#appScreen .user-name{color:#19263e}
+#appScreen .user-email{color:#7d899b!important}
+#appScreen .logout-btn{color:#d74b60!important;background:#fff4f5!important;border:1px solid #fee0e5!important;border-radius:10px!important}
+#appScreen #tnMainContent{margin-left:253px!important;max-width:none!important;width:auto!important;
+padding:clamp(19px,2.5vw,42px)!important;display:block!important}
+#appScreen .tn-page{gap:23px!important}
+#appScreen .tn-page[hidden]{display:none!important}
+#appScreen .tn-page-heading{padding:0!important}
+#appScreen .section-label,#appScreen .dashboard-kicker{color:#6658e7!important;font-weight:750!important}
+#appScreen .dashboard-kicker::before{background:#6458ec!important;box-shadow:0 0 0 4px #e8e5ff!important}
+#appScreen .dashboard-heading{color:#172237!important;font-size:clamp(1.6rem,2.4vw,2.25rem)!important;letter-spacing:-.045em!important}
+#appScreen .dashboard-description{color:#778398!important}
+#appScreen .metrics-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:17px!important}
+#appScreen .metric-card{background:var(--tn-card)!important;border:1px solid var(--tn-line)!important;
+box-shadow:0 4px 18px #2336530b!important;border-radius:16px!important;padding:23px!important;
+min-height:167px!important;position:relative!important}
+#appScreen .metric-card::before{display:none!important}
+#appScreen .metric-card:hover{transform:translateY(-4px)!important;box-shadow:0 12px 28px #1e355517!important}
+#appScreen .metric-label{color:#7c8798!important;font-size:.76rem!important;letter-spacing:0!important;text-transform:none!important}
+#appScreen .metric-value{color:#172237!important;font-family:'Plus Jakarta Sans',sans-serif!important;
+font-weight:800!important;font-size:clamp(1.3rem,1.65vw,1.85rem)!important;letter-spacing:-.05em!important}
+#appScreen .metric-sub{color:#90a0b2!important}
+#appScreen .metric-heading{margin-bottom:17px!important}
+#appScreen .metric-symbol{background:#eaeafe!important;border:0!important;color:#6059e9!important;font-size:1.1rem!important;
+width:42px!important;height:42px!important;border-radius:12px!important}
+#appScreen .metric-card.warning .metric-symbol{color:#179d62!important;background:#e5f8ee!important}
+#appScreen .metric-card.danger .metric-symbol{color:#ec5260!important;background:#fff0f2!important}
+#appScreen .metric-card.success .metric-symbol{color:#089caa!important;background:#e4f7f9!important}
+#appScreen .card,#appScreen .ai-chat-card,#appScreen .budget-limit-banner{background:#fff!important;border:1px solid var(--tn-line)!important;
+color:#172237!important;border-radius:16px!important;box-shadow:0 5px 22px #20395c0b!important}
+#appScreen .card{padding:clamp(19px,2vw,28px)!important}
+#appScreen .card-title{color:#1a263a!important}
+#appScreen .card-description,#appScreen .tn-disclaimer{color:#7b8799!important}
+#appScreen .tn-dashboard-actions{gap:17px!important}
+#appScreen .tn-action-card{background:#fff!important;color:#172237!important;border:1px solid var(--tn-line)!important;
+box-shadow:0 4px 18px #2336530a!important;border-radius:15px!important}
+#appScreen .tn-action-card:hover{background:#f7f8ff!important;border-color:#c6c8fb!important}
+#appScreen .tn-action-card span{color:#7d889b!important}
+#appScreen .tn-view-all,#appScreen .tn-page-total{color:#6057e7!important}
+#appScreen .tn-recent-item{border-color:#edf0f4!important}
+#appScreen .tn-recent-item strong{color:#29364b!important}
+#appScreen .tn-recent-item small{color:#8490a3!important}
+#appScreen .tn-table-amount.income{color:#0b9d64!important}
+#appScreen .tn-table-amount.expense{color:#e34e5e!important}
+#appScreen .form-group label{color:#43516a!important;font-size:.78rem!important;font-weight:700!important}
+#appScreen input,#appScreen select,#appScreen textarea{background:#fff!important;color:#23324b!important;
+border:1px solid #dce4ee!important;border-radius:10px!important;padding:11px 13px!important;
+box-shadow:none!important;font-family:inherit}
+#appScreen input:focus,#appScreen select:focus,#appScreen textarea:focus{outline:2px solid #dedaff!important;border-color:#726af2!important}
+#appScreen input::placeholder{color:#a5b0c0!important}
+#appScreen .primary-btn{background:linear-gradient(112deg,#6659ed,#3b7cf2)!important;color:#fff!important;
+border:0!important;border-radius:11px!important;box-shadow:0 6px 12px #6858ed21!important}
+#appScreen .primary-btn:hover{filter:brightness(1.05)!important}
+#appScreen .transactions-table{width:100%!important;border-collapse:collapse!important}
+#appScreen .transactions-table th{background:#f8faff!important;color:#7d899b!important;border-bottom:1px solid #e7eaf1!important;
+padding:14px 15px!important;letter-spacing:.045em!important}
+#appScreen .transactions-table td{color:#334155!important;border-bottom:1px solid #eef1f6!important;padding:15px!important}
+#appScreen .transactions-table tbody tr:hover{background:#f9faff!important}
+#appScreen .badge.income{color:#0a9861!important;background:#e7f9ef!important}
+#appScreen .badge.expense{color:#da465b!important;background:#fff1f2!important}
+#appScreen .tn-record-filter{background:#f2f4fa!important;border-color:#e4e8f2!important}
+#appScreen .tn-record-filter button{color:#617089!important}
+#appScreen .tn-record-filter button.active{background:#6059e9!important;color:#fff!important}
+#appScreen .edit-transaction-btn,#appScreen .cancel-edit-btn{background:#eeefff!important;color:#5b54e6!important;border:1px solid #dddafa!important}
+#appScreen .tn-delete-btn{background:#fff2f4!important;color:#d74d61!important;border:1px solid #ffe0e4!important}
+#appScreen .tn-search-toolbar input{background:#fff!important}
+#appScreen .tn-filter-count{color:#748297!important}
+#appScreen .tn-empty{color:#95a3b4!important}
+#appScreen .budget-limit-banner{padding:24px!important}
+#appScreen .budget-flag{color:#645aed!important}
+#appScreen .budget-limit-banner strong{color:#25334a!important}
+#appScreen #budgetBannerSub{color:#8b98aa!important}
+#appScreen .budget-progress{background:#e9eaf5!important}
+#appScreen .budget-progress-fill{background:linear-gradient(90deg,#6259e9,#36b6c9)!important}
+#appScreen .tn-budget-note{color:#6a7990!important}
+#appScreen .ai-msg.bot{background:#f2f5fb!important;color:#42526b!important}
+#appScreen .ai-msg.user{background:#eae9ff!important;color:#413cb7!important}
+#appScreen .ai-input-box{border-color:#e3eaf5!important}
+#appScreen .tn-sidebar-overlay{z-index:73!important}
+#appScreen.tn-collapsed .tn-sidebar{width:76px!important}
+#appScreen.tn-collapsed header{margin-left:76px!important}
+#appScreen.tn-collapsed #tnMainContent{margin-left:76px!important}
+#appScreen.tn-collapsed .tn-sidebar-head{justify-content:center!important;padding:2px 0 18px!important}
+#appScreen.tn-collapsed .tn-sidebar-brand strong,#appScreen.tn-collapsed .tn-sidebar-brand small,
+#appScreen.tn-collapsed .tn-sidebar-section,#appScreen.tn-collapsed .tn-nav-label{display:none!important}
+#appScreen.tn-collapsed .tn-nav-item{justify-content:center!important;padding:11px!important}
+#appScreen.tn-collapsed .tn-sidebar-brand{gap:0!important}
+#appScreen header,#appScreen #tnMainContent{transition:margin-left .22s ease!important}
+#appScreen .tn-sidebar .tn-sidebar-note{display:none!important}
+#appScreen .tn-profile-chip{display:flex;align-items:center;gap:10px}
+#appScreen .tn-profile-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;
+color:#5c4de3;background:#eeebff;font-weight:800}
+#appScreen .tn-top-search{display:flex;align-items:center;width:min(350px,32vw);margin-right:auto;margin-left:28px}
+#appScreen .tn-top-search input{width:100%!important;background:#f6f8fc!important;border-color:#ecf0f6!important}
+#appScreen .tn-page .tn-workspace-row{align-items:center}
+@media(max-width:1180px){#appScreen .metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#appScreen .tn-top-search{display:none}}
+@media(max-width:800px){
+#appScreen .tn-sidebar{transform:translateX(-110%)!important;width:min(280px,calc(100vw - 45px))!important;z-index:110!important}
+#appScreen .tn-sidebar.open{transform:translateX(0)!important}
+#appScreen .tn-sidebar-overlay.active{display:block!important;z-index:109!important}
+#appScreen header,#appScreen #tnMainContent,#appScreen.tn-collapsed header,#appScreen.tn-collapsed #tnMainContent{margin-left:0!important}
+#appScreen.tn-collapsed .tn-sidebar{width:min(280px,calc(100vw - 45px))!important}
+#appScreen.tn-collapsed .tn-sidebar-section,#appScreen.tn-collapsed .tn-nav-label{display:block!important}
+#appScreen.tn-collapsed .tn-nav-item{justify-content:flex-start!important}
+#appScreen .tn-sidebar-close{display:grid!important}
+#appScreen .tn-sidebar-brand strong{display:block!important}
+#appScreen .user-email{display:none}
+#appScreen .tn-sidebar-overlay{backdrop-filter:blur(2px)}
+}
+@media(max-width:600px){
+#appScreen .metrics-grid{grid-template-columns:1fr!important}
+#appScreen .tn-dashboard-actions{grid-template-columns:1fr!important}
+#appScreen #tnMainContent{padding:18px!important}
+#appScreen header{min-height:68px!important;padding:10px 15px!important}
+#appScreen .user-nav{gap:8px!important}
+#appScreen .tn-profile-chip{display:none}
+#appScreen .metric-card{min-height:140px!important;padding:19px!important}
+}
