@@ -196,7 +196,7 @@ def validate_transaction_fields(data, default_date=None):
 
     payment_method = str(data.get("payment_method", "Cash")).strip()
     notes = str(data.get("notes", "")).strip()
-    if payment_method not in ("Cash", "Bank Transfer", "Card", "Mobile Wallet", "Other") or len(notes) > 1000:
+    if payment_method not in ("Cash", "Bank Transfer", "Card", "Other") or len(notes) > 1000:
         return None, "Choose a valid payment method and limit notes to 1,000 characters."
     return {
         "kind": kind,

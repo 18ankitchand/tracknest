@@ -803,6 +803,8 @@ font-size:.83rem;cursor:pointer}
 #appScreen .tn-payment-verified{font-size:.7rem;font-weight:750;color:#159968;background:#dcf7e9;border-radius:8px;padding:6px 9px;display:inline-block;white-space:nowrap}
 #appScreen.tn-dark .tn-expense-empty-history{background:#182a41;border-color:#3a4e69}
 #appScreen.tn-dark .tn-expense-empty-history strong{color:#cfddf0}
+#appScreen .tn-payment-grouping-note{color:#a9bad0;font-size:.78rem;line-height:1.6;margin:-9px 0 18px}
+#appScreen .tn-expense-stat:first-child strong{color:#5ed8a0!important}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -958,7 +960,7 @@ font-size:.83rem;cursor:pointer}
                   <select id="incomeEntryCategory" required><option value="Salary">Salary</option><option value="Freelance">Freelance</option><option value="Business">Business</option><option value="Gift">Gift</option><option value="Other">Other income</option></select>
                 </div>
                 <div class="form-group"><label for="incomeEntryDate">Date</label><input type="date" id="incomeEntryDate" required></div>
-                <div class="form-group"><label for="incomeEntryPayment">Payment method</label><select id="incomeEntryPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select></div>
+                <div class="form-group"><label for="incomeEntryPayment">Payment method</label><select id="incomeEntryPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Other</option></select></div>
                 <div class="form-group"><label for="incomeEntryNotes">Notes</label><input id="incomeEntryNotes" maxlength="1000" placeholder="Optional notes"></div>
                 <div class="form-group"><label for="incomeEntryAmount">Amount (Nrs)</label><input id="incomeEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn">Save Income</button>
@@ -988,10 +990,11 @@ font-size:.83rem;cursor:pointer}
               <p class="dashboard-description">Pay an expense with eSewa and automatically add it to your history after confirmation.</p>
             </div>
             <div class="tn-expense-stats">
-              <div class="card tn-expense-stat"><span>eSewa payments recorded</span><strong id="tnEsewaPaidTotal">Nrs 0.00</strong><small>Verified payments only</small></div>
-              <div class="card tn-expense-stat"><span>Successful transactions</span><strong id="tnEsewaSuccessfulCount">0</strong><small>Confirmed eSewa payments</small></div>
-              <div class="card tn-expense-stat"><span>Payment method</span><strong class="tn-esewa-green">eSewa</strong><small>Payment provider checkout</small></div>
+              <div class="card tn-expense-stat"><span>Online Expenses</span><strong id="tnOnlinePaidTotal">Nrs 0.00</strong><small>eSewa, Card &amp; Bank Transfer</small></div>
+              <div class="card tn-expense-stat"><span>Cash &amp; Other Expenses</span><strong id="tnOfflinePaidTotal">Nrs 0.00</strong><small>Cash, Other and legacy wallet records</small></div>
+              <div class="card tn-expense-stat"><span>Recorded Transactions</span><strong id="tnExpensePaymentCount">0</strong><small id="tnPaymentBreakdown">0 online · 0 cash/other</small></div>
             </div>
+            <p class="tn-payment-grouping-note">Online includes eSewa, Card and Bank Transfer. Only eSewa payments are verified by the provider; card and bank expenses are user-recorded.</p>
             <div class="tn-expense-columns">
               <section class="card tn-workspace-card tn-expense-form-card">
                 <h2 class="card-title">Add Expense</h2>
@@ -1009,7 +1012,7 @@ font-size:.83rem;cursor:pointer}
                   <div class="form-group tn-expense-method-group">
                     <label for="expenseEntryPayment">Payment Method</label>
                     <div class="tn-esewa-choice"><span class="tn-payment-radio" aria-hidden="true"></span><span class="tn-esewa-brand">eSewa</span><span class="tn-payment-choice-trailing">Online payment</span></div>
-                    <select id="expenseEntryPayment" aria-label="Choose payment method" onchange="updateExpenseMethodStyle()"><option value="eSewa Demo">eSewa</option><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select>
+                    <select id="expenseEntryPayment" aria-label="Choose payment method" onchange="updateExpenseMethodStyle()"><option value="eSewa Demo">eSewa</option><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Other</option></select>
                   </div>
                   <button type="submit" class="primary-btn tn-expense-pay-submit" id="tnExpenseSubmitButton">Continue to eSewa →</button>
                   <p class="tn-expense-test-notice"><strong>Test environment:</strong> No real money is transferred. An eSewa expense is saved only after the payment provider confirms success. Other methods record an already-paid expense.</p>
@@ -1071,7 +1074,7 @@ font-size:.83rem;cursor:pointer}
                         <label>Amount (Nrs)</label>
                         <input type="number" id="txAmount" step="0.01" placeholder="5000.00" required>
                     </div>
-                    <div class="form-group"><label for="txDate">Transaction date</label><input type="date" id="txDate" required></div><div class="form-group"><label for="txPayment">Payment method</label><select id="txPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select></div>
+                    <div class="form-group"><label for="txDate">Transaction date</label><input type="date" id="txDate" required></div><div class="form-group"><label for="txPayment">Payment method</label><select id="txPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Other</option></select></div>
                     <div class="form-group"><label for="txNotes">Notes</label><input id="txNotes" maxlength="1000" placeholder="Optional notes"></div>
                     <div class="transaction-form-actions"><button type="submit" class="primary-btn" id="addTxBtn">Add Transaction</button>
                     <button type="button" class="cancel-edit-btn" id="cancelTxEdit" onclick="cancelTransactionEdit()" style="display:none">Cancel</button></div>
@@ -1618,10 +1621,14 @@ font-size:.83rem;cursor:pointer}
             const response = await fetch('/api/payments/esewa/summary/', {credentials:'same-origin'});
             if (!response.ok) throw new Error('Could not load payment totals.');
             const info = await response.json();
-            document.getElementById('tnEsewaPaidTotal').textContent =
-                'Nrs ' + Number(info.paid_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-            document.getElementById('tnEsewaSuccessfulCount').textContent =
-                Number(info.successful_count || 0).toLocaleString('en-US');
+            document.getElementById('tnOnlinePaidTotal').textContent =
+                'Nrs ' + Number(info.online_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+            document.getElementById('tnOfflinePaidTotal').textContent =
+                'Nrs ' + Number(info.offline_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+            document.getElementById('tnExpensePaymentCount').textContent =
+                Number((info.online_count || 0) + (info.offline_count || 0)).toLocaleString('en-US');
+            document.getElementById('tnPaymentBreakdown').textContent =
+                (info.online_count || 0) + ' online · ' + (info.offline_count || 0) + ' cash/other';
         }
         function updateExpenseMethodStyle() {
             const method = document.getElementById('expenseEntryPayment').value;
