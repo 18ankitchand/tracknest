@@ -88,6 +88,19 @@ class EsewaSandboxTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "eSewa Demo")
 
+    def test_expenses_page_starts_esewa_from_save_without_separate_payment_panel(self):
+        self.configure_budget("100")
+        response = self.client.get("/expenses/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<select id="expenseEntryPayment"><option value="eSewa Demo">', html=False)
+        self.assertContains(response, 'id="tnExpenseSubmitButton"')
+        self.assertContains(response, 'Save Expense')
+        self.assertContains(response, 'id="tnEsewaReviewDialog"')
+        self.assertContains(response, 'Continue to Payment')
+        self.assertNotContains(response, 'class="tn-esewa-box"')
+        self.assertNotContains(response, 'id="tnEsewaPayments"')
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
+
     def test_continue_checkout_forwards_to_real_demo_gateway_without_saving_expense(self):
         self.configure_budget("100")
         response = self.start("35.00")
