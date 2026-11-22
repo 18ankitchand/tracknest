@@ -15,7 +15,8 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
-from .models import Profile, MonthlyBudget, ExpenseTransaction
+from .models import Profile, MonthlyBudget, ExpenseTransaction, CategoryBudget
+from .premium_api import evaluate_budget_alerts, category_spending
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +96,7 @@ def get_budget(user, month):
     return MonthlyBudget.objects.get_or_create(user=user, month=month)[0]
 
 def serialize_tx(tx):
-    return {"id": tx.pk, "date": tx.date.isoformat(), "desc": tx.description, "type": tx.kind, "category": tx.category, "amount": float(tx.amount)}
+    return {"id": tx.pk, "date": tx.date.isoformat(), "desc": tx.description, "type": tx.kind, "category": tx.category, "amount": float(tx.amount), "payment_method": tx.payment_method, "notes": tx.notes}
 
 def send_limit_email(email, limit, month):
     send_mail(
@@ -133,6 +134,7 @@ def set_budget(request):
         budget = get_budget(request.user, month)
         budget.limit = value
         budget.save(update_fields=["limit"])
+        evaluate_budget_alerts(request.user, month)
     return JsonResponse({"limit": float(value), "spent": float(monthly_spent(request.user, month))})
 
 
@@ -167,12 +169,18 @@ def validate_transaction_fields(data, default_date=None):
     if tx_date > timezone.localdate() or tx_date < date(2000, 1, 1):
         return None, "Choose a transaction date between 2000-01-01 and today."
 
+    payment_method = str(data.get("payment_method", "Cash")).strip()
+    notes = str(data.get("notes", "")).strip()
+    if payment_method not in ("Cash", "Bank Transfer", "Card", "Mobile Wallet", "Other") or len(notes) > 1000:
+        return None, "Choose a valid payment method and limit notes to 1,000 characters."
     return {
         "kind": kind,
         "description": description,
         "category": category,
         "amount": amount,
         "date": tx_date,
+        "payment_method": payment_method,
+        "notes": notes,
     }, None
 
 
@@ -219,7 +227,18 @@ def add_financial_transaction(request):
                 {"error": f"Expense rejected. Remaining budget for {month:%B %Y}: Nrs {max(Decimal('0'), budget.limit - spent)}. No expense was recorded."},
                 status=409,
             )
+        if fields["kind"] == "expense":
+            category_budget = CategoryBudget.objects.select_for_update().filter(
+                user=request.user, month=month, category__name__iexact=fields["category"]
+            ).first()
+            if category_budget:
+                recorded_category = category_spending(request.user, category_budget.category, month)
+                if recorded_category + fields["amount"] > category_budget.limit:
+                    return JsonResponse({"error":
+                        f"Expense rejected: {fields['category']} budget has only Nrs {max(Decimal('0'), category_budget.limit - recorded_category)} remaining."},
+                        status=409)
         tx = ExpenseTransaction.objects.create(user=request.user, **fields)
+        evaluate_budget_alerts(request.user, month)
         alert_queued = (
             fields["kind"] == "expense"
             and spent < budget.limit <= spent + fields["amount"]
@@ -276,9 +295,24 @@ def edit_financial_transaction(request, transaction_id):
                 status=409,
             )
 
+        if new_contribution:
+            category_budget = CategoryBudget.objects.select_for_update().filter(
+                user=request.user, month=new_month, category__name__iexact=fields["category"]
+            ).first()
+            if category_budget:
+                current_category = category_spending(request.user, category_budget.category, new_month)
+                previous_category = (old_contribution if old_month == new_month and
+                    existing.category.casefold() == fields["category"].casefold() else Decimal("0"))
+                new_category_total = current_category - previous_category + new_contribution
+                if new_category_total > category_budget.limit and new_category_total > current_category:
+                    return JsonResponse({"error": "Edit rejected: category spending limit exceeded."}, status=409)
+
         for attr, value in fields.items():
             setattr(existing, attr, value)
         existing.save(update_fields=list(fields))
+        evaluate_budget_alerts(request.user, old_month)
+        if new_month != old_month:
+            evaluate_budget_alerts(request.user, new_month)
 
         if revised_old < budgets[old_month].limit and budgets[old_month].limit_alert_sent:
             budgets[old_month].limit_alert_sent = False
@@ -315,6 +349,7 @@ def delete_financial_transaction(request, transaction_id):
         old_spent = monthly_spent(request.user, month_start(existing.date))
         after_spent = old_spent - (existing.amount if existing.kind == "expense" else Decimal("0"))
         existing.delete()
+        evaluate_budget_alerts(request.user, month_start(existing.date))
         if after_spent < budget.limit and budget.limit_alert_sent:
             budget.limit_alert_sent = False
             budget.save(update_fields=["limit_alert_sent"])
