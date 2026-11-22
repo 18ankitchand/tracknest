@@ -393,3 +393,61 @@ def evaluate_budget_alerts(user, month):
         elif level < item.notified_level:
             item.notified_level = level
             item.save(update_fields=["notified_level"])
+
+
+@require_GET
+def export_pdf(request):
+    """Download a readable owner-only PDF report for the selected date range."""
+    problem = forbidden(request)
+    if problem: return problem
+    qs, error = user_transactions(request)
+    if error: return error
+    from io import BytesIO
+    from xml.sax.saxutils import escape
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=16*mm,
+                            rightMargin=16*mm, topMargin=18*mm, bottomMargin=18*mm)
+    styles = getSampleStyleSheet()
+    rows = [[Paragraph(t, styles["Normal"]) for t in ("Date", "Transaction", "Type", "Category", "Amount (NPR)")]]
+    totals = {"income": Decimal("0"), "expense": Decimal("0")}
+    for tx in qs.order_by("-date", "-id").iterator():
+        totals[tx.kind] += tx.amount
+        rows.append([
+            tx.date.isoformat(),
+            Paragraph(escape(tx.description[:65]), styles["Normal"]),
+            tx.kind.title(),
+            Paragraph(escape(tx.category[:35]), styles["Normal"]),
+            f"{tx.amount:,.2f}",
+        ])
+    story = [
+        Paragraph("TrackNest — Financial Report", styles["Title"]),
+        Paragraph(f"Generated: {timezone.localdate():%B %d, %Y}", styles["Normal"]),
+        Spacer(1, 6*mm),
+        Paragraph(f"Income: NPR {totals['income']:,.2f} | Expenses: NPR {totals['expense']:,.2f} | Balance: NPR {totals['income']-totals['expense']:,.2f}", styles["Normal"]),
+        Spacer(1, 5*mm),
+    ]
+    if len(rows) == 1:
+        story.append(Paragraph("No transactions in this date range.", styles["Normal"]))
+    else:
+        table = Table(rows, colWidths=[28*mm, 68*mm, 21*mm, 35*mm, 27*mm], repeatRows=1, hAlign="LEFT")
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#EDEBFF")),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.HexColor("#302965")),
+            ("VALIGN", (0,0), (-1,-1), "TOP"),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 7),
+            ("TOPPADDING", (0,0), (-1,-1), 7),
+            ("LINEBELOW", (0,0), (-1,0), .7, colors.HexColor("#BFC8D8")),
+            ("LINEBELOW", (0,1), (-1,-1), .25, colors.HexColor("#E3E7EF")),
+            ("FONTSIZE", (0,0), (-1,-1), 8),
+        ]))
+        story.append(table)
+    doc.build(story)
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="tracknest-financial-report.pdf"'
+    return response
