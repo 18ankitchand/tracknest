@@ -179,3 +179,112 @@ def add_financial_transaction(request):
             transaction.on_commit(notify_after_commit)
             alert_queued = True
     return JsonResponse({"transaction": serialize_tx(tx), "alert_queued": alert_queued}, status=201)
+
+
+@require_POST
+def edit_financial_transaction(request, transaction_id):
+    """Edit an existing transaction owned by the signed-in user.
+
+    The original transaction date is kept unchanged. Expenses are checked
+    against the budget for that transaction's month before the edit is saved.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Sign in required."}, status=401)
+
+    data = payload(request)
+    kind = data.get("type")
+    description = str(data.get("desc", "")).strip()
+    category = str(data.get("category", "")).strip()
+    try:
+        amount = Decimal(str(data.get("amount", "")))
+        if (
+            not amount.is_finite() or amount <= 0
+            or amount.as_tuple().exponent < -2
+            or amount > Decimal("9999999999.99")
+        ):
+            raise ValueError()
+    except (InvalidOperation, ValueError):
+        return JsonResponse(
+            {"error": "Enter a valid positive amount (two decimal places maximum)."},
+            status=400,
+        )
+
+    if (
+        kind not in ("income", "expense") or not description
+        or len(description) > 200 or not category or len(category) > 60
+    ):
+        return JsonResponse(
+            {"error": "Enter a valid transaction type, description, and category."},
+            status=400,
+        )
+
+    with transaction.atomic():
+        existing = (
+            ExpenseTransaction.objects.select_for_update()
+            .filter(pk=transaction_id, user=request.user)
+            .first()
+        )
+        if existing is None:
+            return JsonResponse({"error": "Transaction not found."}, status=404)
+
+        month = month_start(existing.date)
+        budget = get_budget(request.user, month)
+        budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)
+
+        # Calculate the edited total, excluding the old value of this record.
+        month_expenses = monthly_spent(request.user, month)
+        old_expense = existing.amount if existing.kind == "expense" else Decimal("0")
+        new_expense = amount if kind == "expense" else Decimal("0")
+        revised_total = month_expenses - old_expense + new_expense
+        if revised_total > budget.limit:
+            return JsonResponse(
+                {
+                    "error": (
+                        "Edit rejected. This change would exceed the monthly budget. "
+                        f"Available for this transaction: Nrs {budget.limit - (month_expenses - old_expense)}."
+                    )
+                },
+                status=409,
+            )
+
+        existing.description = description
+        existing.kind = kind
+        existing.category = category
+        existing.amount = amount
+        existing.save(update_fields=["description", "kind", "category", "amount"])
+
+        # A corrected expense below the limit should allow a later alert
+        # when the current month reaches the limit again.
+        if revised_total < budget.limit and budget.limit_alert_sent:
+            budget.limit_alert_sent = False
+            budget.save(update_fields=["limit_alert_sent"])
+
+        # Only send a new limit notification for an edit in the current month.
+        current_month = month_start(timezone.localdate())
+        alert_queued = False
+        if (
+            month == current_month and kind == "expense"
+            and month_expenses < budget.limit <= revised_total
+            and not budget.limit_alert_sent
+            and settings.EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend"
+        ):
+            budget.limit_alert_sent = True
+            budget.save(update_fields=["limit_alert_sent"])
+            email = request.user.email
+            limit = budget.limit
+            budget_id = budget.pk
+
+            def notify_after_edit():
+                try:
+                    send_limit_email(email, limit, month)
+                except Exception:
+                    logger.exception("TrackNest budget email delivery failed for budget %s", budget_id)
+                    MonthlyBudget.objects.filter(pk=budget_id).update(limit_alert_sent=False)
+
+            transaction.on_commit(notify_after_edit)
+            alert_queued = True
+
+    return JsonResponse(
+        {"transaction": serialize_tx(existing), "alert_queued": alert_queued},
+        status=200,
+    )
