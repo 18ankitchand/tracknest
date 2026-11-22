@@ -12,6 +12,7 @@ class MonthlyBudget(models.Model):
     month = models.DateField()  # First day of month
     limit = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("50000.00"), validators=[MinValueValidator(Decimal("0.01"))])
     limit_alert_sent = models.BooleanField(default=False)
+    notified_level = models.PositiveSmallIntegerField(default=0)
     class Meta:
         constraints = [models.UniqueConstraint(fields=["user", "month"], name="unique_user_budget_month")]
 
