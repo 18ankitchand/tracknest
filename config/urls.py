@@ -30,6 +30,9 @@ urlpatterns = [
     path("api/preferences/", premium_api.preference_detail),
     path("api/preferences/change/", premium_api.preference_change),
     path("api/profile/change/", premium_api.profile_change),
+    path("api/profile/password/", premium_api.change_password),
+    path("api/profile/request-email/", premium_api.request_email_change),
+    path("api/profile/confirm-email/", premium_api.confirm_email_change, name="tracknest_confirm_email_change"),
 
     path("api/finance/budget/", views.set_budget),
     path("api/finance/transactions/", views.add_financial_transaction),
