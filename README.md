@@ -58,3 +58,59 @@ These tests verify administrator access, global sums, per-user totals, user data
 
 ### Preview
 `tracknest_auth_design_preview.html` is an optional static browser preview of the redesigned sign-in/sign-up screen. It has no running database or working login by itself. Use the Django server URL to exercise actual authentication.
+
+---
+
+## Premium TrackNest dashboard (November 2026)
+
+The existing **Sign In** and **Create Account** pages were preserved. Only the signed-in application was redesigned to use a light finance dashboard, fixed navy navigation, four real-data summary cards, Chart.js visualizations and responsive workspace pages.
+
+### Dedicated workspaces
+
+- **Dashboard:** all-time balance, monthly income, expenses and net savings; monthly charts and latest transactions
+- **Income / Expenses:** add transactions with date, category, payment method and notes; filter history and edit/delete saved records
+- **Transactions:** date range, category, type and description filters; sorting, client-side pagination, edit, view details, delete and CSV export
+- **Budgets:** monthly budget plus individual expense-category budgets with progress, creation, editing and deletion
+- **Categories:** manage private income and expense categories; historical labels follow a category rename
+- **Reports & Analytics:** database-aggregated bar, line and doughnut charts, date filtering, CSV and PDF exports
+- **Savings Goals:** create/edit/delete targets and record goal allocations (not cash transfers)
+- **Notifications:** persisted 80%, 90%, 100% budget milestones and read/unread controls
+- **Settings:** light/dark mode and budget-email preference; currency remains NPR because automatic currency conversion is not implemented
+- **My Profile:** update name/phone, change password, request verified email changes
+
+The forecast chart and rule-based financial advisor remain demonstrations and are labelled accordingly. The app cannot stop payments performed outside TrackNest.
+
+### Required database migration
+
+The additive migration `accounts/migrations/0002_premium_finance.py` creates category, category-budget, goal, notification and preference tables, and adds optional transaction notes/payment method fields. It does **not** delete or replace existing users, expenses or budgets.
+
+Run within the existing environment:
+
+```bash
+python manage.py migrate --noinput
+python manage.py check
+python manage.py test accounts --verbosity 2
+```
+
+The existing Mac GitHub auto-sync launcher applies migrations when it restarts. Back up `local-data/db.sqlite3` before major changes.
+
+### Development launch
+
+You can use your existing `TrackNest_Auto_Localhost_Mac/START_TRACKNEST.command` launcher. The repository also includes `START_TRACKNEST.command` for launching a local checkout of the source. A standalone GitHub download may need macOS execute permission.
+
+The web app opens at `http://127.0.0.1:8000/`. Leave the Django server running.
+
+### SMTP configuration
+
+Configure Django SMTP environment variables (see `.env.example`), or the existing private macOS file `~/.tracknest/email.json`, before expecting budget alerts in users' inboxes. No credentials belong in GitHub.
+
+Alert notifications are saved to the app database even when SMTP isn't configured. Current signup addresses are **not verified**, so enable email verification before opening public registration. Real delivery also needs a provider with suitable rate limits and retry management.
+
+### Important implementation limits
+
+- The dashboard and Reports totals are aggregated from the user's database records, but the transaction browser currently loads up to 500 recent records; full server-side pagination is a future scalability improvement.
+- Budget enforcement and category limits are protected by Django validation. SQLite does not provide the same concurrency guarantees as PostgreSQL row locking for simultaneous requests.
+- Goal contributions are recorded as allocations toward a goal, not external transfers or additional expense transactions.
+- Currency conversion is not implemented; all financial values are NPR.
+- Charts use recorded financial data; the original linear-multiplier forecast is not a trained or validated prediction model.
+- GitHub Actions verifies migrations and Django tests. Manual desktop and mobile browser tests are still necessary.
