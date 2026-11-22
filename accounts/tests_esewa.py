@@ -69,6 +69,13 @@ class EsewaSandboxTests(TestCase):
         self.assertEqual(expense.status_code, 409)
         self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
 
+    def test_pending_checkout_prevents_lowering_budget_below_reserved_amount(self):
+        self.configure_budget("100")
+        self.start("80")
+        response = self.post("/api/finance/budget/", {"limit": "50"})
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(MonthlyBudget.objects.get(user=self.user, month=self.month).limit, Decimal("100.00"))
+
     def test_unverified_checkout_does_not_create_expense(self):
         self.configure_budget()
         result = self.start("50")
