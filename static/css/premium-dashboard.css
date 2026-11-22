@@ -153,3 +153,25 @@ color:#5c4de3;background:#eeebff;font-weight:800}
 #appScreen .tn-profile-chip{display:none}
 #appScreen .metric-card{min-height:140px!important;padding:19px!important}
 }
+
+/* Persisted dark-mode preference: scoped overrides, auth untouched. */
+#appScreen.tn-dark{--tn-bg:#0f172a;--tn-card:#1b2b42;--tn-ink:#ecf2fb;--tn-muted:#a7b7ca;--tn-line:#33455e;background:#0f172a!important;color:#eef4ff!important}
+#appScreen.tn-dark header,#appScreen.tn-dark .card,#appScreen.tn-dark .metric-card,
+#appScreen.tn-dark .tn-action-card,#appScreen.tn-dark .tn-premium-tile,
+#appScreen.tn-dark .budget-limit-banner{background:#1a2a40!important;color:#eef4ff!important;border-color:#35465f!important}
+#appScreen.tn-dark .card-title,#appScreen.tn-dark .metric-value,#appScreen.tn-dark .dashboard-heading,
+#appScreen.tn-dark .tn-premium-list-item strong,#appScreen.tn-dark .brand-title,
+#appScreen.tn-dark .user-name,#appScreen.tn-dark .tn-premium-tile h3{color:#eef4ff!important}
+#appScreen.tn-dark .dashboard-description,#appScreen.tn-dark .card-description,
+#appScreen.tn-dark .metric-sub,#appScreen.tn-dark .metric-label,
+#appScreen.tn-dark .tn-premium-list-item small{color:#adc0d4!important}
+#appScreen.tn-dark input,#appScreen.tn-dark select,#appScreen.tn-dark textarea{
+ background:#101d30!important;color:#eaf0fa!important;border-color:#425570!important}
+#appScreen.tn-dark .tn-premium-list-item,#appScreen.tn-dark .tn-recent-item{border-color:#34465f!important}
+#appScreen.tn-dark .transactions-table th{background:#21334c!important;color:#b7c8db!important;border-color:#3a4d65!important}
+#appScreen.tn-dark .transactions-table td{color:#e8eef8!important;border-color:#35465f!important}
+#appScreen.tn-dark .tn-report-summary span{background:#243951!important;color:#b8c7d9!important}
+#appScreen.tn-dark .tn-report-summary strong{color:white!important}
+#appScreen.tn-dark .tn-record-filter{background:#273a53!important;border-color:#3b526e!important}
+#appScreen.tn-dark .tn-premium-progress{background:#34465f!important}
+#appScreen.tn-dark .tn-premium-list-item{background:#1b2b42!important}
