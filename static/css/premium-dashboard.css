@@ -175,3 +175,41 @@ color:#5c4de3;background:#eeebff;font-weight:800}
 #appScreen.tn-dark .tn-record-filter{background:#273a53!important;border-color:#3b526e!important}
 #appScreen.tn-dark .tn-premium-progress{background:#34465f!important}
 #appScreen.tn-dark .tn-premium-list-item{background:#1b2b42!important}
+
+
+/* Screenshot-inspired Expenses workspace: dark navy split view while preserving all other pages. */
+#appScreen:has(#tnPage-expense:not([hidden])) #tnMainContent{background:#0d111c!important}
+#appScreen #tnPage-expense{color:#e8eefb!important;--tn-bg:#0d111c;--tn-card:#19253b}
+#appScreen #tnPage-expense .dashboard-heading{color:#f2f5fb!important}
+#appScreen #tnPage-expense .dashboard-description{color:#9eafc6!important}
+#appScreen #tnPage-expense .section-label{color:#8a83ff!important}
+#appScreen #tnPage-expense .card{background:#19253b!important;color:#edf2fd!important;border:1px solid #2c3d57!important;border-radius:19px!important;box-shadow:0 8px 22px #02040a13!important}
+#appScreen #tnPage-expense .card-title{color:#edf2fd!important}
+#appScreen #tnPage-expense .card-description{color:#a5b4cb!important}
+#appScreen #tnPage-expense .tn-expense-stat strong{color:#f1f4ff!important}
+#appScreen #tnPage-expense .tn-expense-stat small,#appScreen #tnPage-expense .tn-expense-stat span{color:#9babbe!important}
+#appScreen #tnPage-expense .tn-expense-vertical-form label{color:#cbd8e9!important}
+#appScreen #tnPage-expense .tn-expense-vertical-form input,
+#appScreen #tnPage-expense .tn-expense-vertical-form select,
+#appScreen #tnPage-expense .tn-expense-vertical-form textarea,
+#appScreen #tnPage-expense .tn-expense-history-filters input,
+#appScreen #tnPage-expense .tn-expense-history-filters select{background:#0e1a2d!important;border:1px solid #374c6a!important;color:#eff4fa!important;box-shadow:none!important}
+#appScreen #tnPage-expense .tn-expense-vertical-form input::placeholder,
+#appScreen #tnPage-expense .tn-expense-vertical-form textarea::placeholder,
+#appScreen #tnPage-expense .tn-expense-history-filters input::placeholder{color:#8395ae!important}
+#appScreen #tnPage-expense .tn-esewa-choice{background:#0f372a!important;border-color:#18c97e!important}
+#appScreen #tnPage-expense .tn-esewa-choice .tn-esewa-brand{color:#50e68e!important}
+#appScreen #tnPage-expense .tn-esewa-choice .tn-payment-choice-trailing{color:#b6e9cb!important}
+#appScreen #tnPage-expense .tn-payment-radio{box-shadow:inset 0 0 0 4px #0f372a!important}
+#appScreen #tnPage-expense .tn-esewa-choice.tn-is-manual{background:#172945!important;border-color:#57718e!important}
+#appScreen #tnPage-expense .tn-esewa-choice.tn-is-manual .tn-esewa-brand{color:#d2dcef!important}
+#appScreen #tnPage-expense .tn-expense-test-notice{background:#102940!important;border-color:#2b5875!important;color:#aec5dc!important}
+#appScreen #tnPage-expense .tn-page-total{color:#deebfa!important}
+#appScreen #tnPage-expense .transactions-table{background:transparent!important}
+#appScreen #tnPage-expense .transactions-table th{background:#20334e!important;color:#aabbd1!important;border-color:#344761!important}
+#appScreen #tnPage-expense .transactions-table td{background:transparent!important;color:#edf3ff!important;border-color:#344761!important}
+#appScreen #tnPage-expense .tn-expense-empty-history{background:#19253b!important;border-color:#394d69!important}
+#appScreen #tnPage-expense .tn-expense-empty-history strong{color:#c8d6ee!important}
+#appScreen #tnPage-expense .tn-expense-empty-history small{color:#96a8c2!important}
+#appScreen #tnPage-expense .tn-expense-pay-submit{background:#2d65ec!important;color:#fff!important}
+#appScreen #tnPage-expense .tn-expense-pay-submit:hover{background:#2459d6!important}
