@@ -28,6 +28,7 @@ async function loadPremiumModules(){
 }
 async function loadPremiumSection(section){
   try {
+    if(section==='income'||section==='expense') await loadPremiumIncomeExpenseChart(section);
     if(section==='categories') await loadPremiumCategories();
     else if(section==='budget') {await loadPremiumCategories();await loadPremiumBudgets();}
     else if(section==='goals') await loadPremiumGoals();
@@ -235,6 +236,23 @@ function moneyChartOptions(){
   return {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true}}},
     scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#e7eaf2'}}}};
 }
+async function loadPremiumIncomeExpenseChart(kind){
+  const data=await premiumGet('/api/finance/analytics/');
+  const canvasId=kind+'PageChart';
+  destroyPremiumChart(canvasId);
+  premiumCharts[canvasId]=new Chart($tn(canvasId),{
+    type:'line',
+    data:{labels:data.monthly.map(x=>x.month),datasets:[{
+      label:kind==='income'?'Income (NPR)':'Expenses (NPR)',
+      data:data.monthly.map(x=>Number(x[kind])),
+      borderColor:kind==='income'?'#18aa78':'#ed5968',
+      backgroundColor:kind==='income'?'rgba(24,170,120,.12)':'rgba(237,89,104,.12)',
+      fill:true,tension:.24,pointRadius:3
+    }]},
+    options:moneyChartOptions()
+  });
+}
+
 async function loadPremiumAnalytics(){
   const from=$tn('tnReportFrom').value,to=$tn('tnReportTo').value;
   const query=new URLSearchParams();
@@ -282,9 +300,10 @@ function updatePremiumOverviewCharts(data){
     tnOverviewChart.update();
   }
   if(tnCategoryChart){
-    const month=trackNestToday().slice(0,7);
-    // Monthly category breakdown is already built from the saved transaction list;
-    // refresh it from server-wide totals only when explicitly filtered by month.
+    const categories=data.current_month_categories || [];
+    tnCategoryChart.data.labels=categories.length?categories.map(x=>x.name):['No expenses yet'];
+    tnCategoryChart.data.datasets[0].data=categories.length?categories.map(x=>x.amount):[1];
+    tnCategoryChart.data.datasets[0].backgroundColor=categories.length?['#6557e9','#38a3f5','#12af90','#f4ab48','#f16c82','#9b7af4','#75b8d9']:['#e6eaf2'];
     tnCategoryChart.update();
   }
 }
