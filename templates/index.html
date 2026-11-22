@@ -650,6 +650,10 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
 .tn-details-dialog>.primary-btn{margin-top:22px}
 @media(max-width:1200px){#appScreen .tn-search-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:620px){#appScreen .tn-search-toolbar{grid-template-columns:1fr!important}}
+#appScreen .tn-income-filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin:18px 0}
+#appScreen .tn-income-filters input,#appScreen .tn-income-filters select{min-width:0;width:100%}
+@media(max-width:800px){#appScreen .tn-income-filters{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){#appScreen .tn-income-filters{grid-template-columns:1fr}}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -814,6 +818,12 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             <section class="card tn-workspace-card">
               <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Income history</h3></div>
                 <strong class="tn-page-total" id="incomePageTotal">Nrs 0.00</strong></div>
+              <div class="tn-income-filters">
+                <input id="incomeFilterSearch" type="search" placeholder="Search income…" aria-label="Search income" oninput="renderTrackNestPageTables()">
+                <select id="incomeFilterCategory" aria-label="Filter income category" onchange="renderTrackNestPageTables()"><option value="">All categories</option></select>
+                <input id="incomeFilterFrom" type="date" aria-label="Start date" onchange="renderTrackNestPageTables()">
+                <input id="incomeFilterTo" type="date" aria-label="End date" onchange="renderTrackNestPageTables()">
+              </div>
               <div class="table-scroll"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="incomePageRows"></tbody></table></div>
             </section>
             <section class="card">
@@ -842,6 +852,12 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             <section class="card tn-workspace-card">
               <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Expense history</h3></div>
                 <strong class="tn-page-total" id="expensePageTotal">Nrs 0.00</strong></div>
+              <div class="tn-income-filters">
+                <input id="expenseFilterSearch" type="search" placeholder="Search expense…" aria-label="Search expense" oninput="renderTrackNestPageTables()">
+                <select id="expenseFilterCategory" aria-label="Filter expense category" onchange="renderTrackNestPageTables()"><option value="">All categories</option></select>
+                <input id="expenseFilterFrom" type="date" aria-label="Start date" onchange="renderTrackNestPageTables()">
+                <input id="expenseFilterTo" type="date" aria-label="End date" onchange="renderTrackNestPageTables()">
+              </div>
               <div class="table-scroll"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expensePageRows"></tbody></table></div>
             </section>
             <section class="card">
@@ -1427,8 +1443,15 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             const money = n => 'Nrs ' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
             const total = kind => transactions.filter(t=>t.type===kind).reduce((sum,t)=>sum+Number(t.amount),0);
             for (const kind of ['income','expense']) {
-                const records = transactions.filter(t=>t.type===kind);
-                document.getElementById(kind+'PageTotal').textContent = money(total(kind));
+                const search = document.getElementById(kind+'FilterSearch').value.trim().toLowerCase();
+                const category = document.getElementById(kind+'FilterCategory').value;
+                const start = document.getElementById(kind+'FilterFrom').value;
+                const end = document.getElementById(kind+'FilterTo').value;
+                const records = transactions.filter(t=>t.type===kind &&
+                    (!search || (t.desc+' '+t.category).toLowerCase().includes(search)) &&
+                    (!category || t.category===category) &&
+                    (!start || t.date>=start) && (!end || t.date<=end));
+                document.getElementById(kind+'PageTotal').textContent = money(records.reduce((sum,t)=>sum+Number(t.amount),0));
                 document.getElementById(kind+'PageRows').innerHTML = records.length ? records.map(t => `
                     <tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.category)}</td>
                     <td class="tn-table-amount ${kind}">${kind==='income'?'+':'−'}${money(Number(t.amount))}</td>
