@@ -35,6 +35,7 @@ async function loadPremiumSection(section){
     else if(section==='goals') await loadPremiumGoals();
     else if(section==='notifications') await loadPremiumNotifications();
     else if(section==='reports') await loadPremiumAnalytics();
+  else if(section==='forecast') await loadExpenseForecast();
     else if(section==='settings') await loadPremiumSettings();
     else if(section==='profile') populatePremiumProfile();
   } catch(error) {premiumError(error);}
@@ -446,3 +447,37 @@ function renderSpendingCategories(categories) {
   list.appendChild(fragment);
 }
 
+
+/* Real historical expense forecasting — no fixed multiplier or fabricated series. */
+async function loadExpenseForecast() {
+  const data=await premiumGet('/api/finance/forecast/');
+  const format=premiumMoney;
+  $tn('tnForecastCurrentActual').textContent=format(data.current_month_spent);
+  $tn('tnForecastCurrentLabel').textContent=data.current_month_label;
+  $tn('tnForecastNextLabel').textContent=data.next_month_label;
+  const ready=data.status==='ready';
+  $tn('tnForecastCurrentPrediction').textContent=ready?format(data.forecast_current):'Not enough data';
+  $tn('tnForecastNextPrediction').textContent=ready?format(data.forecast_next):'Not enough data';
+  $tn('tnForecastMAE').textContent=data.mae===null?'Not available':format(data.mae);
+  $tn('tnForecastExplanation').textContent=ready
+    ? 'Based on '+data.training_months+' completed months ('+data.active_training_months+
+      ' months with spending). '+(data.backtest_count
+      ? 'Historical mean absolute error: '+format(data.mae)+' over '+data.backtest_count+' backtests. '
+      : 'Not enough historical months for backtest validation. ')+data.method_note
+    : data.reason+' Your current recorded spending is shown, but TrackNest will not invent predictions.';
+  if(typeof forecastChart==='undefined') return;
+  const completed=data.history || [];
+  const labels=completed.map(row=>row.label).concat([data.current_month_label,data.next_month_label]);
+  const actual=completed.map(row=>Number(row.amount)).concat([Number(data.current_month_spent),null]);
+  const predicted=Array(labels.length).fill(null);
+  if(ready){
+    // Attach the forecast to the last actual month to make the trend easy to follow.
+    if(completed.length) predicted[completed.length-1]=Number(completed[completed.length-1].amount);
+    predicted[completed.length]=Number(data.forecast_current);
+    predicted[completed.length+1]=Number(data.forecast_next);
+  }
+  forecastChart.data.labels=labels;
+  forecastChart.data.datasets[0].data=actual;
+  forecastChart.data.datasets[1].data=predicted;
+  forecastChart.update();
+}

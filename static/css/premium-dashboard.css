@@ -247,3 +247,13 @@ color:#5c4de3;background:#eeebff;font-weight:800}
 #appScreen .tn-spending-insight-note{margin-top:17px;border-radius:10px;border:1px solid #334f73;background:#152b48;color:#c4d5ec;font-size:.78rem;padding:13px 16px;line-height:1.65}
 @media(max-width:1160px){#appScreen .tn-insights-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#appScreen .tn-spending-visual-grid{grid-template-columns:1fr}}
 @media(max-width:620px){#appScreen #tnPage-expense .tn-spending-insights{padding:16px!important}#appScreen .tn-insights-metrics{grid-template-columns:1fr 1fr;gap:9px}#appScreen .tn-insight-metric{padding:12px}#appScreen .tn-insight-metric strong{font-size:1.03rem}#appScreen .tn-spending-trend-panel,#appScreen .tn-spending-category-panel{padding:14px}#appScreen .tn-spending-chart-area{height:240px}#appScreen .tn-spending-periods{width:100%;justify-content:space-between}}
+
+/* Forecast dashboard: distinct from descriptive spending overview. */
+#appScreen .tn-forecast-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0 24px}
+#appScreen .tn-forecast-tile{display:flex;flex-direction:column;gap:11px;padding:23px;min-width:0}
+#appScreen .tn-forecast-tile span{font-size:.76rem;font-weight:650;color:#94a8c4}
+#appScreen .tn-forecast-tile strong{font-size:clamp(1rem,1.5vw,1.5rem);color:#e7efff;font-weight:800;overflow-wrap:anywhere}
+#appScreen .tn-forecast-tile small{font-size:.73rem;line-height:1.5;color:#96acc8}
+#appScreen #tnPage-forecast .tn-disclaimer{line-height:1.7;padding:13px 18px}
+@media(max-width:1180px){#appScreen .tn-forecast-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){#appScreen .tn-forecast-summary{grid-template-columns:minmax(0,1fr)}}
