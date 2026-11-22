@@ -992,8 +992,8 @@ font-size:.83rem;cursor:pointer}
               <p class="dashboard-description">Pay an expense with eSewa and automatically add it to your history after confirmation.</p>
             </div>
             <div class="tn-expense-stats">
-              <div class="card tn-expense-stat"><span>Online Expenses</span><strong id="tnOnlinePaidTotal">Nrs 0.00</strong><small>eSewa, Card &amp; Bank Transfer</small></div>
-              <div class="card tn-expense-stat"><span>Cash &amp; Other Expenses</span><strong id="tnOfflinePaidTotal">Nrs 0.00</strong><small>Cash, Other and legacy wallet records</small></div>
+              <div class="card tn-expense-stat"><span>Online Expenses</span><strong id="tnOnlinePaidTotal">Nrs 0.00</strong><small id="tnOnlineTransactionCount">in 0 transactions</small><small>eSewa, Card &amp; Bank Transfer</small></div>
+              <div class="card tn-expense-stat"><span>Cash &amp; Other Expenses</span><strong id="tnOfflinePaidTotal">Nrs 0.00</strong><small id="tnOfflineTransactionCount">in 0 transactions</small><small>Cash, Other and legacy wallet records</small></div>
               <div class="card tn-expense-stat"><span>Total Expenses</span><strong id="tnTotalExpenseAmount">Nrs 0.00</strong><small id="tnExpenseTransactionCount">in 0 transactions</small></div>
             </div>
             <p class="tn-payment-grouping-note">Online includes eSewa, Card and Bank Transfer. Only eSewa payments are verified by the provider; card and bank expenses are user-recorded.</p>
@@ -1627,6 +1627,14 @@ font-size:.83rem;cursor:pointer}
                 'Nrs ' + Number(info.online_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
             document.getElementById('tnOfflinePaidTotal').textContent =
                 'Nrs ' + Number(info.offline_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+            for (const [elementId, count] of [
+                ['tnOnlineTransactionCount', Number(info.online_count || 0)],
+                ['tnOfflineTransactionCount', Number(info.offline_count || 0)]
+            ]) {
+                document.getElementById(elementId).textContent =
+                    'in ' + count.toLocaleString('en-US') +
+                    (count === 1 ? ' transaction' : ' transactions');
+            }
             document.getElementById('tnTotalExpenseAmount').textContent =
                 'Nrs ' + Number(info.total_expense_amount || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
             const transactionCount = Number(info.total_expense_count || 0);
