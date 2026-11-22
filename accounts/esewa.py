@@ -4,6 +4,7 @@ Only real status-check COMPLETE results create an expense. Never store wallet
 credentials, and never claim TrackNest can stop independent external payments.
 """
 import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -104,6 +105,8 @@ def response_signature_valid(data, payment):
             or money(data.get("total_amount")) != payment.amount
             or data.get("status") != "COMPLETE"):
         return False
+    if any(not isinstance(data.get(field), str) for field in SIGNED_RESPONSE_FIELDS.split(",")):
+        return False
     signed_message = ",".join(f"{field}={data[field]}" for field in SIGNED_RESPONSE_FIELDS.split(","))
     return hmac.compare_digest(str(data.get("signature", "")), signature(signed_message))
 
@@ -193,8 +196,13 @@ def finalize(payment, provider_result):
             item.status = "COMPLETE"
             item.save(update_fields=["status"])
             return True
+        # The payment must be recorded even when verification arrives late:
+        # eSewa may already have completed an external transaction.
+        # Use the verification date as the expense date if month rolled over.
+        recorded_date = timezone.localdate()
+        record_month = recorded_date.replace(day=1)
         expense = ExpenseTransaction.objects.create(
-            user=item.user, date=timezone.localdate(), kind="expense",
+            user=item.user, date=recorded_date, kind="expense",
             description=item.description, category=item.category,
             amount=item.amount, payment_method="eSewa (Sandbox)",
             notes="Verified sandbox eSewa test payment. No actual funds transferred.",
@@ -204,10 +212,11 @@ def finalize(payment, provider_result):
         item.reference_code = str(provider_result.get("ref_id", ""))[:80]
         item.verified_at = timezone.now()
         item.save(update_fields=["expense", "status", "reference_code", "verified_at"])
-        evaluate_budget_alerts(item.user, item.month)
-        budget = MonthlyBudget.objects.select_for_update().get(user=item.user, month=item.month)
-        if monthly_spent(item.user, item.month) >= budget.limit:
-            queue_budget_email(item.user, budget, item.month)
+        current_budget = get_budget(item.user, record_month)
+        current_budget = MonthlyBudget.objects.select_for_update().get(pk=current_budget.pk)
+        evaluate_budget_alerts(item.user, record_month)
+        if monthly_spent(item.user, record_month) >= current_budget.limit:
+            queue_budget_email(item.user, current_budget, record_month)
     return True
 
 
@@ -241,7 +250,7 @@ def success(request):
         data = json.loads(base64.b64decode(raw, validate=True))
         if not isinstance(data, dict):
             raise ValueError()
-    except (ValueError, TypeError, UnicodeDecodeError, json.JSONDecodeError):
+    except (ValueError, TypeError, UnicodeDecodeError, json.JSONDecodeError, binascii.Error):
         return render(request, "esewa_result.html", {"success": False, "message": "Invalid eSewa payment response."}, status=400)
     payment = EsewaPayment.objects.filter(
         transaction_uuid=data.get("transaction_uuid"), user=request.user).first()
