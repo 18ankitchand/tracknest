@@ -235,9 +235,36 @@ def category_budget_change(request):
     else: item = None
     amount = money(data.get("limit"))
     if not amount: return JsonResponse({"error": "Enter a valid positive budget."}, status=400)
-    category = Category.objects.filter(user=request.user, pk=data.get("category_id"), kind="expense").first()
     month = get_month(data.get("month"))
-    if not category or not month:
+    if not month:
+        return JsonResponse({"error": "Choose a valid expense category and month."}, status=400)
+    category = None
+    if item:
+        category = item.category
+    elif data.get("category_id"):
+        category = Category.objects.filter(
+            user=request.user, pk=data.get("category_id"), kind="expense"
+        ).first()
+    elif data.get("category_name"):
+        # Built-in Expense form categories are labels until a user budgets them.
+        # Materialize that user's own Category record only when they save a budget.
+        category_name = str(data["category_name"]).strip()
+        if not category_name or len(category_name) > 60:
+            return JsonResponse({"error": "Choose a valid expense category."}, status=400)
+        category = Category.objects.filter(
+            user=request.user, kind="expense", name__iexact=category_name
+        ).first()
+        if not category:
+            try:
+                with transaction.atomic():
+                    category = Category.objects.create(
+                        user=request.user, kind="expense", name=category_name
+                    )
+            except IntegrityError:
+                category = Category.objects.filter(
+                    user=request.user, kind="expense", name__iexact=category_name
+                ).first()
+    if not category:
         return JsonResponse({"error": "Choose a valid expense category and month."}, status=400)
     if item and (item.month != month or item.category_id != category.id):
         return JsonResponse({"error": "Edit the limit only, or create another budget."}, status=400)
