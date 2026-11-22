@@ -49,7 +49,7 @@ class AdminOverviewTests(TestCase):
         from django.utils import timezone
         month = timezone.localdate().replace(day=1)
         MonthlyBudget.objects.filter(user=self.owner).delete()
-        MonthlyBudget.objects.create(user=self.owner, month=month, limit=Decimal("10.00"))
+        MonthlyBudget.objects.create(user=self.owner, month=month, limit=Decimal("10.00"), is_set_by_user=True)
         import json
         response = self.client.post("/api/finance/transactions/", data=json.dumps({"type":"expense", "desc":"Extra", "category":"Food", "amount":"11.00"}), content_type="application/json")
         self.assertEqual(response.status_code, 409)
@@ -64,7 +64,7 @@ class BudgetEmailTests(TestCase):
         )
         self.month = timezone.localdate().replace(day=1)
         self.budget = MonthlyBudget.objects.create(
-            user=self.user, month=self.month, limit=Decimal("20.00")
+            user=self.user, month=self.month, limit=Decimal("20.00"), is_set_by_user=True
         )
         self.client.force_login(self.user)
 
@@ -197,7 +197,7 @@ class TransactionManagementTests(TestCase):
         )
         self.today = timezone.localdate()
         self.month = self.today.replace(day=1)
-        self.budget = MonthlyBudget.objects.create(user=self.user, month=self.month, limit=Decimal("100.00"))
+        self.budget = MonthlyBudget.objects.create(user=self.user, month=self.month, limit=Decimal("100.00"), is_set_by_user=True)
         self.item = ExpenseTransaction.objects.create(
             user=self.user, date=self.today, description="Market", kind="expense",
             category="Groceries", amount=Decimal("40.00")
