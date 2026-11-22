@@ -50,6 +50,28 @@ class PremiumFinanceTests(TestCase):
         self.assertEqual(self.expense("20.00").status_code, 409)
         self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
 
+    def test_default_expense_category_can_receive_monthly_budget(self):
+        response = self.post("/api/category-budgets/change/", {
+            "category_name": "Utilities", "month": self.month.isoformat(),
+            "limit": "75.00",
+        })
+        self.assertEqual(response.status_code, 200)
+        category = Category.objects.get(user=self.user, kind="expense", name="Utilities")
+        budget = CategoryBudget.objects.get(user=self.user, category=category, month=self.month)
+        self.assertEqual(budget.limit, Decimal("75.00"))
+        overview = self.client.get("/api/category-budgets/")
+        self.assertEqual(overview.status_code, 200)
+        self.assertTrue(any(row["category"] == "Utilities" for row in overview.json()["budgets"]))
+
+    def test_default_category_budget_is_private_and_reuses_category(self):
+        payload = {"category_name": "Utilities", "month": self.month.isoformat(), "limit": "30.00"}
+        self.assertEqual(self.post("/api/category-budgets/change/", payload).status_code, 200)
+        self.assertEqual(Category.objects.filter(user=self.user, kind="expense", name="Utilities").count(), 1)
+        self.assertEqual(self.post("/api/category-budgets/change/", payload).status_code, 409)
+        self.client.force_login(self.other)
+        response = self.client.get("/api/category-budgets/")
+        self.assertEqual(response.json()["budgets"], [])
+
     def test_authenticated_category_isolation(self):
         category = Category.objects.create(user=self.other, kind="expense", name="Private")
         response = self.post("/api/category-budgets/change/", {
