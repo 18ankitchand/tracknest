@@ -1031,7 +1031,39 @@ font-size:.83rem;cursor:pointer}
                 <div class="table-scroll tn-expense-history-table"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expensePageRows"></tbody></table></div>
               </section>
             </div>
-            <section class="card tn-expense-trend-card"><div class="tn-workspace-row"><div><div class="section-label">Spending overview</div><h3 class="card-title">Monthly expense trend</h3></div></div><div class="tn-premium-chart-canvas"><canvas id="expensePageChart"></canvas></div></section>
+            <section class="card tn-spending-insights" aria-labelledby="tnSpendingInsightTitle">
+              <div class="tn-spending-topline">
+                <div><span class="tn-insights-eyebrow">SPENDING OVERVIEW</span>
+                  <h2 class="card-title" id="tnSpendingInsightTitle">Understand where your money goes</h2>
+                  <p class="tn-insights-subtitle">Your real expenses at a glance — choose a time range or explore categories.</p>
+                </div>
+                <div class="tn-spending-periods" role="group" aria-label="Spending trend period">
+                  <button type="button" class="active" aria-pressed="true" data-tn-spending-period="7d" onclick="changeSpendingPeriod('7d')">7 days</button>
+                  <button type="button" aria-pressed="false" data-tn-spending-period="30d" onclick="changeSpendingPeriod('30d')">30 days</button>
+                  <button type="button" aria-pressed="false" data-tn-spending-period="6m" onclick="changeSpendingPeriod('6m')">6 months</button>
+                </div>
+              </div>
+              <div class="tn-insights-metrics" aria-live="polite">
+                <div class="tn-insight-metric"><span>Spent this month</span><strong id="tnInsightsMonthTotal">Nrs 0.00</strong><small id="tnInsightsMonthCount">0 transactions</small></div>
+                <div class="tn-insight-metric"><span>Last month</span><strong id="tnInsightsPreviousTotal">Nrs 0.00</strong><small id="tnInsightsComparison">See the monthly comparison</small></div>
+                <div class="tn-insight-metric"><span>Average per day</span><strong id="tnInsightsDailyAverage">Nrs 0.00</strong><small>Month to date</small></div>
+                <div class="tn-insight-metric"><span>Top category</span><strong id="tnInsightsTopCategory">No spending yet</strong><small id="tnInsightsTopCategoryAmount">Start by adding an expense</small></div>
+              </div>
+              <div class="tn-spending-visual-grid">
+                <div class="tn-spending-trend-panel">
+                  <div class="tn-spending-chart-heading"><h3 id="tnSpendingTrendHeading">Daily spending</h3><span id="tnSpendingTrendTotal">Nrs 0.00 in selected period</span></div>
+                  <div class="tn-spending-chart-area"><canvas id="tnSpendingTrendChart" role="img" aria-label="Expense amounts by date"></canvas></div>
+                  <p id="tnSpendingTrendDescription" class="tn-chart-footnote">Showing your actual recorded expense transactions.</p>
+                </div>
+                <div class="tn-spending-category-panel">
+                  <h3>Where your money went</h3>
+                  <p>Expense categories this month</p>
+                  <div class="tn-spending-donut-area"><canvas id="tnSpendingCategoryChart" role="img" aria-label="Expense distribution by category"></canvas><div class="tn-spending-donut-center" id="tnSpendingCategoryCenter">This month</div></div>
+                  <div id="tnSpendingCategoryList" class="tn-spending-category-list"><p>No expenses recorded this month.</p></div>
+                </div>
+              </div>
+              <p class="tn-spending-insight-note" id="tnSpendingInsightNote" aria-live="polite">Add an expense to start seeing personalized spending insights.</p>
+            </section>
           </section>
           <section class="tn-page" id="tnPage-transactions" data-tn-page="transactions" hidden>
             <div class="tn-page-heading"><span class="section-label">Your financial history</span><h1 class="dashboard-heading">Transactions</h1><p class="dashboard-description">Search, filter, edit or delete saved transactions.</p></div>
@@ -1507,6 +1539,9 @@ font-size:.83rem;cursor:pointer}
                 }
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
+                if (!document.getElementById('tnPage-expense').hidden && typeof loadSpendingOverview === 'function') {
+                    loadSpendingOverview().catch(error => console.warn('Spending insights could not load', error));
+                }
                 if (state.locked) lockAccount(); else unlockAccount();
                 if (!budgetConfigured) {
                     document.getElementById('newLimitInput').value = '';

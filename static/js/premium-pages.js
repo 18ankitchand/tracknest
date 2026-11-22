@@ -28,7 +28,8 @@ async function loadPremiumModules(){
 }
 async function loadPremiumSection(section){
   try {
-    if(section==='income'||section==='expense') await loadPremiumIncomeExpenseChart(section);
+    if(section==='income') await loadPremiumIncomeExpenseChart(section);
+  if(section==='expense') await loadSpendingOverview();
     if(section==='categories') await loadPremiumCategories();
     else if(section==='budget') {await loadPremiumCategories();await loadPremiumBudgets();}
     else if(section==='goals') await loadPremiumGoals();
@@ -332,3 +333,116 @@ function downloadPremiumReport(format){
   const url='/api/finance/export.'+format+'?'+query.toString();
   window.location.href=url;
 }
+
+
+/* Clear, user-data-backed Spending Overview with daily and monthly exploration. */
+let tnSpendingData = null;
+let tnSpendingPeriod = '7d';
+function tnFormatSpending(value) { return premiumMoney(value); }
+function tnSpendingCount(value) {
+  const n=Number(value)||0;
+  return n+' transaction'+(n===1?'':'s');
+}
+async function loadSpendingOverview() {
+  const result=await premiumGet('/api/finance/spending-overview/');
+  tnSpendingData=result;
+  $tn('tnInsightsMonthTotal').textContent=tnFormatSpending(result.current_total);
+  $tn('tnInsightsPreviousTotal').textContent=tnFormatSpending(result.previous_total);
+  $tn('tnInsightsDailyAverage').textContent=tnFormatSpending(result.daily_average);
+  $tn('tnInsightsMonthCount').textContent=tnSpendingCount(result.monthly_transactions)+' this month';
+  $tn('tnInsightsTopCategory').textContent=result.top_category ? result.top_category.name : 'No expenses yet';
+  $tn('tnInsightsTopCategoryAmount').textContent=result.top_category
+    ? tnFormatSpending(result.top_category.amount)+' this month'
+    : 'Your top category will appear here';
+  const previous=Number(result.previous_total);
+  const current=Number(result.current_total);
+  $tn('tnInsightsComparison').textContent = previous > 0
+    ? (current > previous ? '↑ ' : current < previous ? '↓ ' : '→ ') +
+      Math.abs((current-previous)/previous*100).toFixed(1)+'% vs last month'
+    : 'No previous-month spending';
+  const ratio=result.budget_used_percent;
+  const budgetNote=ratio === null ? 'Set a budget to see your spending progress.' :
+    'You have used '+Number(ratio).toFixed(1)+'% of this month’s budget.';
+  const topNote=result.top_category
+    ? 'Your largest category this month is '+result.top_category.name+
+      ' ('+tnFormatSpending(result.top_category.amount)+'). '
+    : 'No expenses recorded this month. ';
+  $tn('tnSpendingInsightNote').textContent=topNote+budgetNote;
+  renderSpendingCategories(result.categories || []);
+  changeSpendingPeriod(tnSpendingPeriod);
+}
+function changeSpendingPeriod(period) {
+  if(!['7d','30d','6m'].includes(period)) return;
+  tnSpendingPeriod=period;
+  for(const button of document.querySelectorAll('[data-tn-spending-period]')){
+    const selected=button.dataset.tnSpendingPeriod===period;
+    button.classList.toggle('active',selected);
+    button.setAttribute('aria-pressed',String(selected));
+  }
+  if(!tnSpendingData || typeof Chart==='undefined') return;
+  const items=tnSpendingData.periods[period]||[];
+  const total=items.reduce((acc,p)=>acc+Number(p.amount),0);
+  const labels=items.map(p=>p.label);
+  const values=items.map(p=>Number(p.amount));
+  const isMonthly=period==='6m';
+  $tn('tnSpendingTrendHeading').textContent=isMonthly?'Expenses by month':'Daily spending';
+  $tn('tnSpendingTrendTotal').textContent=tnFormatSpending(total)+' in selected period';
+  $tn('tnSpendingTrendDescription').textContent=total>0
+    ? (isMonthly ? 'Each bar is the total recorded for that month.' : 'Hover over a bar to see the amount spent that day.')+
+      ' Amounts reflect saved expenses, not forecasts.'
+    : 'No expenses recorded in this period yet. Select a different range or add an expense.';
+  destroyPremiumChart('tnSpendingTrendChart');
+  premiumCharts.tnSpendingTrendChart=new Chart($tn('tnSpendingTrendChart'),{
+    type:'bar',
+    data:{labels,datasets:[{
+      label:'Expenses (NPR)',data:values,
+      backgroundColor:values.map(v=>v>0?'rgba(110,111,255,.82)':'rgba(110,111,255,.18)'),
+      hoverBackgroundColor:'#8f85ff',
+      borderRadius:7, maxBarThickness:isMonthly?55:24
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>'Spent: '+tnFormatSpending(ctx.parsed.y)}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#aabbd3',maxTicksLimit:isMonthly?6:period==='7d'?7:10,maxRotation:0}},
+        y:{beginAtZero:true,grid:{color:'rgba(180,199,228,.13)'},
+          ticks:{color:'#aabbd3',callback:v=>Number(v).toLocaleString('en-US')}}
+      }
+    }
+  });
+}
+function renderSpendingCategories(categories) {
+  if(typeof Chart==='undefined') return;
+  const list=$tn('tnSpendingCategoryList');
+  list.replaceChildren();
+  const palette=['#7b70ff','#38bdf8','#26ce9c','#ffbe5c','#f5809e','#aa9dfa','#72ced8'];
+  const total=categories.reduce((sum,c)=>sum+Number(c.amount),0);
+  $tn('tnSpendingCategoryCenter').textContent=total>0?tnFormatSpending(total):'No expenses';
+  destroyPremiumChart('tnSpendingCategoryChart');
+  premiumCharts.tnSpendingCategoryChart=new Chart($tn('tnSpendingCategoryChart'),{
+    type:'doughnut',data:{
+      labels:categories.length?categories.map(c=>c.name):['No expense data'],
+      datasets:[{data:categories.length?categories.map(c=>Number(c.amount)):[1],
+        backgroundColor:categories.length?categories.map((_,i)=>palette[i%palette.length]):['#38465b'],
+        borderWidth:0,hoverOffset:6}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'74%',
+       plugins:{legend:{display:false},
+         tooltip:{enabled:categories.length>0,callbacks:{label:ctx=>ctx.label+': '+tnFormatSpending(ctx.parsed)}}}}
+  });
+  if(!categories.length){
+    const p=document.createElement('p');p.textContent='No spending categories yet.';list.appendChild(p);return;
+  }
+  const fragment=document.createDocumentFragment();
+  categories.slice(0,6).forEach((c,i)=>{
+    const row=document.createElement('div');row.className='tn-spending-cat-row';
+    const name=document.createElement('span');name.className='tn-spending-cat-label';
+    const dot=document.createElement('i');dot.style.backgroundColor=palette[i%palette.length];dot.setAttribute('aria-hidden','true');
+    name.append(dot,document.createTextNode(c.name));
+    const details=document.createElement('span');details.className='tn-spending-cat-value';
+    details.textContent=(100*Number(c.amount)/total).toFixed(0)+'% · '+tnFormatSpending(c.amount);
+    row.append(name,details);fragment.appendChild(row);
+  });
+  list.appendChild(fragment);
+}
+
