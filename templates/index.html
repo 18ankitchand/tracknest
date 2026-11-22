@@ -979,9 +979,38 @@ font-size:.83rem;cursor:pointer}
               </div>
               <div class="table-scroll"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="incomePageRows"></tbody></table></div>
             </section>
-            <section class="card">
-              <div class="tn-workspace-row"><div><div class="section-label">Earnings overview</div><h3 class="card-title">Monthly income trend</h3></div></div>
-              <div class="tn-premium-chart-canvas"><canvas id="incomePageChart"></canvas></div>
+            <section class="card tn-spending-insights" aria-labelledby="tnIncomeInsightTitle">
+              <div class="tn-spending-topline">
+                <div><span class="tn-insights-eyebrow">INCOME OVERVIEW</span>
+                  <h2 class="card-title" id="tnIncomeInsightTitle">Understand where your income comes from</h2>
+                  <p class="tn-insights-subtitle">See your earnings over time and identify your strongest income sources.</p>
+                </div>
+                <div class="tn-spending-periods" role="group" aria-label="Income trend period">
+                  <button type="button" class="active" aria-pressed="true" data-tn-income-period="7d" onclick="changeIncomePeriod('7d')">7 days</button>
+                  <button type="button" aria-pressed="false" data-tn-income-period="30d" onclick="changeIncomePeriod('30d')">30 days</button>
+                  <button type="button" aria-pressed="false" data-tn-income-period="6m" onclick="changeIncomePeriod('6m')">6 months</button>
+                </div>
+              </div>
+              <div class="tn-insights-metrics" aria-live="polite">
+                <div class="tn-insight-metric"><span>Received this month</span><strong id="tnIncomeInsightsMonthTotal">Nrs 0.00</strong><small id="tnIncomeInsightsMonthCount">0 transactions</small></div>
+                <div class="tn-insight-metric"><span>Last month</span><strong id="tnIncomeInsightsPreviousTotal">Nrs 0.00</strong><small id="tnIncomeInsightsComparison">See the monthly comparison</small></div>
+                <div class="tn-insight-metric"><span>Average per day</span><strong id="tnIncomeInsightsDailyAverage">Nrs 0.00</strong><small>Month to date</small></div>
+                <div class="tn-insight-metric"><span>Top category</span><strong id="tnIncomeInsightsTopCategory">No income yet</strong><small id="tnIncomeInsightsTopCategoryAmount">Start by adding income</small></div>
+              </div>
+              <div class="tn-spending-visual-grid">
+                <div class="tn-spending-trend-panel">
+                  <div class="tn-spending-chart-heading"><h3 id="tnIncomeTrendHeading">Daily income</h3><span id="tnIncomeTrendTotal">Nrs 0.00 in selected period</span></div>
+                  <div class="tn-spending-chart-area"><canvas id="tnIncomeTrendChart" role="img" aria-label="Income amounts by date"></canvas><div id="tnIncomeTrendFallback" class="tn-spending-fallback" hidden aria-label="Income amount by period"></div></div>
+                  <p id="tnIncomeTrendDescription" class="tn-chart-footnote">Showing only your saved income records — no example data.</p>
+                </div>
+                <div class="tn-spending-category-panel">
+                  <h3>Where your income came from</h3>
+                  <p>Income sources this month</p>
+                  <div class="tn-spending-donut-area"><canvas id="tnIncomeCategoryChart" role="img" aria-label="Income source distribution"></canvas><div class="tn-spending-donut-center" id="tnIncomeCategoryCenter">This month</div></div>
+                  <div id="tnIncomeCategoryList" class="tn-spending-category-list"><p>No income recorded this month.</p></div>
+                </div>
+              </div>
+              <p class="tn-spending-insight-note" id="tnIncomeInsightNote" aria-live="polite">Add income to see your earnings trends and top sources.</p>
             </section>
           </section>
 
@@ -1545,6 +1574,9 @@ font-size:.83rem;cursor:pointer}
                 }
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
+                if (!document.getElementById('tnPage-income').hidden && typeof loadIncomeOverview === 'function') {
+                    loadIncomeOverview().catch(error => console.error('Income insights could not load',error));
+                }
                 if (!document.getElementById('tnPage-expense').hidden && typeof loadSpendingOverview === 'function') {
                     loadSpendingOverview().catch(error => {
                         console.error('Spending insights error', error);
