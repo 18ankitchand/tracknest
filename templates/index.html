@@ -1047,6 +1047,7 @@
         // State
         let currentUser = null;
         let userBudgetLimit = 50000;
+        let currentMonthlySpent = 0;
         let transactions = [];
         let isBudgetLocked = false;
 
@@ -1233,6 +1234,7 @@
                 if (!response.ok) throw new Error("Could not load financial data");
                 const state = await response.json();
                 userBudgetLimit = state.limit;
+                currentMonthlySpent = Number(state.spent || 0);
                 transactions = state.transactions;
                 document.getElementById("newLimitInput").value = userBudgetLimit;
                 // Restore a stable target after previous locked-state rendering.
@@ -1569,8 +1571,7 @@
             const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
             const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
             const monthKey = trackNestToday().slice(0, 7);
-            const monthlyExpense = transactions.filter(t => t.type === 'expense' && t.date.startsWith(monthKey))
-                .reduce((acc, t) => acc + t.amount, 0);
+            const monthlyExpense = currentMonthlySpent;
             const monthlyIncome = transactions.filter(t => t.type === 'income' && t.date.startsWith(monthKey))
                 .reduce((acc, t) => acc + t.amount, 0);
             const balance = totalIncome - totalExpense;
