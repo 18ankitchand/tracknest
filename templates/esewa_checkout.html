@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>eSewa Sandbox Checkout — TrackNest</title>
+<style>body{font:16px system-ui;background:#f7f9fc;color:#172237;display:grid;place-items:center;min-height:100vh}main{background:white;padding:32px;border-radius:17px;max-width:480px;box-shadow:0 10px 40px #12243a18}button{background:#15a96c;color:white;padding:13px 20px;border:none;border-radius:10px;font-weight:bold;cursor:pointer}small{display:block;margin-top:16px;color:#69798e;line-height:1.6}</style></head><body><main><h1>eSewa Sandbox Payment</h1><p>{{ payment.description }} — Nrs {{ payment.amount }}</p><p>This is the <strong>test environment</strong>, not a real-money payment.</p>
+<form id="esewaCheckout" action="{{ action }}" method="post">
+{% for name,value in fields.items %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+<button type="submit">Continue to eSewa sandbox</button></form>
+<small>You will be redirected to eSewa's test checkout. TrackNest records an expense only after verification. This checkout is for payments to the configured test merchant, not arbitrary bills or wallet transfers.</small>
+<p><a href="/expenses/">Cancel and return to expenses</a></p>
+</main></body></html>
