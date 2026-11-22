@@ -104,8 +104,11 @@ class EsewaSandboxTests(TestCase):
     def test_payment_summary_only_shows_verified_payments_of_logged_in_user(self):
         self.configure_budget("200")
         self.assertEqual(self.start("30").status_code, 200)
-        self.assertEqual(self.client.get("/api/payments/esewa/summary/").json(),
-                         {"paid_total": 0.0, "successful_count": 0, "is_test_environment": True})
+        initial = self.client.get("/api/payments/esewa/summary/").json()
+        self.assertEqual(initial["paid_total"], 0.0)
+        self.assertEqual(initial["successful_count"], 0)
+        self.assertEqual(initial["online_total"], 0.0)
+        self.assertEqual(initial["offline_total"], 0.0)
         payment = EsewaPayment.objects.get(user=self.user)
         with patch("accounts.esewa.status_from_esewa", return_value=self.verified_payload(payment)):
             self.assertTrue(self.post(f"/api/payments/esewa/{payment.transaction_uuid}/verify/", {}).json()["complete"])
@@ -118,6 +121,62 @@ class EsewaSandboxTests(TestCase):
         self.assertEqual(other_summary.json()["paid_total"], 0.0)
         self.assertEqual(other_summary.json()["successful_count"], 0)
 
+    def test_online_and_offline_groups_use_expenses_only_and_preserve_history(self):
+        self.configure_budget("1000")
+        samples = [
+            ("eSewa (Sandbox)", "40.00"),
+            ("Card", "120.00"),
+            ("Bank Transfer", "180.00"),
+            ("Cash", "30.00"),
+            ("Other", "15.00"),
+            # Existing legacy payments remain counted but cannot be selected again.
+            ("Mobile Wallet", "5.00"),
+        ]
+        for method, amount in samples:
+            ExpenseTransaction.objects.create(
+                user=self.user, date=timezone.localdate(), kind="expense",
+                description="Grouped payment", category="Utilities",
+                payment_method=method, amount=Decimal(amount),
+            )
+        ExpenseTransaction.objects.create(
+            user=self.user, date=timezone.localdate(), kind="income",
+            description="Incoming bank transfer", category="Salary",
+            payment_method="Bank Transfer", amount=Decimal("999.00"),
+        )
+        ExpenseTransaction.objects.create(
+            user=self.other, date=timezone.localdate(), kind="expense",
+            description="Private expense", category="Utilities",
+            payment_method="Card", amount=Decimal("5000.00"),
+        )
+        response = self.client.get("/api/payments/esewa/summary/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["online_total"], 340.0)
+        self.assertEqual(data["online_count"], 3)
+        self.assertEqual(data["offline_total"], 50.0)
+        self.assertEqual(data["offline_count"], 3)
+        # Manually typed eSewa-labelled records do not count as verified eSewa.
+        self.assertEqual(data["paid_total"], 0.0)
+        self.assertEqual(data["successful_count"], 0)
+        self.client.force_login(self.other)
+        other_data = self.client.get("/api/payments/esewa/summary/").json()
+        self.assertEqual(other_data["online_total"], 5000.0)
+        self.assertEqual(other_data["offline_total"], 0.0)
+
+    def test_mobile_wallet_removed_from_forms_and_backend_rejects_new_records(self):
+        self.configure_budget("100")
+        page = self.client.get("/expenses/")
+        self.assertEqual(page.status_code, 200)
+        self.assertNotContains(page, "<option>Mobile Wallet</option>")
+        self.assertContains(page, "Online Expenses")
+        self.assertContains(page, "Cash &amp; Other Expenses")
+        result = self.post("/api/finance/transactions/", {
+            "type": "expense", "desc": "Old wallet", "category": "Utilities",
+            "amount": "10.00", "payment_method": "Mobile Wallet",
+        })
+        self.assertEqual(result.status_code, 400)
+        self.assertFalse(ExpenseTransaction.objects.filter(user=self.user).exists())
+
     def test_payment_summary_requires_authentication(self):
         self.client.logout()
         self.assertEqual(self.client.get("/api/payments/esewa/summary/").status_code, 401)
@@ -126,7 +185,7 @@ class EsewaSandboxTests(TestCase):
         self.configure_budget("100")
         response = self.client.get("/expenses/")
         self.assertEqual(response.status_code, 200)
-        for label in ["Expenses &amp; eSewa Payment", "Successful transactions",
+        for label in ["Expenses &amp; eSewa Payment", "Online Expenses", "Cash &amp; Other Expenses",
                       "Expense History", "Continue to eSewa", 'id="tnExpenseForm"']:
             self.assertContains(response, label)
         self.assertContains(response, '<option value="eSewa Demo">eSewa</option>')
