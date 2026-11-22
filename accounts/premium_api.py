@@ -22,8 +22,9 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from .models import (
     Category, CategoryBudget, ExpenseTransaction, MonthlyBudget,
@@ -523,12 +524,12 @@ def request_email_change(request):
     return JsonResponse({"ok": True, "message": "Verification link sent to your new email address."})
 
 
-@require_GET
+@require_http_methods(["GET", "POST"])
 def confirm_email_change(request):
     problem = forbidden(request)
     if problem: return problem
     try:
-        payload = signing.loads(request.GET.get("token", ""), salt="tracknest-email-change", max_age=3600)
+        payload = signing.loads((request.POST.get("token") if request.method == "POST" else request.GET.get("token")) or "", salt="tracknest-email-change", max_age=3600)
     except (signing.BadSignature, signing.SignatureExpired):
         return HttpResponse("Invalid or expired email-change link.", status=400)
     if not isinstance(payload, dict) or payload.get("user") != request.user.pk:
@@ -538,6 +539,8 @@ def confirm_email_change(request):
         validate_email(email)
     except (ValidationError, TypeError):
         return HttpResponse("Invalid address.", status=400)
+    if request.method == "GET":
+        return render(request, "confirm_email.html", {"email": email, "token": request.GET.get("token")})
     with transaction.atomic():
         if User.objects.select_for_update().filter(username__iexact=email).exclude(pk=request.user.pk).exists():
             return HttpResponse("Email is already registered.", status=409)
