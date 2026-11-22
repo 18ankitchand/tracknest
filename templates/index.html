@@ -608,6 +608,35 @@
 #appScreen .tn-account-status{font-size:0}
 @media(max-width:1150px){#appScreen .tn-premium-charts{grid-template-columns:1fr}}
 @media(max-width:600px){#appScreen .tn-premium-chart-canvas{height:245px}}
+
+#appScreen .tn-premium-list{margin-top:17px;display:grid;gap:10px}
+#appScreen .tn-premium-list-item{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px;border:1px solid #e7edf6;border-radius:12px}
+#appScreen .tn-premium-list-item strong{display:block;color:#243148}
+#appScreen .tn-premium-list-item small{color:#8190a4}
+#appScreen .tn-premium-list-item>div:last-child{display:flex;gap:7px}
+#appScreen .tn-premium-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:18px}
+#appScreen .tn-premium-tile{border:1px solid #e5eaf1;border-radius:14px;padding:18px;background:#fff}
+#appScreen .tn-premium-tile h3{font-size:1rem;color:#20304b;margin-bottom:9px}
+#appScreen .tn-premium-tile small{color:#8391a5}
+#appScreen .tn-tile-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+#appScreen .tn-premium-progress{height:8px;background:#eef1f6;border-radius:50px;overflow:hidden;margin:14px 0}
+#appScreen .tn-premium-progress div{height:100%;border-radius:50px;transition:width .2s}
+#appScreen .tn-premium-grid .tn-delete-btn{margin-left:5px}
+#appScreen .tn-settings-form{display:grid;gap:18px;max-width:550px;margin-top:15px}
+#appScreen .tn-settings-form small{display:block;margin-top:5px;color:#8b98ab}
+#appScreen .tn-switch-line{display:flex;align-items:center;gap:9px;color:#28364d}
+#appScreen .tn-switch-line input{width:18px;height:18px}
+#appScreen .tn-report-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:19px}
+#appScreen .tn-report-summary span{display:flex;flex-direction:column;gap:7px;padding:16px;border-radius:13px;background:#f6f8fe;color:#77849a}
+#appScreen .tn-report-summary strong{font-size:1.2rem;color:#273549}
+#appScreen .tn-budget-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+#appScreen .tn-budget-stats .card{display:flex;flex-direction:column;gap:12px}
+#appScreen .tn-budget-stats span{color:#7d899d}
+#appScreen .tn-budget-stats strong{font-size:1.3rem}
+#appScreen .tn-pagination{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:18px;color:#758196;font-size:.8rem}
+#appScreen .tn-premium-empty{color:#91a0b4;padding:30px;text-align:center}
+@media(max-width:750px){#appScreen .tn-premium-grid,#appScreen .tn-budget-stats,#appScreen .tn-report-summary{grid-template-columns:1fr!important}}
+
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -763,6 +792,8 @@
                   <select id="incomeEntryCategory" required><option value="Salary">Salary</option><option value="Freelance">Freelance</option><option value="Business">Business</option><option value="Gift">Gift</option><option value="Other">Other income</option></select>
                 </div>
                 <div class="form-group"><label for="incomeEntryDate">Date</label><input type="date" id="incomeEntryDate" required></div>
+                <div class="form-group"><label for="incomeEntryPayment">Payment method</label><select id="incomeEntryPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select></div>
+                <div class="form-group"><label for="incomeEntryNotes">Notes</label><input id="incomeEntryNotes" maxlength="1000" placeholder="Optional notes"></div>
                 <div class="form-group"><label for="incomeEntryAmount">Amount (Nrs)</label><input id="incomeEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn">Save Income</button>
               </form>
@@ -785,6 +816,8 @@
                   <select id="expenseEntryCategory" required><option value="Groceries">Groceries</option><option value="Dining">Dining</option><option value="Utilities">Utilities</option><option value="Shopping">Shopping</option><option value="Transport">Transport</option><option value="Health">Health</option><option value="Other">Other expense</option></select>
                 </div>
                 <div class="form-group"><label for="expenseEntryDate">Date</label><input type="date" id="expenseEntryDate" required></div>
+                <div class="form-group"><label for="expenseEntryPayment">Payment method</label><select id="expenseEntryPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select></div>
+                <div class="form-group"><label for="expenseEntryNotes">Notes</label><input id="expenseEntryNotes" maxlength="1000" placeholder="Optional notes"></div>
                 <div class="form-group"><label for="expenseEntryAmount">Amount (Nrs)</label><input id="expenseEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn">Save Expense</button>
               </form>
@@ -802,6 +835,8 @@
                     <div><div class="section-label">Your activity</div><div class="card-title">Transaction management</div><p class="card-description">Record and review income and expenses.</p></div><div class="tn-record-filter" id="tnRecordFilter" aria-label="Transaction filters"><button type="button" class="active" onclick="setTrackNestFilter('all')" data-filter="all">All</button><button type="button" onclick="setTrackNestFilter('income')" data-filter="income">Income</button><button type="button" onclick="setTrackNestFilter('expense')" data-filter="expense">Expenses</button></div>
                 </div>
                 <div class="tn-search-toolbar" aria-label="Search transactions">
+                  <div class="form-group"><label for="tnTransactionCategoryFilter">Category</label><select id="tnTransactionCategoryFilter" onchange="updateDashboard()"><option value="">All categories</option></select></div>
+                  <div class="form-group"><label for="tnTransactionSort">Sort</label><select id="tnTransactionSort" onchange="updateDashboard()"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option></select></div>
                     <div class="form-group"><label for="txSearch">Search</label><input type="search" id="txSearch" placeholder="Description or category" oninput="updateDashboard()" maxlength="200"></div>
                     <div class="form-group"><label for="txDateFrom">From date</label><input type="date" id="txDateFrom" onchange="updateDashboard()"></div>
                     <div class="form-group"><label for="txDateTo">To date</label><input type="date" id="txDateTo" onchange="updateDashboard()"></div>
@@ -835,7 +870,8 @@
                         <label>Amount (Nrs)</label>
                         <input type="number" id="txAmount" step="0.01" placeholder="5000.00" required>
                     </div>
-                    <div class="form-group"><label for="txDate">Transaction date</label><input type="date" id="txDate" required></div>
+                    <div class="form-group"><label for="txDate">Transaction date</label><input type="date" id="txDate" required></div><div class="form-group"><label for="txPayment">Payment method</label><select id="txPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select></div>
+                    <div class="form-group"><label for="txNotes">Notes</label><input id="txNotes" maxlength="1000" placeholder="Optional notes"></div>
                     <div class="transaction-form-actions"><button type="submit" class="primary-btn" id="addTxBtn">Add Transaction</button>
                     <button type="button" class="cancel-edit-btn" id="cancelTxEdit" onclick="cancelTransactionEdit()" style="display:none">Cancel</button></div>
                 </form>
@@ -848,15 +884,16 @@
                             <th>Category</th>
                             <th>Type</th>
                             <th>Amount</th>
+                            <th>Payment method</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="txTableBody">
                         <tr>
-                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td>
                         </tr>
                     </tbody>
-                </table></div>
+                </table></div><div class="tn-pagination"><button type="button" class="cancel-edit-btn" onclick="changePremiumTransactionPage(-1)">Previous</button><span id="tnPaginationLabel">Page 1</span><button type="button" class="cancel-edit-btn" onclick="changePremiumTransactionPage(1)">Next</button></div>
             </div>
           </section>
           <section class="tn-page" id="tnPage-budget" data-tn-page="budget" hidden>
@@ -873,6 +910,21 @@
                     <button class="primary-btn" onclick="updateBudgetLimit()" style="padding: 0.5rem 1rem;">Set Limit</button>
                 </div>
             </div>
+            <div class="tn-budget-stats">
+              <div class="card"><span>Monthly budget</span><strong id="tnBudgetTotal">Nrs 0.00</strong></div>
+              <div class="card"><span>Spent this month</span><strong id="tnBudgetSpent">Nrs 0.00</strong></div>
+              <div class="card"><span>Remaining budget</span><strong id="tnBudgetRemaining">Nrs 0.00</strong></div>
+            </div>
+            <section class="card"><div class="tn-workspace-row"><h3 class="card-title">Category budgets</h3><span class="tn-chart-pill">Current month</span></div>
+              <form id="tnCategoryBudgetForm" onsubmit="savePremiumCategoryBudget(event)" class="tn-entry-form">
+                <input type="hidden" id="tnCategoryBudgetId">
+                <div class="form-group"><label for="tnBudgetCategory">Expense category</label><select id="tnBudgetCategory" required></select></div>
+                <div class="form-group"><label for="tnBudgetAmount">Monthly limit (Nrs)</label><input id="tnBudgetAmount" type="number" min=".01" step=".01" required></div>
+                <button class="primary-btn" type="submit">Save category budget</button>
+                <button class="cancel-edit-btn" type="button" onclick="resetPremiumCategoryBudget()">Cancel</button>
+              </form>
+              <div id="tnCategoryBudgetList" class="tn-premium-grid"></div>
+            </section>
             <section class="card tn-budget-note"><h3 class="card-title">How budget protection works</h3>
               <p>Below 80%: normal. From 80%: warning. From 90%: critical. At 100%: TrackNest blocks additional expense recording. Income recording remains available.</p>
               <p>Budget limits apply to records inside TrackNest, not outside payments.</p>
@@ -907,6 +959,67 @@
                     </div>
                 </div>
             <p class="tn-disclaimer">Advice is generated using the existing rule-based demo assistant; it is not a live AI service.</p>
+          </section>
+
+          <section class="tn-page" id="tnPage-categories" data-tn-page="categories" hidden>
+            <div class="tn-page-heading"><span class="section-label">Organize spending</span><h1 class="dashboard-heading">Categories</h1><p class="dashboard-description">Manage income and expense categories for better reporting.</p></div>
+            <section class="card"><h3 class="card-title">Create or edit a category</h3>
+              <form class="tn-entry-form" id="tnCategoryForm" onsubmit="savePremiumCategory(event)">
+                <input type="hidden" id="tnCategoryId">
+                <div class="form-group"><label for="tnCategoryName">Name</label><input id="tnCategoryName" required maxlength="60" placeholder="e.g. Education"></div>
+                <div class="form-group"><label for="tnCategoryType">Type</label><select id="tnCategoryType"><option value="expense">Expense</option><option value="income">Income</option></select></div>
+                <button type="submit" class="primary-btn">Save category</button><button type="button" class="cancel-edit-btn" onclick="resetPremiumCategory()">Cancel</button>
+              </form>
+            </section>
+            <section class="card"><h3 class="card-title">Your categories</h3><div id="tnCategoryList" class="tn-premium-list"></div></section>
+          </section>
+          <section class="tn-page" id="tnPage-reports" data-tn-page="reports" hidden>
+            <div class="tn-page-heading"><span class="section-label">Financial intelligence</span><h1 class="dashboard-heading">Reports & Analytics</h1><p class="dashboard-description">Explore trends calculated from your saved transactions and download your report.</p></div>
+            <section class="card">
+              <div class="tn-search-toolbar"><div class="form-group"><label for="tnReportFrom">From date</label><input type="date" id="tnReportFrom"></div>
+              <div class="form-group"><label for="tnReportTo">To date</label><input type="date" id="tnReportTo"></div>
+              <button class="primary-btn" type="button" onclick="loadPremiumAnalytics()">Apply dates</button>
+              <button class="cancel-edit-btn" type="button" onclick="downloadPremiumReport('csv')">Export CSV</button>
+              <button class="cancel-edit-btn" type="button" onclick="downloadPremiumReport('pdf')">Export PDF</button></div>
+              <div class="tn-report-summary"><span>Income <strong id="tnReportIncome">Nrs 0.00</strong></span><span>Expenses <strong id="tnReportExpense">Nrs 0.00</strong></span><span>Net balance <strong id="tnReportBalance">Nrs 0.00</strong></span></div>
+            </section>
+            <div class="tn-premium-charts"><section class="card"><h3 class="card-title">Monthly income vs expense</h3><div class="tn-premium-chart-canvas"><canvas id="tnReportBar"></canvas></div></section>
+            <section class="card"><h3 class="card-title">Expense by category</h3><div class="tn-premium-chart-canvas"><canvas id="tnReportDonut"></canvas></div></section></div>
+            <section class="card"><h3 class="card-title">Monthly financial trend</h3><div class="tn-premium-chart-canvas"><canvas id="tnReportLine"></canvas></div></section>
+          </section>
+          <section class="tn-page" id="tnPage-goals" data-tn-page="goals" hidden>
+            <div class="tn-page-heading"><span class="section-label">Your future</span><h1 class="dashboard-heading">Savings Goals</h1><p class="dashboard-description">Create targets and track savings allocations separately from expense records.</p></div>
+            <section class="card"><h3 class="card-title">Create or edit savings goal</h3>
+              <form id="tnGoalForm" class="tn-entry-form" onsubmit="savePremiumGoal(event)">
+                <input type="hidden" id="tnGoalId">
+                <div class="form-group"><label for="tnGoalName">Goal name</label><input id="tnGoalName" required maxlength="100" placeholder="New laptop"></div>
+                <div class="form-group"><label for="tnGoalTarget">Target (Nrs)</label><input id="tnGoalTarget" type="number" min="0.01" step=".01" required></div>
+                <div class="form-group"><label for="tnGoalDeadline">Target date (optional)</label><input id="tnGoalDeadline" type="date"></div>
+                <button type="submit" class="primary-btn">Save goal</button><button type="button" class="cancel-edit-btn" onclick="resetPremiumGoal()">Cancel</button>
+              </form>
+            </section>
+            <section class="tn-premium-grid" id="tnGoalsList"></section>
+          </section>
+          <section class="tn-page" id="tnPage-notifications" data-tn-page="notifications" hidden>
+            <div class="tn-page-heading"><span class="section-label">Budget reminders</span><h1 class="dashboard-heading">Notifications <span id="tnUnreadCount"></span></h1><p class="dashboard-description">View budget alerts and mark messages as read.</p></div>
+            <section class="card"><div class="tn-workspace-row"><h3 class="card-title">Recent alerts</h3><button type="button" class="cancel-edit-btn" onclick="markPremiumNotification(null)">Mark all read</button></div>
+              <div id="tnNotificationList" class="tn-premium-list"></div></section>
+          </section>
+          <section class="tn-page" id="tnPage-settings" data-tn-page="settings" hidden>
+            <div class="tn-page-heading"><span class="section-label">Personalize your workspace</span><h1 class="dashboard-heading">Settings</h1><p class="dashboard-description">Choose how your financial dashboard looks and how alerts are delivered.</p></div>
+            <section class="card"><form id="tnSettingsForm" class="tn-settings-form" onsubmit="savePremiumSettings(event)">
+              <div class="form-group"><label for="tnSettingsTheme">Appearance</label><select id="tnSettingsTheme"><option value="light">Light theme</option><option value="dark">Dark theme</option></select></div>
+              <div class="form-group"><label for="tnSettingsCurrency">Currency</label><select id="tnSettingsCurrency"><option value="NPR">Nepalese Rupee (NPR)</option></select><small>Other currencies require conversion and are not supported yet.</small></div>
+              <label class="tn-switch-line"><input type="checkbox" id="tnSettingsEmail" checked> Send budget warning emails to my registered address</label>
+              <button class="primary-btn" type="submit">Save preferences</button></form></section>
+          </section>
+          <section class="tn-page" id="tnPage-profile" data-tn-page="profile" hidden>
+            <div class="tn-page-heading"><span class="section-label">Account information</span><h1 class="dashboard-heading">My Profile</h1><p class="dashboard-description">Manage the name and phone number associated with your account.</p></div>
+            <section class="card"><form id="tnProfileForm" class="tn-settings-form" onsubmit="savePremiumProfile(event)">
+              <div class="form-group"><label for="tnProfileName">Full name</label><input id="tnProfileName" maxlength="150" required></div>
+              <div class="form-group"><label for="tnProfileEmail">Registered email</label><input id="tnProfileEmail" type="email" readonly><small>For security, email changes require a verified-email workflow and are not enabled yet.</small></div>
+              <div class="form-group"><label for="tnProfilePhone">Phone number</label><input id="tnProfilePhone" type="tel" maxlength="20" required></div>
+              <button class="primary-btn" type="submit">Save profile</button></form></section>
           </section>
         </main>
     </div>
@@ -1471,7 +1584,7 @@
             document.getElementById('txFilterCount').textContent = visibleTransactions.length +
                 ' of ' + transactions.length + ' transaction(s) shown';
             if (visibleTransactions.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No ${trackNestRecordFilter === 'all' ? 'transactions' : trackNestRecordFilter + ' records'} yet. Add a transaction above to get started.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No ${trackNestRecordFilter === 'all' ? 'transactions' : trackNestRecordFilter + ' records'} yet. Add a transaction above to get started.</td></tr>`;
             } else {
                 tbody.innerHTML = visibleTransactions.map(t => `
                     <tr>
