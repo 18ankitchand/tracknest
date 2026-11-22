@@ -86,7 +86,7 @@ class EsewaSandboxTests(TestCase):
         self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
         response = self.client.get(result.json()["checkout_url"])
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Sandbox")
+        self.assertContains(response, "eSewa Demo")
 
     def test_continue_checkout_forwards_to_real_demo_gateway_without_saving_expense(self):
         self.configure_budget("100")
