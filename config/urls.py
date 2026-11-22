@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from accounts import views
+from accounts import views, premium_api
 from accounts.admin_views import overview
 
 admin.site.site_header = "TrackNest administration"
@@ -16,6 +16,24 @@ urlpatterns = [
     path("api/auth/logout/", views.sign_out),
     path("api/auth/me/", views.me),
     path("api/finance/state/", views.financial_state),
+    path("api/finance/analytics/", premium_api.analytics),
+    path("api/finance/export.csv", premium_api.export_csv),
+    path("api/finance/export.pdf", premium_api.export_pdf),
+    path("api/categories/", premium_api.categories_list),
+    path("api/categories/change/", premium_api.categories_change),
+    path("api/category-budgets/", premium_api.category_budget_list),
+    path("api/category-budgets/change/", premium_api.category_budget_change),
+    path("api/goals/", premium_api.goals_list),
+    path("api/goals/change/", premium_api.goals_change),
+    path("api/notifications/", premium_api.notifications_list),
+    path("api/notifications/read/", premium_api.notifications_read),
+    path("api/preferences/", premium_api.preference_detail),
+    path("api/preferences/change/", premium_api.preference_change),
+    path("api/profile/change/", premium_api.profile_change),
+    path("api/profile/password/", premium_api.change_password),
+    path("api/profile/request-email/", premium_api.request_email_change),
+    path("api/profile/confirm-email/", premium_api.confirm_email_change, name="tracknest_confirm_email_change"),
+
     path("api/finance/budget/", views.set_budget),
     path("api/finance/transactions/", views.add_financial_transaction),
     path("api/finance/transactions/<int:transaction_id>/edit/", views.edit_financial_transaction),

@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirm email change — TrackNest</title>
+<style>body{font-family:system-ui,sans-serif;background:#f7f9fc;color:#172337;min-height:100vh;display:grid;place-items:center;margin:0}
+main{width:min(420px,90vw);background:#fff;border:1px solid #e3e9f2;border-radius:18px;padding:32px;box-shadow:0 18px 50px #0f172a14}
+h1{font-size:1.5rem}p{color:#66788f;line-height:1.6;overflow-wrap:anywhere}button{background:#6255ea;border:0;padding:12px 20px;color:#fff;border-radius:10px;font-weight:700;cursor:pointer}</style>
+</head><body><main><h1>Confirm your new email</h1><p>Update your TrackNest account to <strong>{{ email }}</strong>?</p>
+<form method="post">{% csrf_token %}<input type="hidden" name="token" value="{{ token }}"><button type="submit">Confirm email change</button></form>
+</main></body></html>

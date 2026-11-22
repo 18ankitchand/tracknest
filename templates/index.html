@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+{% load static %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -600,7 +601,61 @@
 .tn-entry-form{grid-template-columns:minmax(150px,1.4fr) minmax(130px,1fr) minmax(145px,1fr) minmax(120px,1fr) auto}
 @media(max-width:1160px){.tn-entry-form{grid-template-columns:repeat(2,minmax(0,1fr))}.tn-search-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.tn-search-toolbar,.tn-entry-form{grid-template-columns:1fr}}
+#appScreen .tn-premium-charts{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:18px}
+#appScreen .tn-premium-chart-canvas{height:285px;margin-top:14px}
+#appScreen .tn-chart-pill{font-size:.7rem;color:#6455e6;background:#f0eeff;border-radius:8px;padding:7px 10px;font-weight:800}
+#appScreen .tn-dashboard-alerts{display:grid;gap:10px}
+#appScreen .tn-account-status{font-size:0}
+@media(max-width:1150px){#appScreen .tn-premium-charts{grid-template-columns:1fr}}
+@media(max-width:600px){#appScreen .tn-premium-chart-canvas{height:245px}}
+
+#appScreen .tn-premium-list{margin-top:17px;display:grid;gap:10px}
+#appScreen .tn-premium-list-item{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px;border:1px solid #e7edf6;border-radius:12px}
+#appScreen .tn-premium-list-item strong{display:block;color:#243148}
+#appScreen .tn-premium-list-item small{color:#8190a4}
+#appScreen .tn-premium-list-item>div:last-child{display:flex;gap:7px}
+#appScreen .tn-premium-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:18px}
+#appScreen .tn-premium-tile{border:1px solid #e5eaf1;border-radius:14px;padding:18px;background:#fff}
+#appScreen .tn-premium-tile h3{font-size:1rem;color:#20304b;margin-bottom:9px}
+#appScreen .tn-premium-tile small{color:#8391a5}
+#appScreen .tn-tile-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+#appScreen .tn-premium-progress{height:8px;background:#eef1f6;border-radius:50px;overflow:hidden;margin:14px 0}
+#appScreen .tn-premium-progress div{height:100%;border-radius:50px;transition:width .2s}
+#appScreen .tn-premium-grid .tn-delete-btn{margin-left:5px}
+#appScreen .tn-settings-form{display:grid;gap:18px;max-width:550px;margin-top:15px}
+#appScreen .tn-settings-form small{display:block;margin-top:5px;color:#8b98ab}
+#appScreen .tn-switch-line{display:flex;align-items:center;gap:9px;color:#28364d}
+#appScreen .tn-switch-line input{width:18px;height:18px}
+#appScreen .tn-report-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:19px}
+#appScreen .tn-report-summary span{display:flex;flex-direction:column;gap:7px;padding:16px;border-radius:13px;background:#f6f8fe;color:#77849a}
+#appScreen .tn-report-summary strong{font-size:1.2rem;color:#273549}
+#appScreen .tn-budget-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+#appScreen .tn-budget-stats .card{display:flex;flex-direction:column;gap:12px}
+#appScreen .tn-budget-stats span{color:#7d899d}
+#appScreen .tn-budget-stats strong{font-size:1.3rem}
+#appScreen .tn-pagination{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:18px;color:#758196;font-size:.8rem}
+#appScreen .tn-premium-empty{color:#91a0b4;padding:30px;text-align:center}
+@media(max-width:750px){#appScreen .tn-premium-grid,#appScreen .tn-budget-stats,#appScreen .tn-report-summary{grid-template-columns:1fr!important}}
+
+#appScreen .tn-search-toolbar{grid-template-columns:minmax(165px,2fr) repeat(4,minmax(120px,1fr)) auto auto!important}
+#appScreen .tn-search-toolbar button{white-space:nowrap;min-height:46px}
+.tn-details-dialog{border:1px solid #e5eafa;border-radius:17px;padding:25px;color:#25334b;background:white;
+width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
+.tn-details-dialog::backdrop{background:rgba(12,23,43,.65)}
+.tn-details-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.tn-details-header h3{font-size:1.15rem}
+.tn-details-header button{border:0;background:transparent;cursor:pointer;font-size:1.7rem;color:#64748b}
+.tn-detail-row{display:flex;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid #edf0f7}
+.tn-detail-row span{color:#7b879b}.tn-detail-row strong{overflow-wrap:anywhere;text-align:right}
+.tn-details-dialog>.primary-btn{margin-top:22px}
+@media(max-width:1200px){#appScreen .tn-search-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:620px){#appScreen .tn-search-toolbar{grid-template-columns:1fr!important}}
+#appScreen .tn-income-filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin:18px 0}
+#appScreen .tn-income-filters input,#appScreen .tn-income-filters select{min-width:0;width:100%}
+@media(max-width:800px){#appScreen .tn-income-filters{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){#appScreen .tn-income-filters{grid-template-columns:1fr}}
     </style>
+    <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
 <body>
 
@@ -657,16 +712,26 @@
             </div>
             <div class="tn-sidebar-section">WORKSPACE</div>
             <nav class="tn-sidebar-nav" aria-label="Financial sections">
-                <button type="button" class="tn-nav-item active" data-tracknest-nav="dashboard" onclick="navigateTrackNest('dashboard')" aria-current="page"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg><span class="tn-nav-label"><strong>Dashboard</strong><small>Financial overview</small></span></button>
-                <button type="button" class="tn-nav-item" data-tracknest-nav="income" onclick="navigateTrackNest('income')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6M4 21h16"/></svg><span class="tn-nav-label"><strong>Income</strong><small>View income records</small></span></button>
-                <button type="button" class="tn-nav-item" data-tracknest-nav="expense" onclick="navigateTrackNest('expense')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14m-6-6 6 6 6-6M4 3h16"/></svg><span class="tn-nav-label"><strong>Expenses</strong><small>View expense records</small></span></button>
-                <button type="button" class="tn-nav-item" data-tracknest-nav="transactions" onclick="navigateTrackNest('transactions')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M4 11h16M4 17h10"/><path d="m17 16 2 2 3-4"/></svg><span class="tn-nav-label"><strong>Transactions</strong><small>All activity & editing</small></span></button>
+                <button type="button" title="Dashboard" class="tn-nav-item active" data-tracknest-nav="dashboard" onclick="navigateTrackNest('dashboard')" aria-current="page"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg><span class="tn-nav-label"><strong>Dashboard</strong><small>Financial overview</small></span></button>
+                <button type="button" title="Income" class="tn-nav-item" data-tracknest-nav="income" onclick="navigateTrackNest('income')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6M4 21h16"/></svg><span class="tn-nav-label"><strong>Income</strong><small>View income records</small></span></button>
+                <button type="button" title="Expenses" class="tn-nav-item" data-tracknest-nav="expense" onclick="navigateTrackNest('expense')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14m-6-6 6 6 6-6M4 3h16"/></svg><span class="tn-nav-label"><strong>Expenses</strong><small>View expense records</small></span></button>
+                <button type="button" title="Transactions" class="tn-nav-item" data-tracknest-nav="transactions" onclick="navigateTrackNest('transactions')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M4 11h16M4 17h10"/><path d="m17 16 2 2 3-4"/></svg><span class="tn-nav-label"><strong>Transactions</strong><small>All activity & editing</small></span></button>
             </nav>
             <div class="tn-sidebar-section">MANAGE & ANALYZE</div>
             <nav class="tn-sidebar-nav" aria-label="Planning and insights">
-                <button type="button" class="tn-nav-item" data-tracknest-nav="budget" onclick="navigateTrackNest('budget')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 9h18m-5 6h2"/></svg><span class="tn-nav-label"><strong>Monthly budget</strong><small>Set spending limits</small></span></button>
-                <button type="button" class="tn-nav-item" data-tracknest-nav="forecast" onclick="navigateTrackNest('forecast')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19V5m0 14h18M6 15l5-5 4 3 5-7"/></svg><span class="tn-nav-label"><strong>Forecast chart</strong><small>Spending trends</small></span></button>
-                <button type="button" class="tn-nav-item" data-tracknest-nav="advisor" onclick="navigateTrackNest('advisor')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M12 3v4M9 13h.01M15 13h.01M9 17h6"/></svg><span class="tn-nav-label"><strong>Financial advisor</strong><small>Ask about expenses</small></span></button>
+                <button type="button" title="Monthly budget" class="tn-nav-item" data-tracknest-nav="budget" onclick="navigateTrackNest('budget')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 9h18m-5 6h2"/></svg><span class="tn-nav-label"><strong>Monthly budget</strong><small>Set spending limits</small></span></button>
+                <button type="button" title="Forecast chart" class="tn-nav-item" data-tracknest-nav="forecast" onclick="navigateTrackNest('forecast')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19V5m0 14h18M6 15l5-5 4 3 5-7"/></svg><span class="tn-nav-label"><strong>Forecast chart</strong><small>Spending trends</small></span></button>
+                <button type="button" title="Financial advisor" class="tn-nav-item" data-tracknest-nav="advisor" onclick="navigateTrackNest('advisor')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M12 3v4M9 13h.01M15 13h.01M9 17h6"/></svg><span class="tn-nav-label"><strong>Financial advisor</strong><small>Ask about expenses</small></span></button>
+            </nav>
+            <div class="tn-sidebar-section">EXPLORE</div>
+            <nav class="tn-sidebar-nav" aria-label="More financial tools">
+                <button type="button" class="tn-nav-item" data-tracknest-nav="categories" onclick="navigateTrackNest('categories')" title="Categories"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><path d="M17.5 14v7M14 17.5h7"/></svg><span class="tn-nav-label"><strong>Categories</strong></span></button>
+                <button type="button" class="tn-nav-item" data-tracknest-nav="reports" onclick="navigateTrackNest('reports')" title="Reports & Analytics"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11m6 9V5m6 15v-7m5 7H2"/><path d="m3 9 6-4 6 7 6-8"/></svg><span class="tn-nav-label"><strong>Reports & Analytics</strong></span></button>
+                <button type="button" class="tn-nav-item" data-tracknest-nav="goals" onclick="navigateTrackNest('goals')" title="Savings Goals"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="tn-nav-label"><strong>Savings Goals</strong></span></button>
+                <button type="button" class="tn-nav-item" data-tracknest-nav="notifications" onclick="navigateTrackNest('notifications')" title="Notifications"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span class="tn-nav-label"><strong>Notifications</strong></span></button>
+                <button type="button" class="tn-nav-item" data-tracknest-nav="settings" onclick="navigateTrackNest('settings')" title="Settings"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M18.4 5.6l-2.1 2.1m-8.6 8.6-2.1 2.1"/><circle cx="12" cy="12" r="4"/></svg><span class="tn-nav-label"><strong>Settings</strong></span></button>
+                <button type="button" class="tn-nav-item" data-tracknest-nav="profile" onclick="navigateTrackNest('profile')" title="My Profile"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg><span class="tn-nav-label"><strong>My Profile</strong></span></button>
+                <button type="button" class="tn-nav-item" data-tracknest-nav="logout" onclick="handleLogout()" title="Logout"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3h-6"/></svg><span class="tn-nav-label"><strong>Logout</strong></span></button>
             </nav>
             <p class="tn-sidebar-note">Each item opens its own workspace. All pages use your existing saved financial data.</p>
         </aside>
@@ -676,11 +741,12 @@
                 <div class="brand-icon">T</div>
                 <div class="brand-title">TrackNest</div>
             </div>
+            <div class="tn-top-search"><input type="search" aria-label="Search transactions" placeholder="⌕  Search transactions…" id="tnGlobalSearch" onkeydown="if(event.key === 'Enter') { navigateTrackNest('transactions'); document.getElementById('txSearch').value=this.value; updateDashboard(); }"></div>
             <div class="user-nav">
-                <div class="user-info">
+                <div class="tn-profile-chip"><span class="tn-profile-avatar" id="tnUserInitial">U</span><div class="user-info">
                     <div class="user-name" id="displayUserName">Ankit Chand</div>
                     <div class="user-email" id="displayUserEmail">ankit@example.com</div>
-                </div>
+                </div></div>
                 <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
             </div>
         </header>
@@ -690,8 +756,8 @@
           <section class="tn-page" id="tnPage-dashboard" data-tn-page="dashboard">
             <section class="dashboard-intro" id="dashboardOverview" aria-label="Dashboard overview">
                 <div><div class="dashboard-kicker">Your financial workspace</div>
-                <h1 class="dashboard-heading">Financial overview</h1>
-                <p class="dashboard-description">Your spending, budget and transactions — all in one place.</p></div>
+                <h1 class="dashboard-heading">Welcome back, <span id="tnWelcomeName">there</span> 👋</h1>
+                <p class="dashboard-description">Here is your financial overview. Make every rupee count.</p></div>
                 <nav class="dashboard-shortcuts" aria-label="Dashboard shortcuts">
                     <a href="#budget" onclick="navigateTrackNest('budget');return false;" class="dashboard-shortcut">Manage budget</a>
                     <a href="#transactions" onclick="navigateTrackNest('transactions');return false;" class="dashboard-shortcut primary">+ Add transaction</a>
@@ -704,19 +770,19 @@
                     <div class="metric-sub">From your income & expenses</div>
                 </div>
                 <div class="metric-card warning">
-                    <div class="metric-heading"><div class="metric-label">Monthly Spent</div><span class="metric-symbol" aria-hidden="true">◷</span></div>
-                    <div class="metric-value" id="totalSpent">Nrs 0.00</div>
-                    <div class="metric-sub" id="spentPercentageSub">0% of monthly budget</div>
+                    <div class="metric-heading"><div class="metric-label">Total Income (this month)</div><span class="metric-symbol" aria-hidden="true">◷</span></div>
+                    <div class="metric-value" id="totalIncomeMonth">Nrs 0.00</div>
+                    <div class="metric-sub" id="spentPercentageSub">Recorded income this month</div>
                 </div>
                 <div class="metric-card danger">
-                    <div class="metric-heading"><div class="metric-label">Account Status</div><span class="metric-symbol" aria-hidden="true">●</span></div>
-                    <div class="metric-value" id="accountStatus" style="font-size: 1.35rem; color: var(--success); padding-top: 5px;">Active / Normal</div>
-                    <div class="metric-sub" id="statusSub">Funds available for transactions</div>
+                    <div class="metric-heading"><div class="metric-label">Total Expenses (this month)</div><span class="metric-symbol" aria-hidden="true">●</span></div>
+                    <div class="metric-value" id="totalSpent">Nrs 0.00</div><span id="accountStatus" class="tn-account-status" hidden>Active</span>
+                    <div class="metric-sub" id="statusSub">Recorded expenses in the current month</div>
                 </div>
                 <div class="metric-card success">
-                    <div class="metric-heading"><div class="metric-label">Predicted Month-End</div><span class="metric-symbol" aria-hidden="true">⌁</span></div>
-                    <div class="metric-value" id="predictedSpent">Nrs 0.00</div>
-                    <div class="metric-sub">Ensemble forecasting model</div>
+                    <div class="metric-heading"><div class="metric-label">Total Savings (this month)</div><span class="metric-symbol" aria-hidden="true">⌁</span></div>
+                    <div class="metric-value" id="totalSavingsMonth">Nrs 0.00</div><span id="predictedSpent" hidden>Nrs 0.00</span>
+                    <div class="metric-sub">Income minus expenses this month</div>
                 </div>
             </div>
             <div class="tn-dashboard-actions">
@@ -724,6 +790,11 @@
               <button type="button" class="tn-action-card" onclick="navigateTrackNest('expense')"><strong>− Add expense</strong><span>Track your spending</span></button>
               <button type="button" class="tn-action-card" onclick="navigateTrackNest('budget')"><strong>◎ Monthly budget</strong><span>Manage spending limits</span></button>
             </div>
+            <div class="tn-premium-charts">
+              <section class="card tn-dashboard-chart"><div class="tn-workspace-row"><div><div class="section-label">Financial overview</div><h3 class="card-title">Income vs Expenses</h3></div><span class="tn-chart-pill">Last 6 months</span></div><div class="tn-premium-chart-canvas"><canvas id="tnOverviewChart"></canvas></div></section>
+              <section class="card tn-dashboard-chart"><div class="tn-workspace-row"><div><div class="section-label">Category breakdown</div><h3 class="card-title">Where your money goes</h3></div></div><div class="tn-premium-chart-canvas"><canvas id="tnCategoryChart"></canvas></div></section>
+            </div>
+            <section id="tnDashboardAlerts" class="tn-dashboard-alerts" aria-live="polite"></section>
             <section class="card"><div class="tn-workspace-row"><div><div class="section-label">Recent activity</div><h3 class="card-title">Latest transactions</h3></div><button class="tn-view-all" type="button" onclick="navigateTrackNest('transactions')">View all →</button></div><div id="tnRecentTransactions" class="tn-recent-list"></div></section>
           </section>
           <section class="tn-page" id="tnPage-income" data-tn-page="income" hidden>
@@ -738,6 +809,8 @@
                   <select id="incomeEntryCategory" required><option value="Salary">Salary</option><option value="Freelance">Freelance</option><option value="Business">Business</option><option value="Gift">Gift</option><option value="Other">Other income</option></select>
                 </div>
                 <div class="form-group"><label for="incomeEntryDate">Date</label><input type="date" id="incomeEntryDate" required></div>
+                <div class="form-group"><label for="incomeEntryPayment">Payment method</label><select id="incomeEntryPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select></div>
+                <div class="form-group"><label for="incomeEntryNotes">Notes</label><input id="incomeEntryNotes" maxlength="1000" placeholder="Optional notes"></div>
                 <div class="form-group"><label for="incomeEntryAmount">Amount (Nrs)</label><input id="incomeEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn">Save Income</button>
               </form>
@@ -745,7 +818,17 @@
             <section class="card tn-workspace-card">
               <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Income history</h3></div>
                 <strong class="tn-page-total" id="incomePageTotal">Nrs 0.00</strong></div>
+              <div class="tn-income-filters">
+                <input id="incomeFilterSearch" type="search" placeholder="Search income…" aria-label="Search income" oninput="renderTrackNestPageTables()">
+                <select id="incomeFilterCategory" aria-label="Filter income category" onchange="renderTrackNestPageTables()"><option value="">All categories</option></select>
+                <input id="incomeFilterFrom" type="date" aria-label="Start date" onchange="renderTrackNestPageTables()">
+                <input id="incomeFilterTo" type="date" aria-label="End date" onchange="renderTrackNestPageTables()">
+              </div>
               <div class="table-scroll"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="incomePageRows"></tbody></table></div>
+            </section>
+            <section class="card">
+              <div class="tn-workspace-row"><div><div class="section-label">Earnings overview</div><h3 class="card-title">Monthly income trend</h3></div></div>
+              <div class="tn-premium-chart-canvas"><canvas id="incomePageChart"></canvas></div>
             </section>
           </section>
           <section class="tn-page" id="tnPage-expense" data-tn-page="expense" hidden>
@@ -760,6 +843,8 @@
                   <select id="expenseEntryCategory" required><option value="Groceries">Groceries</option><option value="Dining">Dining</option><option value="Utilities">Utilities</option><option value="Shopping">Shopping</option><option value="Transport">Transport</option><option value="Health">Health</option><option value="Other">Other expense</option></select>
                 </div>
                 <div class="form-group"><label for="expenseEntryDate">Date</label><input type="date" id="expenseEntryDate" required></div>
+                <div class="form-group"><label for="expenseEntryPayment">Payment method</label><select id="expenseEntryPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select></div>
+                <div class="form-group"><label for="expenseEntryNotes">Notes</label><input id="expenseEntryNotes" maxlength="1000" placeholder="Optional notes"></div>
                 <div class="form-group"><label for="expenseEntryAmount">Amount (Nrs)</label><input id="expenseEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn">Save Expense</button>
               </form>
@@ -767,7 +852,17 @@
             <section class="card tn-workspace-card">
               <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Expense history</h3></div>
                 <strong class="tn-page-total" id="expensePageTotal">Nrs 0.00</strong></div>
+              <div class="tn-income-filters">
+                <input id="expenseFilterSearch" type="search" placeholder="Search expense…" aria-label="Search expense" oninput="renderTrackNestPageTables()">
+                <select id="expenseFilterCategory" aria-label="Filter expense category" onchange="renderTrackNestPageTables()"><option value="">All categories</option></select>
+                <input id="expenseFilterFrom" type="date" aria-label="Start date" onchange="renderTrackNestPageTables()">
+                <input id="expenseFilterTo" type="date" aria-label="End date" onchange="renderTrackNestPageTables()">
+              </div>
               <div class="table-scroll"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expensePageRows"></tbody></table></div>
+            </section>
+            <section class="card">
+              <div class="tn-workspace-row"><div><div class="section-label">Spending overview</div><h3 class="card-title">Monthly expense trend</h3></div></div>
+              <div class="tn-premium-chart-canvas"><canvas id="expensePageChart"></canvas></div>
             </section>
           </section>
           <section class="tn-page" id="tnPage-transactions" data-tn-page="transactions" hidden>
@@ -777,10 +872,13 @@
                     <div><div class="section-label">Your activity</div><div class="card-title">Transaction management</div><p class="card-description">Record and review income and expenses.</p></div><div class="tn-record-filter" id="tnRecordFilter" aria-label="Transaction filters"><button type="button" class="active" onclick="setTrackNestFilter('all')" data-filter="all">All</button><button type="button" onclick="setTrackNestFilter('income')" data-filter="income">Income</button><button type="button" onclick="setTrackNestFilter('expense')" data-filter="expense">Expenses</button></div>
                 </div>
                 <div class="tn-search-toolbar" aria-label="Search transactions">
-                    <div class="form-group"><label for="txSearch">Search</label><input type="search" id="txSearch" placeholder="Description or category" oninput="updateDashboard()" maxlength="200"></div>
-                    <div class="form-group"><label for="txDateFrom">From date</label><input type="date" id="txDateFrom" onchange="updateDashboard()"></div>
-                    <div class="form-group"><label for="txDateTo">To date</label><input type="date" id="txDateTo" onchange="updateDashboard()"></div>
+                  <div class="form-group"><label for="tnTransactionCategoryFilter">Category</label><select id="tnTransactionCategoryFilter" onchange="premiumTransactionPage=1;updateDashboard()"><option value="">All categories</option></select></div>
+                  <div class="form-group"><label for="tnTransactionSort">Sort</label><select id="tnTransactionSort" onchange="premiumTransactionPage=1;updateDashboard()"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option></select></div>
+                    <div class="form-group"><label for="txSearch">Search</label><input type="search" id="txSearch" placeholder="Description or category" oninput="premiumTransactionPage=1;updateDashboard()" maxlength="200"></div>
+                    <div class="form-group"><label for="txDateFrom">From date</label><input type="date" id="txDateFrom" onchange="premiumTransactionPage=1;updateDashboard()"></div>
+                    <div class="form-group"><label for="txDateTo">To date</label><input type="date" id="txDateTo" onchange="premiumTransactionPage=1;updateDashboard()"></div>
                     <button type="button" class="cancel-edit-btn" onclick="resetTransactionFilters()">Clear filters</button>
+                  <button type="button" class="primary-btn" onclick="downloadPremiumTransactionCSV()">Export CSV</button>
                 </div>
                 <p id="txFilterCount" class="tn-filter-count" role="status" aria-live="polite"></p>
                 <div id="editTransactionNotice" class="edit-transaction-notice" role="status" style="display:none">Editing an existing transaction — update the fields below and save your changes.</div>
@@ -810,7 +908,8 @@
                         <label>Amount (Nrs)</label>
                         <input type="number" id="txAmount" step="0.01" placeholder="5000.00" required>
                     </div>
-                    <div class="form-group"><label for="txDate">Transaction date</label><input type="date" id="txDate" required></div>
+                    <div class="form-group"><label for="txDate">Transaction date</label><input type="date" id="txDate" required></div><div class="form-group"><label for="txPayment">Payment method</label><select id="txPayment"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select></div>
+                    <div class="form-group"><label for="txNotes">Notes</label><input id="txNotes" maxlength="1000" placeholder="Optional notes"></div>
                     <div class="transaction-form-actions"><button type="submit" class="primary-btn" id="addTxBtn">Add Transaction</button>
                     <button type="button" class="cancel-edit-btn" id="cancelTxEdit" onclick="cancelTransactionEdit()" style="display:none">Cancel</button></div>
                 </form>
@@ -823,15 +922,16 @@
                             <th>Category</th>
                             <th>Type</th>
                             <th>Amount</th>
+                            <th>Payment method</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="txTableBody">
                         <tr>
-                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td>
                         </tr>
                     </tbody>
-                </table></div>
+                </table></div><div class="tn-pagination"><button type="button" class="cancel-edit-btn" onclick="changePremiumTransactionPage(-1)">Previous</button><span id="tnPaginationLabel">Page 1</span><button type="button" class="cancel-edit-btn" onclick="changePremiumTransactionPage(1)">Next</button></div>
             </div>
           </section>
           <section class="tn-page" id="tnPage-budget" data-tn-page="budget" hidden>
@@ -848,6 +948,21 @@
                     <button class="primary-btn" onclick="updateBudgetLimit()" style="padding: 0.5rem 1rem;">Set Limit</button>
                 </div>
             </div>
+            <div class="tn-budget-stats">
+              <div class="card"><span>Monthly budget</span><strong id="tnBudgetTotal">Nrs 0.00</strong></div>
+              <div class="card"><span>Spent this month</span><strong id="tnBudgetSpent">Nrs 0.00</strong></div>
+              <div class="card"><span>Remaining budget</span><strong id="tnBudgetRemaining">Nrs 0.00</strong></div>
+            </div>
+            <section class="card"><div class="tn-workspace-row"><h3 class="card-title">Category budgets</h3><span class="tn-chart-pill">Current month</span></div>
+              <form id="tnCategoryBudgetForm" onsubmit="savePremiumCategoryBudget(event)" class="tn-entry-form">
+                <input type="hidden" id="tnCategoryBudgetId">
+                <div class="form-group"><label for="tnBudgetCategory">Expense category</label><select id="tnBudgetCategory" required></select></div>
+                <div class="form-group"><label for="tnBudgetAmount">Monthly limit (Nrs)</label><input id="tnBudgetAmount" type="number" min=".01" step=".01" required></div>
+                <button class="primary-btn" type="submit">Save category budget</button>
+                <button class="cancel-edit-btn" type="button" onclick="resetPremiumCategoryBudget()">Cancel</button>
+              </form>
+              <div id="tnCategoryBudgetList" class="tn-premium-grid"></div>
+            </section>
             <section class="card tn-budget-note"><h3 class="card-title">How budget protection works</h3>
               <p>Below 80%: normal. From 80%: warning. From 90%: critical. At 100%: TrackNest blocks additional expense recording. Income recording remains available.</p>
               <p>Budget limits apply to records inside TrackNest, not outside payments.</p>
@@ -883,9 +998,84 @@
                 </div>
             <p class="tn-disclaimer">Advice is generated using the existing rule-based demo assistant; it is not a live AI service.</p>
           </section>
+
+          <section class="tn-page" id="tnPage-categories" data-tn-page="categories" hidden>
+            <div class="tn-page-heading"><span class="section-label">Organize spending</span><h1 class="dashboard-heading">Categories</h1><p class="dashboard-description">Manage income and expense categories for better reporting.</p></div>
+            <section class="card"><h3 class="card-title">Create or edit a category</h3>
+              <form class="tn-entry-form" id="tnCategoryForm" onsubmit="savePremiumCategory(event)">
+                <input type="hidden" id="tnCategoryId">
+                <div class="form-group"><label for="tnCategoryName">Name</label><input id="tnCategoryName" required maxlength="60" placeholder="e.g. Education"></div>
+                <div class="form-group"><label for="tnCategoryType">Type</label><select id="tnCategoryType"><option value="expense">Expense</option><option value="income">Income</option></select></div>
+                <button type="submit" class="primary-btn">Save category</button><button type="button" class="cancel-edit-btn" onclick="resetPremiumCategory()">Cancel</button>
+              </form>
+            </section>
+            <section class="card"><h3 class="card-title">Your categories</h3><div id="tnCategoryList" class="tn-premium-list"></div></section>
+          </section>
+          <section class="tn-page" id="tnPage-reports" data-tn-page="reports" hidden>
+            <div class="tn-page-heading"><span class="section-label">Financial intelligence</span><h1 class="dashboard-heading">Reports & Analytics</h1><p class="dashboard-description">Explore trends calculated from your saved transactions and download your report.</p></div>
+            <section class="card">
+              <div class="tn-search-toolbar"><div class="form-group"><label for="tnReportFrom">From date</label><input type="date" id="tnReportFrom"></div>
+              <div class="form-group"><label for="tnReportTo">To date</label><input type="date" id="tnReportTo"></div>
+              <button class="primary-btn" type="button" onclick="loadPremiumAnalytics()">Apply dates</button>
+              <button class="cancel-edit-btn" type="button" onclick="downloadPremiumReport('csv')">Export CSV</button>
+              <button class="cancel-edit-btn" type="button" onclick="downloadPremiumReport('pdf')">Export PDF</button></div>
+              <div class="tn-report-summary"><span>Income <strong id="tnReportIncome">Nrs 0.00</strong></span><span>Expenses <strong id="tnReportExpense">Nrs 0.00</strong></span><span>Net balance <strong id="tnReportBalance">Nrs 0.00</strong></span></div>
+            </section>
+            <div class="tn-premium-charts"><section class="card"><h3 class="card-title">Monthly income vs expense</h3><div class="tn-premium-chart-canvas"><canvas id="tnReportBar"></canvas></div></section>
+            <section class="card"><h3 class="card-title">Expense by category</h3><div class="tn-premium-chart-canvas"><canvas id="tnReportDonut"></canvas></div></section></div>
+            <section class="card"><h3 class="card-title">Monthly financial trend</h3><div class="tn-premium-chart-canvas"><canvas id="tnReportLine"></canvas></div></section>
+          </section>
+          <section class="tn-page" id="tnPage-goals" data-tn-page="goals" hidden>
+            <div class="tn-page-heading"><span class="section-label">Your future</span><h1 class="dashboard-heading">Savings Goals</h1><p class="dashboard-description">Create targets and track savings allocations separately from expense records.</p></div>
+            <section class="card"><h3 class="card-title">Create or edit savings goal</h3>
+              <form id="tnGoalForm" class="tn-entry-form" onsubmit="savePremiumGoal(event)">
+                <input type="hidden" id="tnGoalId">
+                <div class="form-group"><label for="tnGoalName">Goal name</label><input id="tnGoalName" required maxlength="100" placeholder="New laptop"></div>
+                <div class="form-group"><label for="tnGoalTarget">Target (Nrs)</label><input id="tnGoalTarget" type="number" min="0.01" step=".01" required></div>
+                <div class="form-group"><label for="tnGoalDeadline">Target date (optional)</label><input id="tnGoalDeadline" type="date"></div>
+                <button type="submit" class="primary-btn">Save goal</button><button type="button" class="cancel-edit-btn" onclick="resetPremiumGoal()">Cancel</button>
+              </form>
+            </section>
+            <section class="tn-premium-grid" id="tnGoalsList"></section>
+          </section>
+          <section class="tn-page" id="tnPage-notifications" data-tn-page="notifications" hidden>
+            <div class="tn-page-heading"><span class="section-label">Budget reminders</span><h1 class="dashboard-heading">Notifications <span id="tnUnreadCount"></span></h1><p class="dashboard-description">View budget alerts and mark messages as read.</p></div>
+            <section class="card"><div class="tn-workspace-row"><h3 class="card-title">Recent alerts</h3><button type="button" class="cancel-edit-btn" onclick="markPremiumNotification(null)">Mark all read</button></div>
+              <div id="tnNotificationList" class="tn-premium-list"></div></section>
+          </section>
+          <section class="tn-page" id="tnPage-settings" data-tn-page="settings" hidden>
+            <div class="tn-page-heading"><span class="section-label">Personalize your workspace</span><h1 class="dashboard-heading">Settings</h1><p class="dashboard-description">Choose how your financial dashboard looks and how alerts are delivered.</p></div>
+            <section class="card"><form id="tnSettingsForm" class="tn-settings-form" onsubmit="savePremiumSettings(event)">
+              <div class="form-group"><label for="tnSettingsTheme">Appearance</label><select id="tnSettingsTheme"><option value="light">Light theme</option><option value="dark">Dark theme</option></select></div>
+              <div class="form-group"><label for="tnSettingsCurrency">Currency</label><select id="tnSettingsCurrency"><option value="NPR">Nepalese Rupee (NPR)</option></select><small>Other currencies require conversion and are not supported yet.</small></div>
+              <label class="tn-switch-line"><input type="checkbox" id="tnSettingsEmail" checked> Send budget warning emails to my registered address</label>
+              <button class="primary-btn" type="submit">Save preferences</button></form></section>
+          </section>
+          <section class="tn-page" id="tnPage-profile" data-tn-page="profile" hidden>
+            <div class="tn-page-heading"><span class="section-label">Account information</span><h1 class="dashboard-heading">My Profile</h1><p class="dashboard-description">Manage the name and phone number associated with your account.</p></div>
+            <section class="card"><form id="tnProfileForm" class="tn-settings-form" onsubmit="savePremiumProfile(event)">
+              <div class="form-group"><label for="tnProfileName">Full name</label><input id="tnProfileName" maxlength="150" required></div>
+              <div class="form-group"><label for="tnProfileEmail">Registered email</label><input id="tnProfileEmail" type="email" readonly><small>Your email changes only after you confirm the verification link sent to the new address.</small></div>
+              <div class="form-group"><label for="tnProfilePhone">Phone number</label><input id="tnProfilePhone" type="tel" maxlength="20" required></div>
+              <button class="primary-btn" type="submit">Save profile</button></form></section>
+            <section class="card"><h3 class="card-title">Change password</h3><form class="tn-settings-form" onsubmit="changePremiumPassword(event)">
+              <div class="form-group"><label for="tnOldPassword">Current password</label><input id="tnOldPassword" type="password" required autocomplete="current-password"></div>
+              <div class="form-group"><label for="tnNewPassword">New password</label><input id="tnNewPassword" type="password" minlength="8" required autocomplete="new-password"></div>
+              <button class="primary-btn" type="submit">Update password</button></form></section>
+            <section class="card"><h3 class="card-title">Change registered email</h3><p class="card-description">A verification link will be sent to the new email. Real email delivery must be configured.</p>
+              <form class="tn-settings-form" onsubmit="requestPremiumEmailChange(event)">
+                <div class="form-group"><label for="tnNewEmail">New email address</label><input id="tnNewEmail" type="email" required></div>
+                <div class="form-group"><label for="tnVerifyPassword">Current password</label><input id="tnVerifyPassword" type="password" required></div>
+                <button type="submit" class="primary-btn">Send verification link</button></form></section>
+          </section>
         </main>
     </div>
 
+    <dialog id="tnTransactionDialog" class="tn-details-dialog">
+        <div class="tn-details-header"><h3>Transaction details</h3><button type="button" onclick="document.getElementById('tnTransactionDialog').close()" aria-label="Close details">×</button></div>
+        <div id="tnTransactionDetailContent"></div>
+        <button type="button" class="primary-btn" onclick="document.getElementById('tnTransactionDialog').close()">Close</button>
+    </dialog>
     <!-- Email Notification Toast -->
     <div id="emailToast">
         <div style="font-weight: 700; color: var(--danger); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -900,6 +1090,7 @@
         // State
         let currentUser = null;
         let userBudgetLimit = 50000;
+        let currentMonthlySpent = 0;
         let transactions = [];
         let isBudgetLocked = false;
 
@@ -1066,9 +1257,17 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('appScreen').classList.add('active');
             document.getElementById('displayUserName').textContent = currentUser.name;
+            document.getElementById('tnWelcomeName').textContent = currentUser.name || "there";
+            document.getElementById('tnUserInitial').textContent = (currentUser.name || "U").trim().slice(0,1).toUpperCase();
             document.getElementById('displayUserEmail').textContent = currentUser.email;
             initializeTrackNestDates();
+            const drawer = document.getElementById('tnSidebar');
+            if(window.matchMedia('(min-width: 801px)').matches){
+                drawer.removeAttribute('inert');drawer.setAttribute('aria-hidden','false');
+                if(localStorage.getItem('tracknest_sidebar_collapsed')==='true') document.getElementById('appScreen').classList.add('tn-collapsed');
+            }
             await loadFinance();
+            if(typeof loadPremiumModules === "function") await loadPremiumModules();
             navigateTrackNest(window.location.hash.slice(1) || "dashboard", false);
         }
 
@@ -1078,6 +1277,7 @@
                 if (!response.ok) throw new Error("Could not load financial data");
                 const state = await response.json();
                 userBudgetLimit = state.limit;
+                currentMonthlySpent = Number(state.spent || 0);
                 transactions = state.transactions;
                 document.getElementById("newLimitInput").value = userBudgetLimit;
                 // Restore a stable target after previous locked-state rendering.
@@ -1087,6 +1287,10 @@
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
                 if (state.locked) lockAccount(); else unlockAccount();
+                if(typeof loadPremiumAnalytics === 'function') {
+                    Promise.all([loadPremiumAnalytics(),loadPremiumBudgets(),loadPremiumNotifications()])
+                        .catch(error=>console.error('Premium refresh failed',error));
+                }
             } catch(error) { alert(error.message); }
         }
 
@@ -1115,10 +1319,22 @@
             toggle.setAttribute('aria-expanded', 'false');
             toggle.setAttribute('aria-label', 'Open navigation menu');
             if (wasOpen) toggle.focus();
+            if(window.matchMedia('(min-width: 801px)').matches){
+                menu.removeAttribute('inert');
+                menu.setAttribute('aria-hidden','false');
+            }
         }
         function toggleTrackNestMenu() {
-            document.getElementById('tnSidebar').classList.contains('open')
-                ? closeTrackNestMenu() : openTrackNestMenu();
+            if(window.matchMedia('(min-width: 801px)').matches) {
+                const app = document.getElementById('appScreen');
+                app.classList.toggle('tn-collapsed');
+                const collapsed = app.classList.contains('tn-collapsed');
+                document.getElementById('tnMenuButton').setAttribute('aria-expanded', String(!collapsed));
+                localStorage.setItem('tracknest_sidebar_collapsed', String(collapsed));
+            } else {
+                document.getElementById('tnSidebar').classList.contains('open')
+                    ? closeTrackNestMenu() : openTrackNestMenu();
+            }
         }
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape' && document.getElementById('tnSidebar').classList.contains('open')) {
@@ -1128,6 +1344,7 @@
         function setTrackNestFilter(filter) {
             if (!['all','income','expense'].includes(filter)) return;
             trackNestRecordFilter = filter;
+            if(typeof premiumTransactionPage !== "undefined") premiumTransactionPage=1;
             document.querySelectorAll('[data-filter]').forEach(button => {
                 const active = button.dataset.filter === filter;
                 button.classList.toggle('active', active);
@@ -1137,7 +1354,7 @@
         }
 
         function navigateTrackNest(section, updateHistory = true) {
-            const pages = ['dashboard','income','expense','transactions','budget','forecast','advisor'];
+            const pages = ['dashboard','income','expense','transactions','budget','forecast','advisor','categories','reports','goals','notifications','settings','profile'];
             if (!pages.includes(section)) section = 'dashboard';
             document.querySelectorAll('[data-tn-page]').forEach(page => {
                 page.hidden = page.dataset.tnPage !== section;
@@ -1155,9 +1372,9 @@
             }
             closeTrackNestMenu();
             window.scrollTo({top:0,behavior:'instant'});
-            if (section === 'forecast' && typeof forecastChart !== 'undefined') {
-                requestAnimationFrame(() => forecastChart.resize());
-            }
+            if (section === 'forecast' && typeof forecastChart !== 'undefined') requestAnimationFrame(() => forecastChart.resize());
+            if (section === 'reports' && typeof premiumCharts !== 'undefined') requestAnimationFrame(() => Object.values(premiumCharts).forEach(chart=>chart&&chart.resize()));
+            if(typeof loadPremiumSection === 'function') loadPremiumSection(section);
         }
         window.addEventListener('popstate', () => navigateTrackNest(window.location.hash.slice(1), false));
         window.addEventListener('hashchange', () => navigateTrackNest(window.location.hash.slice(1), false));
@@ -1172,7 +1389,9 @@
                 desc: document.getElementById(prefix + 'Desc').value.trim(),
                 category: document.getElementById(prefix + 'Category').value,
                 amount: document.getElementById(prefix + 'Amount').value,
-                date: document.getElementById(prefix + 'Date').value
+                date: document.getElementById(prefix + 'Date').value,
+                payment_method: document.getElementById(prefix + 'Payment').value,
+                notes: document.getElementById(prefix + 'Notes').value
             };
             button.disabled = true;
             try {
@@ -1224,12 +1443,19 @@
             const money = n => 'Nrs ' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
             const total = kind => transactions.filter(t=>t.type===kind).reduce((sum,t)=>sum+Number(t.amount),0);
             for (const kind of ['income','expense']) {
-                const records = transactions.filter(t=>t.type===kind);
-                document.getElementById(kind+'PageTotal').textContent = money(total(kind));
+                const search = document.getElementById(kind+'FilterSearch').value.trim().toLowerCase();
+                const category = document.getElementById(kind+'FilterCategory').value;
+                const start = document.getElementById(kind+'FilterFrom').value;
+                const end = document.getElementById(kind+'FilterTo').value;
+                const records = transactions.filter(t=>t.type===kind &&
+                    (!search || (t.desc+' '+t.category).toLowerCase().includes(search)) &&
+                    (!category || t.category===category) &&
+                    (!start || t.date>=start) && (!end || t.date<=end));
+                document.getElementById(kind+'PageTotal').textContent = money(records.reduce((sum,t)=>sum+Number(t.amount),0));
                 document.getElementById(kind+'PageRows').innerHTML = records.length ? records.map(t => `
                     <tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.category)}</td>
                     <td class="tn-table-amount ${kind}">${kind==='income'?'+':'−'}${money(Number(t.amount))}</td>
-                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})">Delete</button></td></tr>
+                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})">Delete</button><button type="button" class="edit-transaction-btn" onclick="viewTransactionDetails(${Number(t.id)})">View</button></td></tr>
                 `).join('') : '<tr><td colspan="5" class="tn-empty">No '+kind+' records yet. Use the form above to add one.</td></tr>';
             }
             const recent = transactions.slice(0,5);
@@ -1293,7 +1519,9 @@
                 type:document.getElementById('txType').value,
                 category:document.getElementById('txCategory').value,
                 amount:document.getElementById('txAmount').value,
-                date:document.getElementById('txDate').value
+                date:document.getElementById('txDate').value,
+                payment_method:document.getElementById('txPayment').value,
+                notes:document.getElementById('txNotes').value
             };
             const isEditing = editingTransactionId !== null;
             const button = document.getElementById('addTxBtn');
@@ -1332,6 +1560,8 @@
             categoryInput.value = record.category;
             document.getElementById('txAmount').value = Number(record.amount).toFixed(2);
             document.getElementById('txDate').value = record.date;
+            document.getElementById('txPayment').value = record.payment_method || 'Cash';
+            document.getElementById('txNotes').value = record.notes || '';
             document.getElementById('addTxBtn').textContent = 'Save Changes';
             document.getElementById('cancelTxEdit').style.display = 'inline-flex';
             document.getElementById('editTransactionNotice').style.display = 'block';
@@ -1392,15 +1622,18 @@
             const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
             const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
             const monthKey = trackNestToday().slice(0, 7);
-            const monthlyExpense = transactions.filter(t => t.type === 'expense' && t.date.startsWith(monthKey))
+            const monthlyExpense = currentMonthlySpent;
+            const monthlyIncome = transactions.filter(t => t.type === 'income' && t.date.startsWith(monthKey))
                 .reduce((acc, t) => acc + t.amount, 0);
             const balance = totalIncome - totalExpense;
 
             document.getElementById('totalBalance').textContent = 'Nrs ' + balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('totalIncomeMonth').textContent = 'Nrs ' + monthlyIncome.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('totalSavingsMonth').textContent = 'Nrs ' + (monthlyIncome - monthlyExpense).toLocaleString('en-US', {minimumFractionDigits: 2});
             document.getElementById('totalSpent').textContent = 'Nrs ' + monthlyExpense.toLocaleString('en-US', {minimumFractionDigits: 2});
 
             const pct = userBudgetLimit > 0 ? Math.round((monthlyExpense / userBudgetLimit) * 100) : 0;
-            document.getElementById('spentPercentageSub').textContent = pct + '% of monthly budget limit';
+            document.getElementById('spentPercentageSub').textContent = 'Income recorded this month';
             document.getElementById('budgetBannerSub').textContent = `Current spent: Nrs ${monthlyExpense.toLocaleString()} (${pct}% of limit)`;
             document.getElementById('budgetProgressFill').style.width = Math.min(100, Math.max(0, pct)) + '%';
             document.getElementById('budgetProgress').setAttribute('aria-valuenow', String(Math.min(100, Math.max(0, pct))));
@@ -1414,25 +1647,35 @@
             const query = document.getElementById('txSearch').value.trim().toLocaleLowerCase();
             const from = document.getElementById('txDateFrom').value;
             const to = document.getElementById('txDateTo').value;
+            const categoryFilter = document.getElementById('tnTransactionCategoryFilter').value;
             const visibleTransactions = transactions.filter(t => {
                 if (trackNestRecordFilter !== 'all' && t.type !== trackNestRecordFilter) return false;
                 if (from && t.date < from) return false;
                 if (to && t.date > to) return false;
+                if (categoryFilter && t.category !== categoryFilter) return false;
                 return !query || (t.desc + ' ' + t.category).toLocaleLowerCase().includes(query);
             });
+            const sort = document.getElementById('tnTransactionSort').value;
+            visibleTransactions.sort((a,b)=>sort==='oldest'? a.date.localeCompare(b.date):
+                sort==='amount-desc'?b.amount-a.amount:sort==='amount-asc'?a.amount-b.amount:b.date.localeCompare(a.date));
+            const pages = Math.max(1,Math.ceil(visibleTransactions.length / 10));
+            premiumTransactionPage=Math.min(Math.max(1,premiumTransactionPage),pages);
+            const pageTransactions=visibleTransactions.slice((premiumTransactionPage-1)*10,premiumTransactionPage*10);
+            document.getElementById('tnPaginationLabel').textContent = 'Page '+premiumTransactionPage+' of '+pages;
             document.getElementById('txFilterCount').textContent = visibleTransactions.length +
                 ' of ' + transactions.length + ' transaction(s) shown';
             if (visibleTransactions.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No ${trackNestRecordFilter === 'all' ? 'transactions' : trackNestRecordFilter + ' records'} yet. Add a transaction above to get started.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No ${trackNestRecordFilter === 'all' ? 'transactions' : trackNestRecordFilter + ' records'} yet. Add a transaction above to get started.</td></tr>`;
             } else {
-                tbody.innerHTML = visibleTransactions.map(t => `
+                tbody.innerHTML = pageTransactions.map(t => `
                     <tr>
                         <td>${t.date}</td>
                         <td>${escapeHtml(t.desc)}</td>
                         <td>${escapeHtml(t.category)}</td>
                         <td><span class="badge ${t.type}">${t.type}</span></td>
                         <td style="font-family: 'JetBrains Mono';">${t.type === 'income' ? '+' : '-'}Nrs ${t.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                        <td><button type="button" class="edit-transaction-btn" onclick="editTransaction(${Number(t.id)})" aria-label="Edit ${escapeHtml(t.desc)}">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})" aria-label="Delete ${escapeHtml(t.desc)}">Delete</button></td>
+                        <td>${escapeHtml(t.payment_method || 'Cash')}</td>
+                        <td><button type="button" class="edit-transaction-btn" onclick="editTransaction(${Number(t.id)})" aria-label="Edit ${escapeHtml(t.desc)}">Edit</button><button type="button" class="edit-transaction-btn" onclick="viewTransactionDetails(${Number(t.id)})">View</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})" aria-label="Delete ${escapeHtml(t.desc)}">Delete</button></td>
                     </tr>
                 `).join('');
             }
@@ -1442,6 +1685,77 @@
             forecastChart.data.datasets[1].data = [null, null, null, null, monthlyExpense, predicted];
             forecastChart.update();
             renderTrackNestPageTables();
+            if (lastTransactionChartData !== transactions) {renderTrackNestCharts(); lastTransactionChartData = transactions;}
+        }
+
+
+        // Premium charts use only actual signed-in user's recorded transactions.
+        let lastTransactionChartData = null;
+        let tnOverviewChart = null;
+        let tnCategoryChart = null;
+        function renderTrackNestCharts() {
+            if (typeof Chart === 'undefined') return;
+            const monthKeys = [];
+            const labels = [];
+            const now = new Date();
+            for (let offset = 5; offset >= 0; offset--) {
+                const d = new Date(now.getFullYear(), now.getMonth()-offset, 1);
+                monthKeys.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
+                labels.push(d.toLocaleString('en-US',{month:'short'}));
+            }
+            const values = (type) => monthKeys.map(month =>
+                transactions.filter(tx=>tx.type===type && tx.date.startsWith(month))
+                    .reduce((sum,tx)=>sum+Number(tx.amount),0));
+            if (tnOverviewChart) tnOverviewChart.destroy();
+            tnOverviewChart = new Chart(document.getElementById('tnOverviewChart'),{
+                type:'bar',
+                data:{labels,datasets:[
+                    {label:'Income',data:values('income'),backgroundColor:'#22b981',borderRadius:5,maxBarThickness:24},
+                    {label:'Expenses',data:values('expense'),backgroundColor:'#6d62ee',borderRadius:5,maxBarThickness:24}
+                ]},
+                options:{
+                    responsive:true,maintainAspectRatio:false,
+                    plugins:{legend:{position:'bottom',labels:{usePointStyle:true}}},
+                    scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#e8edf5'}}}
+                }
+            });
+            const byCategory={};
+            transactions.filter(tx=>tx.type==='expense' && tx.date.startsWith(trackNestToday().slice(0,7))).forEach(tx=>{
+                byCategory[tx.category]=(byCategory[tx.category]||0)+Number(tx.amount);
+            });
+            const names=Object.keys(byCategory);
+            if (tnCategoryChart) tnCategoryChart.destroy();
+            tnCategoryChart=new Chart(document.getElementById('tnCategoryChart'),{
+                type:'doughnut',
+                data:{
+                    labels:names.length?names:['No expenses yet'],
+                    datasets:[{
+                        data:names.length?Object.values(byCategory):[1],
+                        backgroundColor:names.length?['#6557e9','#38a3f5','#12af90','#f4ab48','#f16c82','#9b7af4','#75b8d9']:['#e6eaf2'],
+                        borderWidth:0,hoverOffset:6
+                    }]
+                },
+                options:{
+                    responsive:true,maintainAspectRatio:false,cutout:'69%',
+                    plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8}}}
+                }
+            });
+        }
+
+        function viewTransactionDetails(id) {
+            const item=transactions.find(t=>Number(t.id)===Number(id));
+            if(!item){alert('Transaction not found.');return;}
+            const label=(name,value)=>'<div class="tn-detail-row"><span>'+name+'</span><strong>'+escapeHtml(value)+'</strong></div>';
+            document.getElementById('tnTransactionDetailContent').innerHTML =
+                label('Description',item.desc)+label('Date',item.date)+label('Type',item.type)+
+                label('Category',item.category)+label('Amount',premiumMoney(item.amount))+
+                label('Payment method',item.payment_method||'Cash')+label('Notes',item.notes||'—');
+            document.getElementById('tnTransactionDialog').showModal();
+        }
+
+        function changePremiumTransactionPage(delta) {
+            premiumTransactionPage=Math.max(1,premiumTransactionPage+delta);
+            updateDashboard();
         }
 
         // AI Chatbot logic
@@ -1490,5 +1804,6 @@
             }
         }
     </script>
+    <script src="{% static 'js/premium-pages.js' %}"></script>
 </body>
 </html>

@@ -1,7 +1,8 @@
 name: Django checks
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, premium-ui-redesign-2026-11-22]
   pull_request:
     branches: [main]
 jobs:
@@ -19,6 +20,8 @@ jobs:
         run: pip install -r requirements.txt
       - name: Check schema consistency
         run: python manage.py makemigrations --check --dry-run
+      - name: Collect static assets for Django templates
+        run: python manage.py collectstatic --noinput
       - name: Run Django security and system checks
         run: python manage.py check
       - name: Test accounts and transactions
