@@ -112,6 +112,20 @@ def response_signature_valid(data, payment):
     return hmac.compare_digest(str(data.get("signature", "")), signature(signed_message))
 
 
+@require_GET
+def payment_summary(request):
+    """Owner-only totals of successful verified eSewa checkouts, never pending ones."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Sign in required."}, status=401)
+    paid = EsewaPayment.objects.filter(user=request.user, status="COMPLETE", expense__isnull=False)
+    summary = paid.aggregate(amount=Sum("amount"))
+    return JsonResponse({
+        "paid_total": float(summary["amount"] or Decimal("0")),
+        "successful_count": paid.count(),
+        "is_test_environment": True,
+    })
+
+
 @require_POST
 def start_checkout(request):
     if not request.user.is_authenticated:

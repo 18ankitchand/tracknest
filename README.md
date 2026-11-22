@@ -196,3 +196,13 @@ The customer signs in **on eSewa's site**, enters the publicly provided demo ver
 Cash, Bank Transfer, Card, Mobile Wallet and Other continue using direct/manual Save Expense and do not open eSewa. Only test-merchant payments are supported; there are no real-money transfers. Existing user accounts, transactions and monthly budgets remain intact. Additive migration `accounts/migrations/0004_esewa_notes.py` stores notes on pending eSewa checkouts.
 
 The uploaded reference recording shows a **Continue to Payment → eSewa sign-in → OTP → final Continue → result** journey. TrackNest redirects to the official provider rather than recreating or collecting its wallet login credentials. Browser UAT redirects and Gmail delivery must still be verified manually on the user's Mac, especially if eSewa refuses a localhost return URL.
+
+---
+
+## Expenses & eSewa Payment page — reference-image redesign
+
+The Expenses screen now uses the user's supplied **three summary cards + two-column payment form and expense history** reference. The top cards show total provider-verified eSewa payments and count from the owner's database records, plus the payment method. The left form contains amount, category, optional description, date, notes and eSewa payment selection. The right side shows saved expenses with filters; successfully verified provider payments are marked as such and cannot be edited or deleted directly, maintaining payment audit history. The existing monthly expense trend chart remains below.
+
+The interface intentionally uses `eSewa` for the primary payment method and buttons rather than a promotional “demo” label. **A clearly visible test-environment notice remains mandatory**: the checkout is still the public eSewa UAT endpoint, not real-money bill pay. Real payments will only be supported after merchant authorization, payment reconciliation and full production hardening. No user credentials are collected by TrackNest.
+
+The Expenses payment summary route `GET /api/payments/esewa/summary/` is authenticated and counts only the current user's `COMPLETE` payments with a verified linked expense. Pending and canceled attempts never inflate the amounts. The form supports manual expense entries for Cash, Bank Transfer, Card, Mobile Wallet or Other. Empty descriptions automatically receive a neutral expense description using the selected category. Existing income, budgets, authentication and data remain unchanged.

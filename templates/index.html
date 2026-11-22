@@ -748,6 +748,61 @@ font-size:.83rem;cursor:pointer}
 .tn-esewa-review-actions button{width:100%}}
 #appScreen .tn-expense-payment-hint{display:block;margin-top:7px;color:#78899d;font-size:.73rem;line-height:1.5}
 #appScreen.tn-dark .tn-expense-payment-hint{color:#b8c8dc}
+
+#appScreen .tn-expense-workspace{max-width:1480px}
+#appScreen .tn-expense-heading{margin-bottom:22px}
+#appScreen .tn-expense-heading .dashboard-heading{font-size:clamp(1.65rem,2.5vw,2.2rem);margin:7px 0}
+#appScreen .tn-expense-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px;margin-bottom:24px}
+#appScreen .tn-expense-stats .tn-expense-stat{display:flex;flex-direction:column;gap:8px;padding:24px 26px;min-height:116px}
+#appScreen .tn-expense-stat span{font-size:.81rem;color:#7f8da3}
+#appScreen .tn-expense-stat strong{font-size:1.65rem;font-weight:800;color:#20334f}
+#appScreen .tn-expense-stat small{font-size:.72rem;color:#8996a9}
+#appScreen .tn-expense-stat .tn-esewa-green{color:#20bf77!important}
+#appScreen .tn-expense-columns{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:stretch}
+#appScreen .tn-expense-columns>.card{margin:0;min-width:0;padding:27px}
+#appScreen .tn-expense-form-card .card-title,#appScreen .tn-expense-history-card .card-title{font-size:1.15rem;margin-bottom:8px}
+#appScreen .tn-expense-form-card .card-description,#appScreen .tn-expense-history-card .card-description{font-size:.81rem;line-height:1.6}
+#appScreen .tn-expense-vertical-form{display:grid;grid-template-columns:1fr;gap:17px;margin-top:23px}
+#appScreen .tn-expense-vertical-form .form-group{display:flex;flex-direction:column;gap:8px;margin:0;min-width:0}
+#appScreen .tn-expense-vertical-form label{color:#53647e;font-size:.83rem;font-weight:750}
+#appScreen .tn-expense-vertical-form input,#appScreen .tn-expense-vertical-form select,#appScreen .tn-expense-vertical-form textarea{width:100%;box-sizing:border-box;border-radius:11px;min-height:50px;padding:12px 15px;line-height:1.5}
+#appScreen .tn-expense-vertical-form textarea{min-height:88px;resize:vertical}
+#appScreen .tn-form-optional{color:#8c9aaf;font-weight:500}
+#appScreen .tn-expense-secondary-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#appScreen .tn-esewa-choice{display:flex;align-items:center;gap:13px;background:#e8f9f1;border:2px solid #18ae70;border-radius:12px;padding:14px 17px;min-height:52px;box-sizing:border-box}
+#appScreen .tn-payment-radio{border-radius:100%;width:17px;height:17px;background:#19b76a;box-shadow:inset 0 0 0 4px #e8f9f1;border:2px solid #14a95f;flex:0 0 17px}
+#appScreen .tn-esewa-brand{color:#119956;font-size:1.32rem;font-weight:900}
+#appScreen .tn-payment-choice-trailing{margin-left:auto;font-size:.74rem;color:#2a8b60}
+#appScreen .tn-expense-method-group select{min-height:43px!important}
+#appScreen .tn-expense-pay-submit{min-height:54px;width:100%;border-radius:12px;font-weight:800;font-size:.98rem}
+#appScreen .tn-expense-test-notice{font-size:.77rem;line-height:1.65;color:#708198;background:#eef5fb;border:1px solid #dbe7f5;padding:13px 15px;border-radius:11px}
+#appScreen .tn-expense-history-header{align-items:start;gap:8px}
+#appScreen .tn-expense-history-header .tn-page-total{font-size:.94rem}
+#appScreen .tn-expense-history-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:17px 0}
+#appScreen .tn-expense-history-filters input,#appScreen .tn-expense-history-filters select{min-width:0;width:100%;box-sizing:border-box}
+#appScreen .tn-expense-history-table{overflow:auto;max-height:610px}
+#appScreen .tn-expense-history-card{min-height:580px}
+#appScreen .tn-expense-history-table .transactions-table{min-width:520px}
+#appScreen .tn-expense-trend-card{margin-top:21px}
+#appScreen.tn-dark .tn-expense-stats .tn-expense-stat strong{color:#edf4ff}
+#appScreen.tn-dark .tn-expense-vertical-form label{color:#c6d4e6}
+#appScreen.tn-dark .tn-esewa-choice{background:#103928;border-color:#20bd72}
+#appScreen.tn-dark .tn-payment-radio{box-shadow:inset 0 0 0 4px #103928}
+#appScreen.tn-dark .tn-esewa-brand{color:#50dc9b}
+#appScreen.tn-dark .tn-payment-choice-trailing{color:#b2e6ca}
+#appScreen.tn-dark .tn-expense-test-notice{background:#1c3349;border-color:#36526c;color:#c1d4e7}
+@media(max-width:1100px){#appScreen .tn-expense-columns{grid-template-columns:1fr}#appScreen .tn-expense-history-card{min-height:360px}}
+@media(max-width:700px){#appScreen .tn-expense-stats{grid-template-columns:1fr}#appScreen .tn-expense-secondary-fields{grid-template-columns:1fr}#appScreen .tn-expense-columns>.card{padding:18px}}
+#appScreen .tn-esewa-choice.tn-is-manual{background:#eff2f8;border-color:#b6c6dc}
+#appScreen .tn-esewa-choice.tn-is-manual .tn-esewa-brand{color:#435878}
+#appScreen .tn-esewa-choice.tn-is-manual .tn-payment-choice-trailing{color:#6a7e94}
+#appScreen .tn-esewa-choice.tn-is-manual .tn-payment-radio{background:#a5afc0;border-color:#8b9caf;box-shadow:inset 0 0 0 4px #eff2f8}
+#appScreen .tn-expense-empty-history{min-height:135px;display:grid;place-content:center;gap:9px;text-align:center;border:1px dashed #c6d1e4;border-radius:14px;background:#f8fafc;padding:28px;color:#657a96}
+#appScreen .tn-expense-empty-history strong{font-size:.95rem;font-weight:600;color:#536b89}
+#appScreen .tn-expense-empty-history small{font-size:.78rem;line-height:1.55}
+#appScreen .tn-payment-verified{font-size:.7rem;font-weight:750;color:#159968;background:#dcf7e9;border-radius:8px;padding:6px 9px;display:inline-block;white-space:nowrap}
+#appScreen.tn-dark .tn-expense-empty-history{background:#182a41;border-color:#3a4e69}
+#appScreen.tn-dark .tn-expense-empty-history strong{color:#cfddf0}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -925,39 +980,53 @@ font-size:.83rem;cursor:pointer}
               <div class="tn-premium-chart-canvas"><canvas id="incomePageChart"></canvas></div>
             </section>
           </section>
-          <section class="tn-page" id="tnPage-expense" data-tn-page="expense" hidden>
-            <div class="tn-page-heading"><span class="section-label">Spending management</span><h1 class="dashboard-heading">Expenses</h1><p class="dashboard-description">Record expenses and review how you spend your money.</p></div>
-            
-            <section class="card tn-workspace-card">
-              <div class="section-label">New expense</div><div class="card-title">Add expense record</div>
-              <p class="card-description">Record your purchases and other spending. Choose the date it occurred.</p>
-              <form class="tn-entry-form" onsubmit="submitTrackNestEntry(event,'expense')">
-                <div class="form-group"><label for="expenseEntryDesc">Description</label><input id="expenseEntryDesc" maxlength="200" placeholder="e.g. Grocery shopping" required></div>
-                <div class="form-group"><label for="expenseEntryCategory">Category</label>
-                  <select id="expenseEntryCategory" required><option value="Groceries">Groceries</option><option value="Dining">Dining</option><option value="Utilities">Utilities</option><option value="Shopping">Shopping</option><option value="Transport">Transport</option><option value="Health">Health</option><option value="Other">Other expense</option></select>
+
+          <section class="tn-page tn-expense-workspace" id="tnPage-expense" data-tn-page="expense" hidden>
+            <div class="tn-page-heading tn-expense-heading">
+              <span class="section-label">TRACKNEST / EXPENSES</span>
+              <h1 class="dashboard-heading">Expenses &amp; eSewa Payment</h1>
+              <p class="dashboard-description">Pay an expense with eSewa and automatically add it to your history after confirmation.</p>
+            </div>
+            <div class="tn-expense-stats">
+              <div class="card tn-expense-stat"><span>eSewa payments recorded</span><strong id="tnEsewaPaidTotal">Nrs 0.00</strong><small>Verified payments only</small></div>
+              <div class="card tn-expense-stat"><span>Successful transactions</span><strong id="tnEsewaSuccessfulCount">0</strong><small>Confirmed eSewa payments</small></div>
+              <div class="card tn-expense-stat"><span>Payment method</span><strong class="tn-esewa-green">eSewa</strong><small>Payment provider checkout</small></div>
+            </div>
+            <div class="tn-expense-columns">
+              <section class="card tn-workspace-card tn-expense-form-card">
+                <h2 class="card-title">Add Expense</h2>
+                <p class="card-description">Enter an amount and category. A description is optional. Choose your payment method below.</p>
+                <form class="tn-expense-vertical-form" id="tnExpenseForm" onsubmit="submitTrackNestEntry(event,'expense')">
+                  <div class="form-group"><label for="expenseEntryAmount">Amount (NPR) *</label><input id="expenseEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="e.g. 1200" required></div>
+                  <div class="form-group"><label for="expenseEntryCategory">Category *</label>
+                    <select id="expenseEntryCategory" required><option value="" selected disabled>Choose category</option><option value="Groceries">Groceries</option><option value="Dining">Dining</option><option value="Utilities">Utilities</option><option value="Shopping">Shopping</option><option value="Transport">Transport</option><option value="Health">Health</option><option value="Other">Other expense</option></select>
+                  </div>
+                  <div class="form-group"><label for="expenseEntryDesc">Description <span class="tn-form-optional">(optional)</span></label><textarea id="expenseEntryDesc" maxlength="200" rows="3" placeholder="e.g. Monthly internet bill"></textarea></div>
+                  <div class="tn-expense-secondary-fields">
+                    <div class="form-group"><label for="expenseEntryDate">Expense date</label><input type="date" id="expenseEntryDate" required></div>
+                    <div class="form-group"><label for="expenseEntryNotes">Notes (optional)</label><input id="expenseEntryNotes" maxlength="1000" placeholder="Additional details"></div>
+                  </div>
+                  <div class="form-group tn-expense-method-group">
+                    <label for="expenseEntryPayment">Payment Method</label>
+                    <div class="tn-esewa-choice"><span class="tn-payment-radio" aria-hidden="true"></span><span class="tn-esewa-brand">eSewa</span><span class="tn-payment-choice-trailing">Online payment</span></div>
+                    <select id="expenseEntryPayment" aria-label="Choose payment method" onchange="updateExpenseMethodStyle()"><option value="eSewa Demo">eSewa</option><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select>
+                  </div>
+                  <button type="submit" class="primary-btn tn-expense-pay-submit" id="tnExpenseSubmitButton">Continue to eSewa →</button>
+                  <p class="tn-expense-test-notice"><strong>Test environment:</strong> No real money is transferred. An eSewa expense is saved only after the payment provider confirms success. Other methods record an already-paid expense.</p>
+                </form>
+              </section>
+              <section class="card tn-workspace-card tn-expense-history-card">
+                <div class="tn-workspace-row tn-expense-history-header"><div><h2 class="card-title">Expense History</h2><p class="card-description">Your saved expenses, including verified eSewa payments.</p></div><strong class="tn-page-total" id="expensePageTotal">Nrs 0.00</strong></div>
+                <div class="tn-income-filters tn-expense-history-filters">
+                  <input id="expenseFilterSearch" type="search" placeholder="Search expenses…" aria-label="Search expense" oninput="renderTrackNestPageTables()">
+                  <select id="expenseFilterCategory" aria-label="Filter expense category" onchange="renderTrackNestPageTables()"><option value="">All categories</option></select>
+                  <input id="expenseFilterFrom" type="date" aria-label="Start date" onchange="renderTrackNestPageTables()">
+                  <input id="expenseFilterTo" type="date" aria-label="End date" onchange="renderTrackNestPageTables()">
                 </div>
-                <div class="form-group"><label for="expenseEntryDate">Date</label><input type="date" id="expenseEntryDate" required></div>
-                <div class="form-group"><label for="expenseEntryPayment">Payment method</label><select id="expenseEntryPayment"><option value="eSewa Demo">eSewa Demo (test payment)</option><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select><small class="tn-expense-payment-hint">eSewa Demo opens the payment checkout after Save Expense. Manual methods record an already-paid expense.</small></div>
-                <div class="form-group"><label for="expenseEntryNotes">Notes</label><input id="expenseEntryNotes" maxlength="1000" placeholder="Optional notes"></div>
-                <div class="form-group"><label for="expenseEntryAmount">Amount (Nrs)</label><input id="expenseEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
-                <button type="submit" class="primary-btn" id="tnExpenseSubmitButton">Save Expense</button>
-              </form>
-            </section>
-            <section class="card tn-workspace-card">
-              <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Expense history</h3></div>
-                <strong class="tn-page-total" id="expensePageTotal">Nrs 0.00</strong></div>
-              <div class="tn-income-filters">
-                <input id="expenseFilterSearch" type="search" placeholder="Search expense…" aria-label="Search expense" oninput="renderTrackNestPageTables()">
-                <select id="expenseFilterCategory" aria-label="Filter expense category" onchange="renderTrackNestPageTables()"><option value="">All categories</option></select>
-                <input id="expenseFilterFrom" type="date" aria-label="Start date" onchange="renderTrackNestPageTables()">
-                <input id="expenseFilterTo" type="date" aria-label="End date" onchange="renderTrackNestPageTables()">
-              </div>
-              <div class="table-scroll"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expensePageRows"></tbody></table></div>
-            </section>
-            <section class="card">
-              <div class="tn-workspace-row"><div><div class="section-label">Spending overview</div><h3 class="card-title">Monthly expense trend</h3></div></div>
-              <div class="tn-premium-chart-canvas"><canvas id="expensePageChart"></canvas></div>
-            </section>
+                <div class="table-scroll tn-expense-history-table"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expensePageRows"></tbody></table></div>
+              </section>
+            </div>
+            <section class="card tn-expense-trend-card"><div class="tn-workspace-row"><div><div class="section-label">Spending overview</div><h3 class="card-title">Monthly expense trend</h3></div></div><div class="tn-premium-chart-canvas"><canvas id="expensePageChart"></canvas></div></section>
           </section>
           <section class="tn-page" id="tnPage-transactions" data-tn-page="transactions" hidden>
             <div class="tn-page-heading"><span class="section-label">Your financial history</span><h1 class="dashboard-heading">Transactions</h1><p class="dashboard-description">Search, filter, edit or delete saved transactions.</p></div>
@@ -1193,15 +1262,15 @@ font-size:.83rem;cursor:pointer}
       <form method="dialog" class="tn-esewa-review-panel">
         <div class="tn-esewa-review-heading">
           <span class="tn-esewa-review-mark" aria-hidden="true">e</span>
-          <div><p class="tn-esewa-review-kicker">eSewa public demo checkout</p><h2 id="tnEsewaReviewTitle">Review your payment</h2></div>
+          <div><p class="tn-esewa-review-kicker">eSewa payment checkout</p><h2 id="tnEsewaReviewTitle">Review your payment</h2></div>
         </div>
-        <p class="tn-esewa-review-message">You'll continue to the official eSewa TEST checkout. Sign in using eSewa's demo wallet and enter its test OTP. No real money is transferred.</p>
+        <p class="tn-esewa-review-message">You'll continue to eSewa's test checkout for sign-in and payment confirmation. No real money is transferred.</p>
         <dl class="tn-esewa-review-summary">
           <div><dt>Expense</dt><dd id="tnEsewaReviewDescription"></dd></div>
           <div><dt>Category</dt><dd id="tnEsewaReviewCategory"></dd></div>
           <div><dt>Amount to pay (test)</dt><dd id="tnEsewaReviewAmount"></dd></div>
         </dl>
-        <p class="tn-esewa-review-note">This expense is NOT saved yet. TrackNest will record it once only after eSewa reports a verified successful demo payment. Canceling won't create an expense.</p>
+        <p class="tn-esewa-review-note">This expense is not saved yet. TrackNest records it only after a verified successful test payment. Canceling won't create an expense.</p>
         <div class="tn-esewa-review-actions">
           <button type="submit" value="cancel" class="cancel-edit-btn" id="tnEsewaCancelButton">Cancel</button>
           <button type="button" class="tn-esewa-pay-button" id="tnEsewaContinueButton" onclick="continueEsewaDemoPayment()">Continue to Payment</button>
@@ -1425,6 +1494,7 @@ font-size:.83rem;cursor:pointer}
                     ? '100% limit alerts are configured to email your registered address (subject to delivery).'
                     : 'Email alerts are not configured for inbox delivery. Set up Gmail SMTP on your Mac to receive 100% limit emails.';
                 transactions = state.transactions;
+                loadExpensePaymentSummary().catch(error => console.warn('Payment summary could not load', error));
                 document.getElementById("newLimitInput").value = userBudgetLimit;
                 // Restore a stable target after previous locked-state rendering.
                 if (!document.getElementById("currentLimitDisplay")) {
@@ -1544,6 +1614,24 @@ font-size:.83rem;cursor:pointer}
         window.addEventListener('popstate', () => navigateTrackNest(trackNestCurrentSection(), false));
         window.addEventListener('hashchange', () => navigateTrackNest(window.location.hash.slice(1), false));
 
+        async function loadExpensePaymentSummary() {
+            const response = await fetch('/api/payments/esewa/summary/', {credentials:'same-origin'});
+            if (!response.ok) throw new Error('Could not load payment totals.');
+            const info = await response.json();
+            document.getElementById('tnEsewaPaidTotal').textContent =
+                'Nrs ' + Number(info.paid_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+            document.getElementById('tnEsewaSuccessfulCount').textContent =
+                Number(info.successful_count || 0).toLocaleString('en-US');
+        }
+        function updateExpenseMethodStyle() {
+            const method = document.getElementById('expenseEntryPayment').value;
+            const isEsewa = method === 'eSewa Demo';
+            document.querySelector('.tn-esewa-brand').textContent = isEsewa ? 'eSewa' : method;
+            document.querySelector('.tn-payment-choice-trailing').textContent = isEsewa ? 'Online payment' : 'Manual record';
+            document.querySelector('.tn-esewa-choice').classList.toggle('tn-is-manual', !isEsewa);
+            document.getElementById('tnExpenseSubmitButton').textContent =
+                isEsewa ? 'Continue to eSewa →' : 'Save Expense';
+        }
         async function submitTrackNestEntry(event, kind) {
             event.preventDefault();
             const form = event.currentTarget;
@@ -1558,15 +1646,23 @@ font-size:.83rem;cursor:pointer}
                 payment_method: document.getElementById(prefix + 'Payment').value,
                 notes: document.getElementById(prefix + 'Notes').value
             };
-            if (kind === 'expense' && data.payment_method === 'eSewa Demo') {
-                openEsewaPaymentReview();
-                return;
+            if (kind === 'expense') {
+                if (!data.category) {
+                    showAccountToast('Choose an expense category first.', 'error');
+                    return;
+                }
+                if (!data.desc) data.desc = 'Expense — ' + data.category;
+                if (data.payment_method === 'eSewa Demo') {
+                    openEsewaPaymentReview();
+                    return;
+                }
             }
             button.disabled = true;
             try {
                 const result = await authRequest('/api/finance/transactions/',data);
                 form.reset();
                 initializeTrackNestDates();
+                if (kind === 'expense') updateExpenseMethodStyle();
                 await loadFinance();
                 if (result.alert_queued) showBudgetToast('Budget limit reached. Email alert scheduled for your registered address.');
             } catch(error) {
@@ -1581,24 +1677,24 @@ font-size:.83rem;cursor:pointer}
                 return;
             }
             if (!esewaSandboxReady) {
-                showAccountToast('The eSewa demo is unavailable. Check the localhost development-mode settings.','error');
+                showAccountToast('The eSewa test checkout is unavailable. Check the localhost development settings.','error');
                 return;
             }
             const description = document.getElementById('expenseEntryDesc').value.trim();
             const category = document.getElementById('expenseEntryCategory').value;
             const amount = document.getElementById('expenseEntryAmount').value;
             const date = document.getElementById('expenseEntryDate').value;
-            if (!description || !category || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
-                showAccountToast('Enter an expense description, category and valid positive amount first.','error');
+            if (!category || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
+                showAccountToast('Choose a category and enter a valid positive amount first.','error');
                 return;
             }
             // The payment is recorded on the day eSewa confirms it, not a backdated date.
             if (date !== trackNestToday()) {
-                showAccountToast('eSewa demo payments are recorded on the verification date. Select today for this demo checkout.','error');
+                showAccountToast('Online payments are recorded on the verification date. Select today for this test checkout.','error');
                 return;
             }
             const dialog = document.getElementById('tnEsewaReviewDialog');
-            document.getElementById('tnEsewaReviewDescription').textContent = description;
+            document.getElementById('tnEsewaReviewDescription').textContent = description || 'Expense — ' + category;
             document.getElementById('tnEsewaReviewCategory').textContent = category;
             document.getElementById('tnEsewaReviewAmount').textContent =
                 'Nrs ' + Number(amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
@@ -1609,8 +1705,8 @@ font-size:.83rem;cursor:pointer}
             if (button.disabled) return;
             button.disabled = true;
             button.textContent = 'Opening eSewa…';
-            const description = document.getElementById('expenseEntryDesc').value.trim();
             const category = document.getElementById('expenseEntryCategory').value;
+            const description = document.getElementById('expenseEntryDesc').value.trim() || 'Expense — ' + category;
             const amount = document.getElementById('expenseEntryAmount').value;
             const notes = document.getElementById('expenseEntryNotes').value;
             try {
@@ -1677,8 +1773,12 @@ font-size:.83rem;cursor:pointer}
                 document.getElementById(kind+'PageRows').innerHTML = records.length ? records.map(t => `
                     <tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.category)}</td>
                     <td class="tn-table-amount ${kind}">${kind==='income'?'+':'−'}${money(Number(t.amount))}</td>
-                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})">Delete</button><button type="button" class="edit-transaction-btn" onclick="viewTransactionDetails(${Number(t.id)})">View</button></td></tr>
-                `).join('') : '<tr><td colspan="5" class="tn-empty">No '+kind+' records yet. Use the form above to add one.</td></tr>';
+                    <td>${t.verified_esewa ? '<span class="tn-payment-verified">Verified eSewa</span>' :
+                        '<button class="edit-transaction-btn" type="button" onclick="navigateTrackNest(\'transactions\');editTransaction('+Number(t.id)+')">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction('+Number(t.id)+')">Delete</button>'}
+                      <button type="button" class="edit-transaction-btn" onclick="viewTransactionDetails(${Number(t.id)})">View</button></td></tr>
+                `).join('') : (kind === 'expense' ?
+                    '<tr><td colspan="5"><div class="tn-expense-empty-history"><strong>No expenses recorded yet.</strong><small>Save a manual expense or complete an eSewa test payment to see it here.</small></div></td></tr>'
+                    : '<tr><td colspan="5" class="tn-empty">No income records yet. Use the form to add one.</td></tr>');
             }
             const recent = transactions.slice(0,5);
             document.getElementById('tnRecentTransactions').innerHTML = recent.length ? recent.map(t=>`

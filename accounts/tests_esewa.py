@@ -86,20 +86,54 @@ class EsewaSandboxTests(TestCase):
         self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
         response = self.client.get(result.json()["checkout_url"])
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "eSewa Demo")
+        self.assertContains(response, "eSewa Payment")
 
     def test_expenses_page_starts_esewa_from_save_without_separate_payment_panel(self):
         self.configure_budget("100")
         response = self.client.get("/expenses/")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '<select id="expenseEntryPayment"><option value="eSewa Demo">', html=False)
+        self.assertContains(response, '<select id="expenseEntryPayment"')
         self.assertContains(response, 'id="tnExpenseSubmitButton"')
-        self.assertContains(response, 'Save Expense')
+        self.assertContains(response, 'Continue to eSewa')
         self.assertContains(response, 'id="tnEsewaReviewDialog"')
         self.assertContains(response, 'Continue to Payment')
         self.assertNotContains(response, 'class="tn-esewa-box"')
         self.assertNotContains(response, 'id="tnEsewaPayments"')
         self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
+
+    def test_payment_summary_only_shows_verified_payments_of_logged_in_user(self):
+        self.configure_budget("200")
+        self.assertEqual(self.start("30").status_code, 200)
+        self.assertEqual(self.client.get("/api/payments/esewa/summary/").json(),
+                         {"paid_total": 0.0, "successful_count": 0, "is_test_environment": True})
+        payment = EsewaPayment.objects.get(user=self.user)
+        with patch("accounts.esewa.status_from_esewa", return_value=self.verified_payload(payment)):
+            self.assertTrue(self.post(f"/api/payments/esewa/{payment.transaction_uuid}/verify/", {}).json()["complete"])
+        summary = self.client.get("/api/payments/esewa/summary/")
+        self.assertEqual(summary.status_code, 200)
+        self.assertEqual(summary.json()["paid_total"], 30.0)
+        self.assertEqual(summary.json()["successful_count"], 1)
+        self.client.force_login(self.other)
+        other_summary = self.client.get("/api/payments/esewa/summary/")
+        self.assertEqual(other_summary.json()["paid_total"], 0.0)
+        self.assertEqual(other_summary.json()["successful_count"], 0)
+
+    def test_payment_summary_requires_authentication(self):
+        self.client.logout()
+        self.assertEqual(self.client.get("/api/payments/esewa/summary/").status_code, 401)
+
+    def test_expenses_page_has_side_by_side_layout_and_no_demo_word_in_visible_labels(self):
+        self.configure_budget("100")
+        response = self.client.get("/expenses/")
+        self.assertEqual(response.status_code, 200)
+        for label in ["Expenses &amp; eSewa Payment", "Successful transactions",
+                      "Expense History", "Continue to eSewa", 'id="tnExpenseForm"']:
+            self.assertContains(response, label)
+        self.assertContains(response, '<option value="eSewa Demo">eSewa</option>')
+        self.assertContains(response, "Test environment:")
+        self.assertNotContains(response, 'class="tn-esewa-box"')
+        self.assertNotContains(response, 'id="tnEsewaPayments"')
+        self.assertNotContains(response, "Try eSewa Demo Payment")
 
     def test_continue_checkout_forwards_to_real_demo_gateway_without_saving_expense(self):
         self.configure_budget("100")
@@ -111,7 +145,7 @@ class EsewaSandboxTests(TestCase):
         self.assertContains(checkout, 'id="esewaCheckout"')
         self.assertContains(checkout, "https://rc-epay.esewa.com.np/api/epay/main/v2/form")
         self.assertContains(checkout, "requestSubmit()")
-        self.assertContains(checkout, "Continue to eSewa Demo")
+        self.assertContains(checkout, "Continue to eSewa")
         self.assertEqual(payment.status, "PENDING")
         self.assertFalse(ExpenseTransaction.objects.filter(user=self.user).exists())
 
