@@ -76,3 +76,6 @@ class SpendingOverviewTests(TestCase):
                        'data-tn-spending-period="7d"','data-tn-spending-period="6m"']:
             self.assertContains(response,marker)
         self.assertNotContains(response,'id="expensePageChart"')
+        self.assertContains(response,'id="tnSpendingTrendFallback"')
+        self.assertContains(response,'js/premium-pages.js')
+        self.assertContains(response,'?v=20261122-spending-repair-1')
