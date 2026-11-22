@@ -28,7 +28,7 @@ async function loadPremiumModules(){
 }
 async function loadPremiumSection(section){
   try {
-    if(section==='income') await loadPremiumIncomeExpenseChart(section);
+    if(section==='income') await loadIncomeOverview();
   if(section==='expense') await loadSpendingOverview();
     if(section==='categories') await loadPremiumCategories();
     else if(section==='budget') {await loadPremiumCategories();await loadPremiumBudgets();}
@@ -546,6 +546,212 @@ function renderSpendingCategories(categories) {
 }
 
 
+/* Income Overview reuses the expense insight layout with income-only data. */
+/* Fall back to the same authenticated transaction state that powers summary cards.
+   This prevents an empty overview if the separate analytics request is unavailable. */
+function buildIncomeOverviewFromTransactions(records) {
+  const today = new Date();
+  const todayKey = trackNestToday();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  const prev = new Date(today.getFullYear(), today.getMonth()-1, 1);
+  const fmt = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const monthKey = d => fmt(d).slice(0,7);
+  const firstKey=monthKey(first), prevKey=monthKey(prev);
+  const amountsByDate=new Map(), amountsByMonth=new Map(), byCategory=new Map();
+  let currentCount=0, previousCount=0;
+  for(const transaction of records){
+    if(transaction.type!=='income') continue;
+    const day=String(transaction.date || '').slice(0,10);
+    const value=Number(transaction.amount);
+    if(day.length!==10 || day>todayKey || !Number.isFinite(value) || value<=0) continue;
+    amountsByDate.set(day,(amountsByDate.get(day)||0)+value);
+    const month=day.slice(0,7);
+    amountsByMonth.set(month,(amountsByMonth.get(month)||0)+value);
+    if(month===firstKey){
+      currentCount++;
+      const category=transaction.category || 'Other';
+      byCategory.set(category,(byCategory.get(category)||0)+value);
+    } else if(month===prevKey){previousCount++;}
+  }
+  const daySeries = count => Array.from({length:count},(_,i)=>{
+    const date=new Date(today.getFullYear(),today.getMonth(),today.getDate()-(count-1-i));
+    const day=fmt(date);
+    return {date:day,label:date.toLocaleDateString('en-US',{day:'2-digit',month:'short'}),amount:amountsByDate.get(day)||0};
+  });
+  const sixMonths=Array.from({length:6},(_,i)=>{
+    const date=new Date(today.getFullYear(),today.getMonth()-(5-i),1);
+    return {month:monthKey(date),label:date.toLocaleDateString('en-US',{month:'short',year:'numeric'}),
+      amount:amountsByMonth.get(monthKey(date))||0};
+  });
+  const categories=[...byCategory].map(([name,amount])=>({name,amount})).sort((a,b)=>b.amount-a.amount);
+  const currentTotal=amountsByMonth.get(firstKey)||0, prevTotal=amountsByMonth.get(prevKey)||0;
+  return {periods:{'7d':daySeries(7),'30d':daySeries(30),'6m':sixMonths},
+    current_total:currentTotal,previous_total:prevTotal,
+    monthly_transactions:currentCount,previous_transactions:previousCount,
+    daily_average:currentTotal/today.getDate(),
+    top_category:categories[0]||null,categories};
+}
+
+/* Clear, user-data-backed Income Overview with daily and monthly exploration. */
+let tnIncomeData = null;
+let tnIncomePeriod = '7d';
+function tnFormatIncome(value) { return premiumMoney(value); }
+function tnIncomeCount(value) {
+  const n=Number(value)||0;
+  return n+' transaction'+(n===1?'':'s');
+}
+async function loadIncomeOverview() {
+  // Show an immediate picture from already authenticated finance state, and
+  // reconcile it with the full analytics endpoint when available.
+  const local=Array.isArray(transactions)
+    ? buildIncomeOverviewFromTransactions(transactions) : null;
+  if(local) renderIncomeOverview(local, false);
+  try {
+    const result=await premiumGet('/api/finance/income-overview/');
+    // Protect against unexpectedly empty API responses when the finance state
+    // already confirms current-month expenses. Keep a visible explanation.
+    if(local && local.monthly_transactions>0 && result.monthly_transactions===0) {
+      $tn('tnIncomeInsightNote').textContent=
+        'Displaying your saved income records. The full analytics totals did not match your transactions.';
+      console.warn('Income overview mismatch with finance state', result);
+      return;
+    }
+    renderIncomeOverview(result, true);
+  } catch(error) {
+    const note=$tn('tnIncomeInsightNote');
+    if(note) note.textContent='Showing income from your saved transactions. The full overview could not refresh: '+
+      (error.message || 'Please refresh the page.');
+    console.error('TrackNest Income Overview API failed',error);
+  }
+}
+function renderIncomeOverview(result, fromServer) {
+  tnIncomeData=result;
+  $tn('tnIncomeInsightsMonthTotal').textContent=tnFormatIncome(result.current_total);
+  $tn('tnIncomeInsightsPreviousTotal').textContent=tnFormatIncome(result.previous_total);
+  $tn('tnIncomeInsightsDailyAverage').textContent=tnFormatIncome(result.daily_average);
+  $tn('tnIncomeInsightsMonthCount').textContent=tnIncomeCount(result.monthly_transactions)+' this month';
+  $tn('tnIncomeInsightsTopCategory').textContent=result.top_category ? result.top_category.name : 'No income yet';
+  $tn('tnIncomeInsightsTopCategoryAmount').textContent=result.top_category
+    ? tnFormatIncome(result.top_category.amount)+' this month'
+    : 'Your top category will appear here';
+  const previous=Number(result.previous_total);
+  const current=Number(result.current_total);
+  $tn('tnIncomeInsightsComparison').textContent = previous > 0
+    ? (current > previous ? '↑ ' : current < previous ? '↓ ' : '→ ') +
+      Math.abs((current-previous)/previous*100).toFixed(1)+'% vs last month'
+    : 'No income recorded last month';
+  const budgetNote='This overview includes only saved income records.';
+  const topNote=result.top_category
+    ? 'Your largest income source this month is '+result.top_category.name+
+      ' ('+tnFormatIncome(result.top_category.amount)+'). '
+    : 'No income recorded this month. ';
+  $tn('tnIncomeInsightNote').textContent=topNote+budgetNote;
+  renderIncomeCategories(result.categories || []);
+  changeIncomePeriod(tnIncomePeriod);
+}
+function changeIncomePeriod(period) {
+  if(!['7d','30d','6m'].includes(period)) return;
+  tnIncomePeriod=period;
+  for(const button of document.querySelectorAll('[data-tn-income-period]')){
+    const selected=button.dataset.tnIncomePeriod===period;
+    button.classList.toggle('active',selected);
+    button.setAttribute('aria-pressed',String(selected));
+  }
+  if(!tnIncomeData) return;
+  const items=tnIncomeData.periods[period]||[];
+  const total=items.reduce((acc,p)=>acc+Number(p.amount),0);
+  const labels=items.map(p=>p.label);
+  const values=items.map(p=>Number(p.amount));
+  const isMonthly=period==='6m';
+  $tn('tnIncomeTrendHeading').textContent=isMonthly?'Income by month':'Daily income';
+  $tn('tnIncomeTrendTotal').textContent=tnFormatIncome(total)+' in selected period';
+  $tn('tnIncomeTrendDescription').textContent=total>0
+    ? (isMonthly ? 'Each bar is the total recorded for that month.' : 'Hover over a bar to see the amount spent that day.')+
+      ' Amounts reflect saved income, not forecasts.'
+    : 'No income recorded in this period yet. Select a different range or add an expense.';
+  const fallback=$tn('tnIncomeTrendFallback');
+  if(typeof Chart==='undefined') {
+    // Do not show a blank chart if the external charting library is blocked/offline.
+    if(fallback) {
+      fallback.hidden=false;
+      fallback.replaceChildren();
+      const max=Math.max(1,...values);
+      for(let i=0;i<items.length;i++) {
+        const row=document.createElement('div');row.className='tn-fallback-spending-row';
+        const name=document.createElement('span');name.textContent=labels[i];
+        const bar=document.createElement('div');bar.className='tn-fallback-spending-track';
+        const fill=document.createElement('i');fill.style.width=(100*values[i]/max)+'%';
+        bar.appendChild(fill);
+        const amount=document.createElement('strong');amount.textContent=tnFormatIncome(values[i]);
+        row.append(name,bar,amount);fallback.appendChild(row);
+      }
+    }
+    $tn('tnIncomeTrendChart').hidden=true;
+    return;
+  }
+  if(fallback){fallback.hidden=true;fallback.replaceChildren();}
+  $tn('tnIncomeTrendChart').hidden=false;
+  destroyPremiumChart('tnIncomeTrendChart');
+  premiumCharts.tnIncomeTrendChart=new Chart($tn('tnIncomeTrendChart'),{
+    type:'bar',
+    data:{labels,datasets:[{
+      label:'Income (NPR)',data:values,
+      backgroundColor:values.map(v=>v>0?'rgba(32,201,147,.82)':'rgba(32,201,147,.18)'),
+      hoverBackgroundColor:'#25c994',
+      borderRadius:7, maxBarThickness:isMonthly?55:24
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>'Received: '+tnFormatIncome(ctx.parsed.y)}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#aabbd3',maxTicksLimit:isMonthly?6:period==='7d'?7:10,maxRotation:0}},
+        y:{beginAtZero:true,grid:{color:'rgba(180,199,228,.13)'},
+          ticks:{color:'#aabbd3',callback:v=>Number(v).toLocaleString('en-US')}}
+      }
+    }
+  });
+}
+function renderIncomeCategories(categories) {
+  const list=$tn('tnIncomeCategoryList');
+  list.replaceChildren();
+  const palette=['#1cc994','#38bdf8','#7b70ff','#ffbe5c','#f5809e','#aa9dfa','#72ced8'];
+  const total=categories.reduce((sum,c)=>sum+Number(c.amount),0);
+  $tn('tnIncomeCategoryCenter').textContent=total>0?tnFormatIncome(total):'No income';
+  if(typeof Chart!=='undefined') {
+  $tn('tnIncomeCategoryChart').hidden=false;
+  destroyPremiumChart('tnIncomeCategoryChart');
+  premiumCharts.tnIncomeCategoryChart=new Chart($tn('tnIncomeCategoryChart'),{
+    type:'doughnut',data:{
+      labels:categories.length?categories.map(c=>c.name):['No expense data'],
+      datasets:[{data:categories.length?categories.map(c=>Number(c.amount)):[1],
+        backgroundColor:categories.length?categories.map((_,i)=>palette[i%palette.length]):['#38465b'],
+        borderWidth:0,hoverOffset:6}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'74%',
+       plugins:{legend:{display:false},
+         tooltip:{enabled:categories.length>0,callbacks:{label:ctx=>ctx.label+': '+tnFormatIncome(ctx.parsed)}}}}
+  });
+  } else {
+    $tn('tnIncomeCategoryChart').hidden=true;
+    $tn('tnIncomeCategoryCenter').textContent=total>0?'Category totals shown below':'No income';
+  }
+  if(!categories.length){
+    const p=document.createElement('p');p.textContent='No income sources yet.';list.appendChild(p);return;
+  }
+  const fragment=document.createDocumentFragment();
+  categories.slice(0,6).forEach((c,i)=>{
+    const row=document.createElement('div');row.className='tn-spending-cat-row';
+    const name=document.createElement('span');name.className='tn-spending-cat-label';
+    const dot=document.createElement('i');dot.style.backgroundColor=palette[i%palette.length];dot.setAttribute('aria-hidden','true');
+    name.append(dot,document.createTextNode(c.name));
+    const details=document.createElement('span');details.className='tn-spending-cat-value';
+    details.textContent=(100*Number(c.amount)/total).toFixed(0)+'% · '+tnFormatIncome(c.amount);
+    row.append(name,details);fragment.appendChild(row);
+  });
+  list.appendChild(fragment);
+}
+
+
 /* Real historical expense forecasting — no fixed multiplier or fabricated series. */
 async function loadExpenseForecast() {
   const data=await premiumGet('/api/finance/forecast/');
@@ -557,6 +763,23 @@ async function loadExpenseForecast() {
   $tn('tnForecastCurrentPrediction').textContent=ready?format(data.forecast_current):'Not enough data';
   $tn('tnForecastNextPrediction').textContent=ready?format(data.forecast_next):'Not enough data';
   $tn('tnForecastMAE').textContent=data.mae===null?'Not available':format(data.mae);
+  $tn('tnForecastModelState').textContent=ready?'Linear Regression ready':'More history needed';
+  $tn('tnForecastModelState').classList.toggle('is-ready',ready);
+  $tn('tnForecastTrainingSummary').textContent=data.training_months+' completed month'+
+    (data.training_months===1?'':'s')+' · '+data.active_training_months+' with spending';
+  const slope=Number(data.slope_per_month);
+  $tn('tnForecastTrend').textContent=ready
+    ? (slope>0?'↑ Increasing':slope<0?'↓ Decreasing':'→ Stable')+' '+format(Math.abs(slope))+'/month'
+    : 'Not enough history';
+  $tn('tnForecastSlopeNote').textContent=ready
+    ? 'The fitted line changes by this amount each month.'
+    : 'At least three completed months with spending are required.';
+  $tn('tnForecastValidation').textContent=data.mae===null?'Not evaluated yet':
+    'Average error '+format(data.mae);
+  $tn('tnForecastChartNote').textContent=ready
+    ? 'Blue bars are actual saved monthly expenses. Yellow dotted values estimate this month and next month; they are not guaranteed future spending.'
+    : 'Blue bars are real completed-month spending. No yellow prediction is shown until at least three completed months have spending.';
+
   $tn('tnForecastExplanation').textContent=ready
     ? 'Based on '+data.training_months+' completed months ('+data.active_training_months+
       ' months with spending). '+(data.backtest_count
@@ -578,4 +801,29 @@ async function loadExpenseForecast() {
   forecastChart.data.datasets[0].data=actual;
   forecastChart.data.datasets[1].data=predicted;
   forecastChart.update();
+}
+
+/* A live explanation of TrackNest's exact monthly budget thresholds. */
+function updateBudgetProtectionGuide() {
+  const section=$tn('tnBudgetProtectionStatus');
+  if(!section) return;
+  const limit=Number(userBudgetLimit);
+  const spent=Number(currentMonthlySpent)||0;
+  const configured=Boolean(budgetConfigured && limit>0 && Number.isFinite(limit));
+  const percent=configured?(spent/limit*100):0;
+  const stage=!configured?'unset':percent>=100?'limit':percent>=90?'critical':percent>=80?'warning':'normal';
+  const labels={unset:'Set your budget first',normal:'Normal · below 80%',
+    warning:'Warning · 80% reached',critical:'Critical · 90% reached',limit:'Limit reached · 100%'};
+  section.textContent=labels[stage];
+  section.dataset.stage=stage;
+  $tn('tnBudgetProtectionUsage').textContent=configured?percent.toFixed(1)+'% used':'Budget not configured';
+  $tn('tnBudgetProtectionRemaining').textContent=configured
+    ? premiumMoney(Math.max(0,limit-spent))+' remaining of '+premiumMoney(limit)
+    : 'Choose a monthly limit to activate protection.';
+  $tn('tnBudgetProtectionFill').style.width=(configured?Math.max(0,Math.min(100,percent)):0)+'%';
+  $tn('tnBudgetProtectionBar').setAttribute('aria-valuenow',String(Math.max(0,Math.min(100,Math.round(percent)))));
+  $tn('tnBudgetProtectionBar').dataset.stage=stage;
+  for(const item of document.querySelectorAll('[data-budget-threshold]')){
+    item.classList.toggle('is-current',item.dataset.budgetThreshold===stage);
+  }
 }

@@ -255,3 +255,20 @@ The project has **two primary academic algorithms**:
 **Data flow:** Authenticated expense entries/eSewa-verified entries -> `accounts.ExpenseTransaction` -> monthly aggregation -> (a) threshold enforcement and notifications; (b) Linear Regression historical trend fitting -> forecast JSON -> Chart.js plot with real months and projected values.
 
 **Validation:** Run `python manage.py test accounts.tests_forecasting` and `python manage.py test accounts` in the project virtual environment. No model migration or new dependency is required: OLS is implemented explicitly in Python to make the mathematical formula auditable for TU evaluation. Compare chart values against test fixtures and explain that MAE is only shown when historical backtests were possible. Document the observed test results and any real-user forecasting accuracy only after running those checks.
+
+
+---
+
+## Income Overview, forecast interpretation and budget protection guide
+
+### Income Overview
+The Income page now provides an interactive overview matching the Expenses overview: actual month-to-date income, previous-month income, average income per elapsed calendar day, highest income source, period-switchable 7-day/30-day daily bars and 6-month monthly bars, and a category/source doughnut chart. These values come from the current user's **income** records only via `GET /api/finance/income-overview/` (`accounts/income_overview.py`), with an additional local-render fallback from the already authenticated finance state. No expense or other user's income is included. Historical records are preserved. This is descriptive aggregation rather than machine learning.
+
+### Time Series Forecasting visual explanation
+Forecast & Trends retains the same tested Linear Regression calculation (`accounts/forecasting.py`) but uses visual bars for actual completed monthly expense data and a distinct dashed yellow line for predictions. The page exposes trained/insufficient-data state, per-month fitted slope (direction and magnitude), training sample size, Mean Absolute Error (MAE) when enough history exists, and the three stages of forecasting: group recorded months, fit the Ordinary Least Squares line, evaluate and estimate. A missing-data state avoids fabricated forecasts. Incomplete current-month expenses are shown as actuals but are never used as training targets.
+
+### Budget Threshold Monitoring visual explanation
+The Budget page now has a dynamic usage bar with 80%, 90% and 100% landmarks, a live badge showing the current state, the amount remaining, four stage cards, and the mathematical spending percentage formula. Stages reflect the existing verified budget enforcement: under 80% normal, 80%–below 90% warning, 90%–below 100% critical, and at/above 100% the application blocks additional expense recording (and new in-app checkout). Recorded income is still permitted and external payments are unaffected. Alert emails require valid SMTP configuration.
+
+### Tests
+`python manage.py test accounts.tests_income_overview accounts.tests_forecasting accounts.tests_spending_overview` verifies calculations and the page markup. Run `python manage.py test accounts` for a full suite. Chart.js rendering and mobile layout should also be reviewed in Safari after your local GitHub auto-sync pulls the update.

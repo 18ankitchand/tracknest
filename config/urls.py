@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from accounts import views, premium_api, financial_assistant, esewa, spending_overview, forecasting
+from accounts import views, premium_api, financial_assistant, esewa, spending_overview, forecasting, income_overview
 from accounts.admin_views import overview
 
 admin.site.site_header = "TrackNest administration"
@@ -37,6 +37,7 @@ urlpatterns = [
     path("api/payments/esewa/<str:reference>/verify/", esewa.check_status, name="tn_esewa_verify"),
     path("api/finance/analytics/", premium_api.analytics),
     path("api/finance/spending-overview/", spending_overview.spending_overview),
+    path("api/finance/income-overview/", income_overview.income_overview),
     path("api/finance/forecast/", forecasting.expense_forecast),
     path("api/assistant/ask/", financial_assistant.financial_assistant),
     path("api/finance/export.csv", premium_api.export_csv),
