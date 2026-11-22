@@ -152,3 +152,30 @@ class PremiumFinanceTests(TestCase):
         )
         self.assertEqual(tx.payment_method, "Cash")
         self.assertEqual(tx.notes, "")
+
+    def test_email_change_requires_signed_in_confirmation_post(self):
+        from django.core import signing
+        token = signing.dumps(
+            {"user": self.user.pk, "new_email": "new-premium@example.com"},
+            salt="tracknest-email-change",
+        )
+        url = "/api/profile/confirm-email/?token=" + token
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "premium@example.com")
+        response = self.client.post("/api/profile/confirm-email/", {"token": token})
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "new-premium@example.com")
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_email_change_sends_verification_only_to_new_address(self):
+        response = self.post("/api/profile/request-email/", {
+            "new_email": "new-premium@example.com",
+            "current_password": "StartPass123!",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mail.outbox[-1].to, ["new-premium@example.com"])
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "premium@example.com")
