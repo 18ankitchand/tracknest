@@ -700,6 +700,8 @@ font-size:.83rem;cursor:pointer}
 .tn-assistant-floating span:first-child{font-size:1.2rem}
 .tn-assistant-floating:hover{transform:translateY(-2px);box-shadow:0 18px 34px rgba(71,83,198,.4)}
 @media(max-width:600px){.tn-assistant-floating{right:14px;bottom:14px;padding:11px 14px}}
+#appScreen .tn-budget-email-status{color:#63758c;font-size:.77rem;line-height:1.5;margin-top:.55rem}
+#appScreen.tn-dark .tn-budget-email-status{color:#b8cbe0}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -987,6 +989,7 @@ font-size:.83rem;cursor:pointer}
                     <span class="budget-flag">Monthly spending plan</span>
                     <strong id="budgetBannerTitle">Monthly Budget Limit: Nrs <span id="currentLimitDisplay">50,000.00</span></strong>
                     <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="budgetBannerSub">Current spent: Nrs 0.00 (0% of limit)</div>
+                    <p id="tnBudgetEmailStatus" class="tn-budget-email-status" role="status">Checking email alert configuration…</p>
                     <div id="budgetProgress" class="budget-progress" role="progressbar" aria-label="Monthly budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="budgetProgressFill" class="budget-progress-fill"></div></div>
                 </div>
                 <div class="budget-edit">
@@ -1343,6 +1346,9 @@ font-size:.83rem;cursor:pointer}
                 const state = await response.json();
                 userBudgetLimit = state.limit;
                 currentMonthlySpent = Number(state.spent || 0);
+                document.getElementById('tnBudgetEmailStatus').textContent = state.email_delivery_configured
+                    ? '100% limit alerts are configured to email your registered address (subject to delivery).'
+                    : 'Email alerts are not configured for inbox delivery. Set up Gmail SMTP on your Mac to receive 100% limit emails.';
                 transactions = state.transactions;
                 document.getElementById("newLimitInput").value = userBudgetLimit;
                 // Restore a stable target after previous locked-state rendering.
@@ -1584,8 +1590,9 @@ font-size:.83rem;cursor:pointer}
         async function updateBudgetLimit() {
             const value = document.getElementById('newLimitInput').value;
             try {
-                await authRequest('/api/finance/budget/', {limit:value});
+                const result = await authRequest('/api/finance/budget/', {limit:value});
                 await loadFinance();
+                if (result.alert_queued) showBudgetToast('100% budget reached. An email notification was requested for your registered address.');
             } catch(error) { alert(error.message); }
         }
 
