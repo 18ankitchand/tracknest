@@ -11,6 +11,10 @@ from decimal import Decimal, InvalidOperation
 from collections import defaultdict
 
 from django.contrib.auth import update_session_auth_hash, password_validation
+from django.contrib.auth.tokens import default_token_generator
+from django.core import signing
+from django.urls import reverse
+from django.core.validators import validate_email
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
@@ -451,3 +455,77 @@ def export_pdf(request):
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
     response["Content-Disposition"] = 'attachment; filename="tracknest-financial-report.pdf"'
     return response
+
+
+@require_POST
+def change_password(request):
+    problem = forbidden(request)
+    if problem: return problem
+    data = read_json(request)
+    old_password = data.get("current_password", "")
+    new_password = data.get("new_password", "")
+    if not isinstance(old_password, str) or not request.user.check_password(old_password):
+        return JsonResponse({"error": "Your current password is incorrect."}, status=400)
+    if not isinstance(new_password, str):
+        return JsonResponse({"error": "Enter a valid new password."}, status=400)
+    try:
+        password_validation.validate_password(new_password, request.user)
+    except ValidationError as exc:
+        return JsonResponse({"error": " ".join(exc.messages)}, status=400)
+    request.user.set_password(new_password)
+    request.user.save(update_fields=["password"])
+    update_session_auth_hash(request, request.user)
+    return JsonResponse({"ok": True, "message": "Password changed."})
+
+
+@require_POST
+def request_email_change(request):
+    problem = forbidden(request)
+    if problem: return problem
+    data = read_json(request)
+    email = str(data.get("new_email", "")).strip().lower()
+    password = data.get("current_password", "")
+    if not request.user.check_password(password):
+        return JsonResponse({"error": "Enter your current password."}, status=400)
+    try:
+        validate_email(email)
+    except ValidationError:
+        return JsonResponse({"error": "Enter a valid email address."}, status=400)
+    if User.objects.filter(username__iexact=email).exclude(pk=request.user.pk).exists():
+        return JsonResponse({"error": "Email already registered."}, status=409)
+    if settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":
+        return JsonResponse({"error": "Configure real email delivery before changing your email."}, status=503)
+    token = signing.dumps({"user": request.user.pk, "new_email": email}, salt="tracknest-email-change")
+    url = request.build_absolute_uri(reverse("tracknest_confirm_email_change")) + "?token=" + token
+    try:
+        send_mail("Verify your new TrackNest email address",
+                  "Open this link within 1 hour while signed in to TrackNest:\n" + url,
+                  settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
+    except Exception:
+        logger.exception("TrackNest email-change verification failed")
+        return JsonResponse({"error": "Unable to send verification email. Try again later."}, status=503)
+    return JsonResponse({"ok": True, "message": "Verification link sent to your new email address."})
+
+
+@require_GET
+def confirm_email_change(request):
+    problem = forbidden(request)
+    if problem: return problem
+    try:
+        payload = signing.loads(request.GET.get("token", ""), salt="tracknest-email-change", max_age=3600)
+    except (signing.BadSignature, signing.SignatureExpired):
+        return HttpResponse("Invalid or expired email-change link.", status=400)
+    if not isinstance(payload, dict) or payload.get("user") != request.user.pk:
+        return HttpResponse("Please sign in to the correct account.", status=403)
+    email = payload.get("new_email")
+    try:
+        validate_email(email)
+    except (ValidationError, TypeError):
+        return HttpResponse("Invalid address.", status=400)
+    with transaction.atomic():
+        if User.objects.select_for_update().filter(username__iexact=email).exclude(pk=request.user.pk).exists():
+            return HttpResponse("Email is already registered.", status=409)
+        request.user.email = email
+        request.user.username = email
+        request.user.save(update_fields=["email", "username"])
+    return HttpResponse("Email verified and updated. Return to TrackNest and refresh your profile.")
