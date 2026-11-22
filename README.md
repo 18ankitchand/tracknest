@@ -218,3 +218,28 @@ The Expenses summary cards group only the logged-in user's saved **expense** tra
 - **Recorded Transactions**: total count of both groups with an online/offline breakdown.
 
 Mobile Wallet is removed from new expense, income and transaction-edit payment method dropdowns, and the backend rejects it for new or updated transactions. Past Mobile Wallet records remain in the database and count with the second group. The original owner-only `/api/payments/esewa/summary/` endpoint retains `paid_total` and `successful_count` for verified eSewa records and now additionally provides online and offline totals and counts. This grouping does not initiate or verify card/bank transfers.
+
+
+---
+
+## Spending Overview (interactive, real-data analytics)
+
+The Expenses page's former **Monthly expense trend** line chart had only a single point when the user had one month of transactions. It has been replaced by an accessible dashboard showing a 7-day/30-day daily spending bar chart, a 6-month spending chart including zero-spending months, current and previous month totals, month-to-date daily average, largest expense category and a category breakdown doughnut chart. It uses the logged-in user's real transactions through `GET /api/finance/spending-overview/`. No predictions or simulated chart numbers are used.
+
+**Workflow:** authenticated browser -> `accounts/spending_overview.py` -> user-scoped Django ORM expense query -> date/category aggregation -> JSON -> `static/js/premium-pages.js` -> Chart.js charts. Empty accounts and periods are supported. Daily average divides recorded month-to-date expenses by the number of elapsed calendar days, including days with no expenses. Month totals are calendar-month totals; the previous month comparison is a full previous month and the current month is month-to-date, so comparisons are not normalized by elapsed days. There is no migration and no change to expense records.
+
+## Algorithm inventory (implementation verified 2026-11-22)
+
+**1. Budget threshold monitoring — implemented** in `accounts/premium_api.py:evaluate_budget_alerts`, expense create/edit and budget logic in `accounts/views.py`, and verified eSewa accounting in `accounts/esewa.py`. For each user/month, spending is summed and compared with the configured monthly or category limit: below 80% normal, 80–89.99% warning, 90–99.99% critical, 100% or more limit reached. In-app notifications and opt-in configured email are generated on threshold crossings. Expense recording and new TrackNest eSewa checkout are rejected if they would exceed the applicable limit. This does not prevent payments made outside TrackNest. Database transactions and row locking are used where supported (SQLite has limited row-lock semantics versus PostgreSQL).
+
+**2. Financial aggregation/analytics — implemented** in `accounts/premium_api.py:analytics`, `accounts/spending_overview.py:spending_overview`, `accounts/esewa.py:payment_summary` and frontend Chart.js code. Totals are grouped by user, transaction kind, category, date/month and payment method. This is deterministic descriptive analytics, not machine learning.
+
+**3. eSewa HMAC-SHA256 verification — implemented for sandbox** in `accounts/esewa.py`. The request and signed callback are checked with HMAC-SHA256. A separate provider status query must return `COMPLETE` before an expense is recorded; a unique transaction UUID and DB constraints prevent duplicate saved expense records. Provider UAT is for test payments only, not real-money processing.
+
+**4. Rule-based financial assistant — implemented** in `accounts/financial_assistant.py`. A keyword/intent classifier selects prewritten analysis branches and reads the current user's income, expense, budget, transaction or savings data. No LLM, external AI API or training takes place. Chat cannot change the records.
+
+**5. Expense forecasting demonstration — NOT a trained algorithm** in `templates/index.html:updateDashboard`. The current value is `predicted = monthlyExpense * 1.25` and illustrative Chart.js points, not a fitted ensemble model or Linear Regression. It is a UI example only.
+
+**Not implemented:** the proposed Z-score anomaly detector (`Z = (X - mean) / standard_deviation`, unusual if `|Z| > 2.5`) and trained/evaluated Linear Regression time-series expense forecasting. These are planned academic modules and must not be reported as tested functional algorithms.
+
+To test the new Spending Overview endpoint and its privacy restrictions: `python manage.py test accounts.tests_spending_overview`. Run the full suite with `python manage.py test accounts` and inspect the Expense dashboard in a browser for responsive chart rendering.
