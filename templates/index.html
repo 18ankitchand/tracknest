@@ -758,7 +758,7 @@ font-size:.83rem;cursor:pointer}
 #appScreen .tn-expense-stat strong{font-size:1.65rem;font-weight:800;color:#20334f}
 #appScreen .tn-expense-stat small{font-size:.72rem;color:#8996a9}
 #appScreen .tn-expense-stat .tn-esewa-green{color:#20bf77!important}
-#appScreen .tn-expense-columns{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:stretch}
+#appScreen .tn-expense-columns{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
 #appScreen .tn-expense-columns>.card{margin:0;min-width:0;padding:27px}
 #appScreen .tn-expense-form-card .card-title,#appScreen .tn-expense-history-card .card-title{font-size:1.15rem;margin-bottom:8px}
 #appScreen .tn-expense-form-card .card-description,#appScreen .tn-expense-history-card .card-description{font-size:.81rem;line-height:1.6}
@@ -778,10 +778,12 @@ font-size:.83rem;cursor:pointer}
 #appScreen .tn-expense-test-notice{font-size:.77rem;line-height:1.65;color:#708198;background:#eef5fb;border:1px solid #dbe7f5;padding:13px 15px;border-radius:11px}
 #appScreen .tn-expense-history-header{align-items:start;gap:8px}
 #appScreen .tn-expense-history-header .tn-page-total{font-size:.94rem}
-#appScreen .tn-expense-history-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:17px 0}
+#appScreen .tn-expense-history-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:17px 0}
+@media(max-width:900px){#appScreen .tn-expense-history-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){#appScreen .tn-expense-history-filters{grid-template-columns:minmax(0,1fr)}}
 #appScreen .tn-expense-history-filters input,#appScreen .tn-expense-history-filters select{min-width:0;width:100%;box-sizing:border-box}
 #appScreen .tn-expense-history-table{overflow:auto;max-height:610px}
-#appScreen .tn-expense-history-card{min-height:580px}
+#appScreen .tn-expense-history-card{min-height:320px}
 #appScreen .tn-expense-history-table .transactions-table{min-width:520px}
 #appScreen .tn-expense-trend-card{margin-top:21px}
 #appScreen.tn-dark .tn-expense-stats .tn-expense-stat strong{color:#edf4ff}
