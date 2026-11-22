@@ -443,7 +443,7 @@ function changeSpendingPeriod(period) {
     button.classList.toggle('active',selected);
     button.setAttribute('aria-pressed',String(selected));
   }
-  if(!tnSpendingData || typeof Chart==='undefined') return;
+  if(!tnSpendingData) return;
   const items=tnSpendingData.periods[period]||[];
   const total=items.reduce((acc,p)=>acc+Number(p.amount),0);
   const labels=items.map(p=>p.label);
@@ -455,6 +455,28 @@ function changeSpendingPeriod(period) {
     ? (isMonthly ? 'Each bar is the total recorded for that month.' : 'Hover over a bar to see the amount spent that day.')+
       ' Amounts reflect saved expenses, not forecasts.'
     : 'No expenses recorded in this period yet. Select a different range or add an expense.';
+  const fallback=$tn('tnSpendingTrendFallback');
+  if(typeof Chart==='undefined') {
+    // Do not show a blank chart if the external charting library is blocked/offline.
+    if(fallback) {
+      fallback.hidden=false;
+      fallback.replaceChildren();
+      const max=Math.max(1,...values);
+      for(let i=0;i<items.length;i++) {
+        const row=document.createElement('div');row.className='tn-fallback-spending-row';
+        const name=document.createElement('span');name.textContent=labels[i];
+        const bar=document.createElement('div');bar.className='tn-fallback-spending-track';
+        const fill=document.createElement('i');fill.style.width=(100*values[i]/max)+'%';
+        bar.appendChild(fill);
+        const amount=document.createElement('strong');amount.textContent=tnFormatSpending(values[i]);
+        row.append(name,bar,amount);fallback.appendChild(row);
+      }
+    }
+    $tn('tnSpendingTrendChart').hidden=true;
+    return;
+  }
+  if(fallback){fallback.hidden=true;fallback.replaceChildren();}
+  $tn('tnSpendingTrendChart').hidden=false;
   destroyPremiumChart('tnSpendingTrendChart');
   premiumCharts.tnSpendingTrendChart=new Chart($tn('tnSpendingTrendChart'),{
     type:'bar',
@@ -477,12 +499,13 @@ function changeSpendingPeriod(period) {
   });
 }
 function renderSpendingCategories(categories) {
-  if(typeof Chart==='undefined') return;
   const list=$tn('tnSpendingCategoryList');
   list.replaceChildren();
   const palette=['#7b70ff','#38bdf8','#26ce9c','#ffbe5c','#f5809e','#aa9dfa','#72ced8'];
   const total=categories.reduce((sum,c)=>sum+Number(c.amount),0);
   $tn('tnSpendingCategoryCenter').textContent=total>0?tnFormatSpending(total):'No expenses';
+  if(typeof Chart!=='undefined') {
+  $tn('tnSpendingCategoryChart').hidden=false;
   destroyPremiumChart('tnSpendingCategoryChart');
   premiumCharts.tnSpendingCategoryChart=new Chart($tn('tnSpendingCategoryChart'),{
     type:'doughnut',data:{
@@ -494,6 +517,10 @@ function renderSpendingCategories(categories) {
        plugins:{legend:{display:false},
          tooltip:{enabled:categories.length>0,callbacks:{label:ctx=>ctx.label+': '+tnFormatSpending(ctx.parsed)}}}}
   });
+  } else {
+    $tn('tnSpendingCategoryChart').hidden=true;
+    $tn('tnSpendingCategoryCenter').textContent=total>0?'Category totals shown below':'No expenses';
+  }
   if(!categories.length){
     const p=document.createElement('p');p.textContent='No spending categories yet.';list.appendChild(p);return;
   }
