@@ -3,6 +3,48 @@ let premiumCategories = [];
 let premiumBudgets = [];
 let premiumGoals = [];
 let premiumNotifications = [];
+let premiumNotificationIds = null;
+let premiumNotificationPoll = null;
+let premiumAlertAudio = null;
+
+// Browser audio is permitted only after a user interaction on many devices.
+function ringPremiumNotification(){
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContextClass) return;
+    premiumAlertAudio = premiumAlertAudio || new AudioContextClass();
+    if(premiumAlertAudio.state !== 'running') return;
+    const now = premiumAlertAudio.currentTime;
+    [0, 0.16].forEach((delay)=>{
+      const oscillator=premiumAlertAudio.createOscillator();
+      const gain=premiumAlertAudio.createGain();
+      oscillator.type='sine';
+      oscillator.frequency.value=delay===0?880:1175;
+      gain.gain.setValueAtTime(0.0001,now+delay);
+      gain.gain.exponentialRampToValueAtTime(0.12,now+delay+0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.15);
+      oscillator.connect(gain).connect(premiumAlertAudio.destination);
+      oscillator.start(now+delay);
+      oscillator.stop(now+delay+0.16);
+    });
+  }catch(error){console.debug('Notification sound unavailable',error);}
+}
+document.addEventListener('pointerdown',()=>{
+  const AudioContextClass=window.AudioContext || window.webkitAudioContext;
+  if(!AudioContextClass) return;
+  try {
+    premiumAlertAudio=premiumAlertAudio || new AudioContextClass();
+    if(premiumAlertAudio.state==='suspended') premiumAlertAudio.resume().catch(()=>{});
+  }catch(error){console.debug('Audio initialization unavailable',error);}
+},{once:true});
+function startPremiumNotificationPolling(){
+  if(premiumNotificationPoll) return;
+  premiumNotificationPoll=window.setInterval(()=>{
+    if(currentUser && document.visibilityState==='visible')
+      loadPremiumNotifications().catch(()=>{});
+  },30000);
+}
+
 let premiumAnalyticsData = null;
 let premiumTransactionPage = 1;
 let premiumTransactionPageSize = 10;
@@ -179,6 +221,27 @@ async function contributePremiumGoal(id){
 async function loadPremiumNotifications(){
   const data=await premiumGet('/api/notifications/');
   premiumNotifications=data.notifications;
+  const receivedIds = new Set(premiumNotifications.map(n=>n.id));
+  const newlyReceived = premiumNotificationIds===null ? [] :
+    premiumNotifications.filter(n=>!n.is_read && !premiumNotificationIds.has(n.id));
+  premiumNotificationIds=receivedIds;
+  const badge=$tn('tnNotificationBadge');
+  if(badge){
+    badge.hidden=!data.unread;
+    badge.textContent=data.unread>99?'99+':String(data.unread);
+    badge.setAttribute('aria-label',data.unread+' unread notifications');
+  }
+  if(newlyReceived.length){
+    const bell=$tn('tnNotificationBell');
+    if(bell){
+      bell.classList.remove('tn-bell-ringing');
+      void bell.offsetWidth;
+      bell.classList.add('tn-bell-ringing');
+    }
+    ringPremiumNotification();
+    showBudgetToast(newlyReceived[0].title+': '+newlyReceived[0].message);
+  }
+  startPremiumNotificationPolling();
   $tn('tnUnreadCount').textContent=data.unread?'('+data.unread+' unread)':'';
   $tn('tnNotificationList').innerHTML=premiumNotifications.length?premiumNotifications.map(n=>
     '<div class="tn-premium-list-item"><div><strong>'+escapeHtml(n.title)+(n.is_read?'':' ●')+'</strong>'+
