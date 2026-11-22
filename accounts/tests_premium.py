@@ -65,17 +65,20 @@ class PremiumFinanceTests(TestCase):
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_threshold_alerts_are_not_repeated(self):
         with self.captureOnCommitCallbacks(execute=True):
-            response = self.expense("80.00")
-        self.assertEqual(response.status_code, 201)
+            self.assertEqual(self.expense("80.00").status_code, 201)
+        self.assertEqual(len(mail.outbox), 0)
         self.assertEqual(TrackNestNotification.objects.filter(user=self.user).count(), 1)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.expense("10.00").status_code, 201)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(TrackNestNotification.objects.filter(user=self.user).count(), 1)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.expense("1.00").status_code, 201)
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("91%", mail.outbox[0].subject)
         with self.captureOnCommitCallbacks(execute=True):
-            response = self.expense("10.00")
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(TrackNestNotification.objects.filter(user=self.user).count(), 2)
-        with self.captureOnCommitCallbacks(execute=True):
-            response = self.expense("10.00")
-        self.assertEqual(response.status_code, 201)
+            self.assertEqual(self.expense("9.00").status_code, 201)
+        self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(TrackNestNotification.objects.filter(user=self.user).count(), 3)
         self.assertEqual(self.expense("1.00").status_code, 409)
 
