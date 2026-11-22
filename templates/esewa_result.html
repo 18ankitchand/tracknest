@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment Status — TrackNest</title>
+<style>body{font:16px system-ui;background:#f7f9fc;color:#172237;display:grid;place-items:center;min-height:100vh}main{background:white;padding:30px;border-radius:16px;max-width:520px;box-shadow:0 10px 40px #12243a18;line-height:1.6}a{display:inline-block;padding:11px 17px;background:#6358e8;border-radius:10px;color:white;text-decoration:none}</style></head><body><main>
+<h1>{% if success %}Payment verified{% else %}Payment not confirmed{% endif %}</h1>
+<p>{{ message }}</p>
+{% if reference %}<small>Payment reference: {{ reference }}</small>{% endif %}
+<p><a href="/expenses/">Return to Expenses</a></p>
+</main></body></html>
