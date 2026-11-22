@@ -46,7 +46,8 @@ def money(value):
 
 
 def configured():
-    return settings.ESEWA_SANDBOX_READY
+    # Defense in depth: public UAT checkout must never run on a production server.
+    return bool(settings.DEBUG and settings.ESEWA_SANDBOX_READY)
 
 
 def signature(message):

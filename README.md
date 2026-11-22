@@ -162,3 +162,25 @@ Run tests with `python manage.py test accounts.tests_assistant` in the existing 
 **Files added or changed:** `accounts/esewa.py`, `accounts/models.py`, `accounts/migrations/0003_esewa_checkout.py`, `accounts/views.py`, `config/urls.py`, `config/settings.py`, `templates/esewa_checkout.html`, `templates/esewa_result.html`, `templates/index.html`, `accounts/tests_esewa.py`, `ENABLE_ESEWA_SANDBOX.command`, `.env.example`.
 
 Use `python manage.py migrate` and `python manage.py test accounts` in the active virtual environment, or allow the existing Mac auto-sync launcher to apply migrations. Back up the current SQLite database first.
+
+---
+
+## eSewa public developer demo (no personal merchant account)
+
+eSewa publishes **shared UAT sandbox credentials**, so for **development on localhost** you do not need to register a merchant account or run `ENABLE_ESEWA_SANDBOX.command`.
+
+Official source: https://developer.esewa.com.np/pages/Test-credentials
+
+- UAT test merchant code: `EPAYTEST`
+- Public UAT HMAC test key: `8gBm/:&EnhH.1/q`
+- UAT demo wallet IDs: `9806800001` through `9806800005`
+- Test wallet password and OTP are listed on the official developer page.
+- UAT payment form: `https://rc-epay.esewa.com.np/api/epay/main/v2/form`
+
+**Local test flow:** Keep the Mac auto-sync Django server running in development mode (`DJANGO_DEBUG=1`). Refresh `http://127.0.0.1:8000/expenses/`, sign in to a **throwaway test TrackNest user account**, set that user's monthly budget, enter an expense amount inside its budget, and click **Try eSewa Demo Payment**. Continue to eSewa's UAT test checkout, using the official test-wallet credentials. The payment is saved as an expense only after a signed completion response and an independent eSewa status check. Budget enforcement and existing email alerts work as before.
+
+The UAT integration is intentionally **disabled if `DEBUG=False`**, even if someone sets an enable flag. It must never accept real customer money. If a private `~/.tracknest/esewa.json` file explicitly sets `enabled:false` (or the environment sets `TRACKNEST_ESEWA_SANDBOX=0`), this overrides the development default and keeps the demo button disabled.
+
+**Important:** This works with a shared public *test merchant*, not your own merchant account. eSewa test transactions do not transfer money, do not pay arbitrary bills, and cannot be verified against the production gateway. eSewa may require a publicly reachable HTTPS callback instead of `127.0.0.1`; local browser end-to-end testing depends on eSewa accepting the localhost return URL. Provider sandbox behavior has not yet been verified from this project.
+
+For real-money merchant checkout, obtain eSewa's approved merchant account and production credentials, implement production auditing and reconciliation, and test on HTTPS. Do not promote this test-only code by switching provider URLs.

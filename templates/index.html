@@ -721,6 +721,8 @@ font-size:.83rem;cursor:pointer}
 #appScreen.tn-dark .tn-esewa-box,#appScreen.tn-dark .tn-budget-onboarding{background:#24394e;border-color:#48667a}
 #appScreen.tn-dark .tn-esewa-box strong,#appScreen.tn-dark .tn-esewa-history h3{color:#c6f8d7}
 #appScreen.tn-dark .tn-esewa-box p,#appScreen.tn-dark .tn-esewa-history-row,#appScreen.tn-dark .tn-budget-onboarding{color:#dbe8f5}
+#appScreen .tn-esewa-box a{color:#146c53;font-weight:750;text-decoration:underline}
+#appScreen.tn-dark .tn-esewa-box a{color:#96eac0}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -916,8 +918,8 @@ font-size:.83rem;cursor:pointer}
                 <button type="submit" class="primary-btn">Save Expense</button>
               </form>
               <div class="tn-esewa-box">
-                <div><strong>Pay using eSewa (Sandbox)</strong><p>Use the expense description, category and amount above for a test merchant checkout. No real money is transferred.</p></div>
-                <button type="button" class="tn-esewa-pay-button" id="tnEsewaButton" onclick="startEsewaCheckout()">Pay with eSewa Test</button>
+                <div><strong>eSewa Demo Payment — No Merchant Account Needed</strong><p>Uses eSewa's publicly documented UAT merchant <b>EPAYTEST</b>. Enter the description, category and amount above, then continue to the official demo checkout. No real money is transferred.</p><p><a href="https://developer.esewa.com.np/pages/Test-credentials" target="_blank" rel="noopener noreferrer">View official test wallet login and OTP details</a></p></div>
+                <button type="button" class="tn-esewa-pay-button" id="tnEsewaButton" onclick="startEsewaCheckout()">Try eSewa Demo Payment</button>
                 <span id="tnEsewaAvailability" role="status">Checking sandbox availability…</span>
               </div>
               <section class="tn-esewa-history"><h3>eSewa checkout attempts</h3><p>Only provider-verified successful payments become expenses.</p><div id="tnEsewaPayments"></div></section>
@@ -1382,7 +1384,7 @@ font-size:.83rem;cursor:pointer}
                 document.getElementById('tnBudgetSetupBanner').hidden = budgetConfigured;
                 document.getElementById('newLimitInput').placeholder = budgetConfigured ? 'New limit' : 'Your chosen monthly limit';
                 document.getElementById('tnEsewaAvailability').textContent = esewaSandboxReady
-                    ? 'Sandbox available. Test transactions only.' : 'Not configured — set up private eSewa sandbox credentials first.';
+                    ? 'Official eSewa UAT demo is ready (EPAYTEST). No merchant registration required.' : 'Demo is disabled in production or by local configuration. Run TrackNest in development mode.';
                 document.getElementById('tnEsewaButton').disabled = !esewaSandboxReady || !budgetConfigured || state.locked;
                 renderEsewaAttempts(state.esewa_payments || []);
                 document.getElementById('tnBudgetEmailStatus').textContent = state.email_delivery_configured
@@ -1574,7 +1576,7 @@ font-size:.83rem;cursor:pointer}
                 return;
             }
             if (!esewaSandboxReady) {
-                showAccountToast('eSewa sandbox is not configured. Check the setup instructions.','error');
+                showAccountToast('eSewa demo is unavailable. Ensure your localhost Django app runs with DEBUG=1 and sandbox is enabled.','error');
                 return;
             }
             const description=document.getElementById('expenseEntryDesc').value.trim();

@@ -86,8 +86,23 @@ if _esewa_file.is_file():
     except (OSError, ValueError):
         logging.getLogger(__name__).warning("eSewa sandbox configuration unavailable.")
         _esewa_local = {}
-ESEWA_SANDBOX_ENABLED = os.environ.get("TRACKNEST_ESEWA_SANDBOX", str(_esewa_local.get("enabled", "false"))).lower() in ("1", "true")
-ESEWA_PRODUCT_CODE = os.environ.get("TRACKNEST_ESEWA_PRODUCT_CODE", _esewa_local.get("product_code", "EPAYTEST"))
-ESEWA_SECRET_KEY = os.environ.get("TRACKNEST_ESEWA_SECRET_KEY", _esewa_local.get("secret_key", ""))
-# Prevent inadvertently using the test merchant against live checkout.
-ESEWA_SANDBOX_READY = bool(ESEWA_SANDBOX_ENABLED and ESEWA_SECRET_KEY and ESEWA_PRODUCT_CODE)
+# eSewa explicitly publishes these shared UAT credentials for developers.
+# They are NOT live merchant credentials. The public key is usable in DEBUG only.
+# Source: https://developer.esewa.com.np/pages/Test-credentials
+_ESEWA_PUBLIC_UAT_CODE = "EPAYTEST"
+_ESEWA_PUBLIC_UAT_KEY = "8gBm/:&EnhH.1/q"
+ESEWA_SANDBOX_ENABLED = os.environ.get(
+    "TRACKNEST_ESEWA_SANDBOX", str(_esewa_local.get("enabled", "true" if DEBUG else "false"))
+).lower() in ("1", "true")
+ESEWA_PRODUCT_CODE = os.environ.get(
+    "TRACKNEST_ESEWA_PRODUCT_CODE", _esewa_local.get("product_code", _ESEWA_PUBLIC_UAT_CODE)
+)
+ESEWA_SECRET_KEY = os.environ.get(
+    "TRACKNEST_ESEWA_SECRET_KEY", _esewa_local.get("secret_key", _ESEWA_PUBLIC_UAT_KEY if DEBUG else "")
+)
+# The sandbox checkout is intentionally disabled in any production deployment,
+# even if an environment variable accidentally enables UAT credentials.
+ESEWA_SANDBOX_READY = bool(
+    DEBUG and ESEWA_SANDBOX_ENABLED
+    and ESEWA_PRODUCT_CODE == _ESEWA_PUBLIC_UAT_CODE and ESEWA_SECRET_KEY
+)
