@@ -211,6 +211,23 @@ async function savePremiumProfile(event){
     premiumSuccess('Profile updated.');}catch(e){premiumError(e);}
 }
 
+async function changePremiumPassword(event){
+  event.preventDefault();
+  const oldPassword=$tn('tnOldPassword').value, newPassword=$tn('tnNewPassword').value;
+  try{
+    await authRequest('/api/profile/password/',{current_password:oldPassword,new_password:newPassword});
+    event.currentTarget.reset();premiumSuccess('Password updated. Your session remains active.');
+  }catch(error){premiumError(error);}
+}
+async function requestPremiumEmailChange(event){
+  event.preventDefault();
+  try{
+    const result=await authRequest('/api/profile/request-email/',{
+      new_email:$tn('tnNewEmail').value,current_password:$tn('tnVerifyPassword').value});
+    $tn('tnVerifyPassword').value='';premiumSuccess(result.message);
+  }catch(error){premiumError(error);}
+}
+
 function destroyPremiumChart(name){
   if(premiumCharts[name]){premiumCharts[name].destroy();premiumCharts[name]=null;}
 }
