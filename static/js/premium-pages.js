@@ -763,6 +763,23 @@ async function loadExpenseForecast() {
   $tn('tnForecastCurrentPrediction').textContent=ready?format(data.forecast_current):'Not enough data';
   $tn('tnForecastNextPrediction').textContent=ready?format(data.forecast_next):'Not enough data';
   $tn('tnForecastMAE').textContent=data.mae===null?'Not available':format(data.mae);
+  $tn('tnForecastModelState').textContent=ready?'Linear Regression ready':'More history needed';
+  $tn('tnForecastModelState').classList.toggle('is-ready',ready);
+  $tn('tnForecastTrainingSummary').textContent=data.training_months+' completed month'+
+    (data.training_months===1?'':'s')+' · '+data.active_training_months+' with spending';
+  const slope=Number(data.slope_per_month);
+  $tn('tnForecastTrend').textContent=ready
+    ? (slope>0?'↑ Increasing':slope<0?'↓ Decreasing':'→ Stable')+' '+format(Math.abs(slope))+'/month'
+    : 'Not enough history';
+  $tn('tnForecastSlopeNote').textContent=ready
+    ? 'The fitted line changes by this amount each month.'
+    : 'At least three completed months with spending are required.';
+  $tn('tnForecastValidation').textContent=data.mae===null?'Not evaluated yet':
+    'Average error '+format(data.mae);
+  $tn('tnForecastChartNote').textContent=ready
+    ? 'Blue bars are actual saved monthly expenses. Yellow dotted values estimate this month and next month; they are not guaranteed future spending.'
+    : 'Blue bars are real completed-month spending. No yellow prediction is shown until at least three completed months have spending.';
+
   $tn('tnForecastExplanation').textContent=ready
     ? 'Based on '+data.training_months+' completed months ('+data.active_training_months+
       ' months with spending). '+(data.backtest_count
@@ -784,4 +801,29 @@ async function loadExpenseForecast() {
   forecastChart.data.datasets[0].data=actual;
   forecastChart.data.datasets[1].data=predicted;
   forecastChart.update();
+}
+
+/* A live explanation of TrackNest's exact monthly budget thresholds. */
+function updateBudgetProtectionGuide() {
+  const section=$tn('tnBudgetProtectionStatus');
+  if(!section) return;
+  const limit=Number(userBudgetLimit);
+  const spent=Number(currentMonthlySpent)||0;
+  const configured=Boolean(budgetConfigured && limit>0 && Number.isFinite(limit));
+  const percent=configured?(spent/limit*100):0;
+  const stage=!configured?'unset':percent>=100?'limit':percent>=90?'critical':percent>=80?'warning':'normal';
+  const labels={unset:'Set your budget first',normal:'Normal · below 80%',
+    warning:'Warning · 80% reached',critical:'Critical · 90% reached',limit:'Limit reached · 100%'};
+  section.textContent=labels[stage];
+  section.dataset.stage=stage;
+  $tn('tnBudgetProtectionUsage').textContent=configured?percent.toFixed(1)+'% used':'Budget not configured';
+  $tn('tnBudgetProtectionRemaining').textContent=configured
+    ? premiumMoney(Math.max(0,limit-spent))+' remaining of '+premiumMoney(limit)
+    : 'Choose a monthly limit to activate protection.';
+  $tn('tnBudgetProtectionFill').style.width=(configured?Math.max(0,Math.min(100,percent)):0)+'%';
+  $tn('tnBudgetProtectionBar').setAttribute('aria-valuenow',String(Math.max(0,Math.min(100,Math.round(percent)))));
+  $tn('tnBudgetProtectionBar').dataset.stage=stage;
+  for(const item of document.querySelectorAll('[data-budget-threshold]')){
+    item.classList.toggle('is-current',item.dataset.budgetThreshold===stage);
+  }
 }
