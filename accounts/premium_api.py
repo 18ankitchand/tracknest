@@ -169,13 +169,22 @@ def categories_change(request):
     if Category.objects.filter(user=request.user, kind=kind, name__iexact=name).exclude(pk=cat.pk if cat else None).exists():
         return JsonResponse({"error": "A category with this name already exists."}, status=409)
     try:
-        if cat:
-            if cat.kind != kind and cat.monthly_budgets.exists():
-                return JsonResponse({"error": "Remove the category budgets before changing its type."}, status=409)
-            cat.name, cat.kind = name, kind
-            cat.save(update_fields=["name", "kind"])
-        else:
-            cat = Category.objects.create(user=request.user, kind=kind, name=name)
+        with transaction.atomic():
+            if cat:
+                if cat.kind != kind and (
+                    cat.monthly_budgets.exists()
+                    or ExpenseTransaction.objects.filter(user=request.user, kind=cat.kind, category=cat.name).exists()
+                ):
+                    return JsonResponse({"error": "The category type cannot change while existing records or budgets use it."}, status=409)
+                old_name, old_kind = cat.name, cat.kind
+                cat.name, cat.kind = name, kind
+                cat.save(update_fields=["name", "kind"])
+                if old_name != name:
+                    ExpenseTransaction.objects.filter(
+                        user=request.user, kind=old_kind, category=old_name
+                    ).update(category=name)
+            else:
+                cat = Category.objects.create(user=request.user, kind=kind, name=name)
     except IntegrityError:
         return JsonResponse({"error": "Category already exists."}, status=409)
     return JsonResponse({"id": cat.id, "name": cat.name, "type": cat.kind})
