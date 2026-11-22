@@ -1635,31 +1635,46 @@
             const labels = [];
             const now = new Date();
             for (let offset = 5; offset >= 0; offset--) {
-                const day = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-                monthKeys.push(day.getFullYear() + '-' + String(day.getMonth()+1).padStart(2,'0'));
-                labels.push(day.toLocaleString('en-US',{month:'short'}));
+                const d = new Date(now.getFullYear(), now.getMonth()-offset, 1);
+                monthKeys.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
+                labels.push(d.toLocaleString('en-US',{month:'short'}));
             }
-            const income = monthKeys.map(m=>transactions.filter(t=>t.type==='income'&&t.date.startsWith(m)).reduce((a,t)=>a+Number(t.amount),0));
-            const expense = monthKeys.map(m=>transactions.filter(t=>t.type==='expense'&&t.date.startsWith(m)).reduce((a,t)=>a+Number(t.amount),0));
-            const categories = {};
-            transactions.filter(t=>t.type==='expense' && t.date.startsWith(trackNestToday().slice(0,7))).forEach(t=>{
-                categories[t.category]=(categories[t.category]||0)+Number(t.amount);
-            });
+            const values = (type) => monthKeys.map(month =>
+                transactions.filter(tx=>tx.type===type && tx.date.startsWith(month))
+                    .reduce((sum,tx)=>sum+Number(tx.amount),0));
             if (tnOverviewChart) tnOverviewChart.destroy();
-            tnOverviewChart = new Chart(document.getElementById('tnOverviewChart'), {
-                type:'bar',data:{labels,datasets:[
-                  {label:'Income',data:income,backgroundColor:'#22b981',borderRadius:5,maxBarThickness:24},
-                  {label:'Expenses',data:expense,backgroundColor:'#6d62ee',borderRadius:5,maxBarThickness:24}
-                ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true}}},
-                  scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#e8edf5'}}}}}
+            tnOverviewChart = new Chart(document.getElementById('tnOverviewChart'),{
+                type:'bar',
+                data:{labels,datasets:[
+                    {label:'Income',data:values('income'),backgroundColor:'#22b981',borderRadius:5,maxBarThickness:24},
+                    {label:'Expenses',data:values('expense'),backgroundColor:'#6d62ee',borderRadius:5,maxBarThickness:24}
+                ]},
+                options:{
+                    responsive:true,maintainAspectRatio:false,
+                    plugins:{legend:{position:'bottom',labels:{usePointStyle:true}}},
+                    scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#e8edf5'}}}
+                }
             });
-            if(tnCategoryChart) tnCategoryChart.destroy();
-            const names = Object.keys(categories);
-            tnCategoryChart = new Chart(document.getElementById('tnCategoryChart'),{
-                type:'doughnut',data:{labels:names.length?names:['No expenses yet'],
-                  datasets:[{data:names.length?Object.values(categories):[1],
-                  backgroundColor:names.length?['#6557e9','#38a3f5','#12af90','#f4ab48','#f16c82','#9b7af4','#75b8d9']:['#e6eaf2'],borderWidth:0,hoverOffset:6}]},
-                options:{responsive:true,maintainAspectRatio:false,cutout:'69%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8}}}}
+            const byCategory={};
+            transactions.filter(tx=>tx.type==='expense' && tx.date.startsWith(trackNestToday().slice(0,7))).forEach(tx=>{
+                byCategory[tx.category]=(byCategory[tx.category]||0)+Number(tx.amount);
+            });
+            const names=Object.keys(byCategory);
+            if (tnCategoryChart) tnCategoryChart.destroy();
+            tnCategoryChart=new Chart(document.getElementById('tnCategoryChart'),{
+                type:'doughnut',
+                data:{
+                    labels:names.length?names:['No expenses yet'],
+                    datasets:[{
+                        data:names.length?Object.values(byCategory):[1],
+                        backgroundColor:names.length?['#6557e9','#38a3f5','#12af90','#f4ab48','#f16c82','#9b7af4','#75b8d9']:['#e6eaf2'],
+                        borderWidth:0,hoverOffset:6
+                    }]
+                },
+                options:{
+                    responsive:true,maintainAspectRatio:false,cutout:'69%',
+                    plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8}}}
+                }
             });
         }
 
