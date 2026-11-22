@@ -155,6 +155,8 @@ class EsewaSandboxTests(TestCase):
         self.assertEqual(data["online_count"], 3)
         self.assertEqual(data["offline_total"], 50.0)
         self.assertEqual(data["offline_count"], 3)
+        self.assertEqual(data["total_expense_amount"], 390.0)
+        self.assertEqual(data["total_expense_count"], 6)
         # Manually typed eSewa-labelled records do not count as verified eSewa.
         self.assertEqual(data["paid_total"], 0.0)
         self.assertEqual(data["successful_count"], 0)
@@ -162,6 +164,8 @@ class EsewaSandboxTests(TestCase):
         other_data = self.client.get("/api/payments/esewa/summary/").json()
         self.assertEqual(other_data["online_total"], 5000.0)
         self.assertEqual(other_data["offline_total"], 0.0)
+        self.assertEqual(other_data["total_expense_amount"], 5000.0)
+        self.assertEqual(other_data["total_expense_count"], 1)
 
     def test_mobile_wallet_removed_from_forms_and_backend_rejects_new_records(self):
         self.configure_budget("100")
@@ -170,10 +174,9 @@ class EsewaSandboxTests(TestCase):
         self.assertNotContains(page, "<option>Mobile Wallet</option>")
         self.assertContains(page, "Online Expenses")
         self.assertContains(page, "Cash &amp; Other Expenses")
-        self.assertContains(page, "Recorded Transactions")
-        self.assertContains(page, 'id="tnExpensePaymentCount"')
-        self.assertContains(page, 'id="tnPaymentBreakdown"')
         self.assertContains(page, "Total Expenses")
+        for element_id in ("tnOnlineTransactionCount", "tnOfflineTransactionCount", "tnExpenseTransactionCount", "tnTotalExpenseAmount"):
+            self.assertContains(page, f'id="{element_id}"')
         result = self.post("/api/finance/transactions/", {
             "type": "expense", "desc": "Old wallet", "category": "Utilities",
             "amount": "10.00", "payment_method": "Mobile Wallet",

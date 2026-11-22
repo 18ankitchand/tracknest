@@ -126,6 +126,7 @@ def payment_summary(request):
     offline = expenses.exclude(payment_method__in=online_methods)
     online_totals = online.aggregate(amount=Sum("amount"))
     offline_totals = offline.aggregate(amount=Sum("amount"))
+    overall_totals = expenses.aggregate(amount=Sum("amount"))
     return JsonResponse({
         "paid_total": float(summary["amount"] or Decimal("0")),
         "successful_count": paid.count(),
@@ -133,6 +134,8 @@ def payment_summary(request):
         "online_count": online.count(),
         "offline_total": float(offline_totals["amount"] or Decimal("0")),
         "offline_count": offline.count(),
+        "total_expense_amount": float(overall_totals["amount"] or Decimal("0")),
+        "total_expense_count": expenses.count(),
         "online_methods": ["eSewa", "Card", "Bank Transfer"],
         "offline_methods": ["Cash", "Other"],
         "is_test_environment": True,
