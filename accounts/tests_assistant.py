@@ -14,7 +14,7 @@ class FinancialAssistantTests(TestCase):
         self.other = User.objects.create_user(username="otherbot@example.com", email="otherbot@example.com", password="ChangeMe123!")
         self.today = timezone.localdate()
         self.month = self.today.replace(day=1)
-        MonthlyBudget.objects.create(user=self.me, month=self.month, limit=Decimal("1000.00"))
+        MonthlyBudget.objects.create(user=self.me, month=self.month, limit=Decimal("1000.00"), is_set_by_user=True)
         Category = __import__("accounts.models", fromlist=["Category"]).Category
         food = Category.objects.create(user=self.me, name="Groceries", kind="expense")
         CategoryBudget.objects.create(user=self.me, category=food, month=self.month, limit=Decimal("250.00"))
