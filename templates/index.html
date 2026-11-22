@@ -1380,6 +1380,7 @@ font-size:.83rem;cursor:pointer}
                 budgetConfigured = state.budget_configured !== false;
                 esewaSandboxReady = Boolean(state.esewa_sandbox_ready);
                 document.getElementById('tnBudgetSetupBanner').hidden = budgetConfigured;
+                document.getElementById('newLimitInput').placeholder = budgetConfigured ? 'New limit' : 'Your chosen monthly limit';
                 document.getElementById('tnEsewaAvailability').textContent = esewaSandboxReady
                     ? 'Sandbox available. Test transactions only.' : 'Not configured — set up private eSewa sandbox credentials first.';
                 document.getElementById('tnEsewaButton').disabled = !esewaSandboxReady || !budgetConfigured || state.locked;
@@ -1396,6 +1397,12 @@ font-size:.83rem;cursor:pointer}
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
                 if (state.locked) lockAccount(); else unlockAccount();
+                if (!budgetConfigured) {
+                    document.getElementById('newLimitInput').value = '';
+                    document.getElementById('budgetBannerTitle').textContent = 'Monthly Budget: Not set';
+                    document.getElementById('budgetBannerSub').textContent = 'Choose your own monthly spending limit to get started.';
+                    document.getElementById('tnBudgetTotal').textContent = 'Not set';
+                }
                 if(typeof loadPremiumAnalytics === 'function') {
                     Promise.all([loadPremiumAnalytics(),loadPremiumBudgets(),loadPremiumNotifications()])
                         .catch(error=>console.error('Premium refresh failed',error));
