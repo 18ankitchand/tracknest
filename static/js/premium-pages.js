@@ -47,6 +47,16 @@ function renderPremiumCategorySelectors(){
   const names=[...new Set([...transactions.map(t=>t.category),...premiumCategories.map(c=>c.name)])].sort();
   filter.innerHTML='<option value="">All categories</option>'+names.map(x=>'<option>'+escapeHtml(x)+'</option>').join('');
   filter.value=filterValue;
+  for(const kind of ['income','expense']){
+    const el=$tn(kind+'FilterCategory'),previous=el.value;
+    const names=[...new Set([
+      ...transactions.filter(t=>t.type===kind).map(t=>t.category),
+      ...premiumCategories.filter(c=>c.type===kind).map(c=>c.name)
+    ])].sort();
+    el.innerHTML='<option value="">All categories</option>'+names.map(name=>
+      '<option>'+escapeHtml(name)+'</option>').join('');
+    el.value=previous;
+  }
   // Retain original common categories while allowing custom categories created by the user.
   for(const [kind,id] of [['income','incomeEntryCategory'],['expense','expenseEntryCategory']]){
     const el=$tn(id),previous=el.value, all=Array.from(el.options).map(o=>o.value);
