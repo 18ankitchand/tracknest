@@ -179,3 +179,18 @@ class PremiumFinanceTests(TestCase):
         self.assertEqual(mail.outbox[-1].to, ["new-premium@example.com"])
         self.user.refresh_from_db()
         self.assertEqual(self.user.email, "premium@example.com")
+
+
+class FinanceNavigationTests(TestCase):
+    def test_every_workspace_has_a_distinct_django_route(self):
+        paths = [
+            "/dashboard/", "/income/", "/expenses/", "/transactions/",
+            "/budgets/", "/categories/", "/reports/", "/goals/",
+            "/notifications/", "/settings/", "/profile/", "/forecast/", "/advisor/",
+        ]
+        self.assertEqual(len(paths), len(set(paths)))
+        for url in paths:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'id="appScreen"')

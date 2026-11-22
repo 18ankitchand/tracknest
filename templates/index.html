@@ -1268,7 +1268,7 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             }
             await loadFinance();
             if(typeof loadPremiumModules === "function") await loadPremiumModules();
-            navigateTrackNest(window.location.hash.slice(1) || "dashboard", false);
+            navigateTrackNest(trackNestCurrentSection(), false);
         }
 
         async function loadFinance() {
@@ -1353,6 +1353,17 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             updateDashboard();
         }
 
+        const trackNestPathMap = {
+            dashboard:'dashboard',income:'income',expense:'expenses',
+            transactions:'transactions',budget:'budgets',forecast:'forecast',
+            advisor:'advisor',categories:'categories',reports:'reports',
+            goals:'goals',notifications:'notifications',settings:'settings',profile:'profile'
+        };
+        function trackNestCurrentSection() {
+            const slug = window.location.pathname.split('/').filter(Boolean)[0];
+            const found = Object.keys(trackNestPathMap).find(key => trackNestPathMap[key] === slug);
+            return found || window.location.hash.slice(1) || 'dashboard';
+        }
         function navigateTrackNest(section, updateHistory = true) {
             const pages = ['dashboard','income','expense','transactions','budget','forecast','advisor','categories','reports','goals','notifications','settings','profile'];
             if (!pages.includes(section)) section = 'dashboard';
@@ -1367,8 +1378,9 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             });
             if (section === 'income' || section === 'expense') setTrackNestFilter(section);
             if (section === 'transactions') setTrackNestFilter('all');
-            if (updateHistory && window.location.hash !== '#' + section) {
-                history.pushState(null, '', '#' + section);
+            const targetPath = '/' + trackNestPathMap[section] + '/';
+            if (updateHistory && window.location.pathname !== targetPath) {
+                history.pushState({section}, '', targetPath);
             }
             closeTrackNestMenu();
             window.scrollTo({top:0,behavior:'instant'});
@@ -1376,7 +1388,7 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             if (section === 'reports' && typeof premiumCharts !== 'undefined') requestAnimationFrame(() => Object.values(premiumCharts).forEach(chart=>chart&&chart.resize()));
             if(typeof loadPremiumSection === 'function') loadPremiumSection(section);
         }
-        window.addEventListener('popstate', () => navigateTrackNest(window.location.hash.slice(1), false));
+        window.addEventListener('popstate', () => navigateTrackNest(trackNestCurrentSection(), false));
         window.addEventListener('hashchange', () => navigateTrackNest(window.location.hash.slice(1), false));
 
         async function submitTrackNestEntry(event, kind) {
