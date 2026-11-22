@@ -125,3 +125,113 @@ class BudgetEmailTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.budget.refresh_from_db()
         self.assertFalse(self.budget.limit_alert_sent)
+
+
+class TransactionManagementTests(TestCase):
+    def setUp(self):
+        from django.utils import timezone
+        self.user = User.objects.create_user(
+            username="editor@example.com", email="editor@example.com", password="SafePassword123!"
+        )
+        self.other = User.objects.create_user(
+            username="other-editor@example.com", email="other-editor@example.com", password="SafePassword123!"
+        )
+        self.today = timezone.localdate()
+        self.month = self.today.replace(day=1)
+        self.budget = MonthlyBudget.objects.create(user=self.user, month=self.month, limit=Decimal("100.00"))
+        self.item = ExpenseTransaction.objects.create(
+            user=self.user, date=self.today, description="Market", kind="expense",
+            category="Groceries", amount=Decimal("40.00")
+        )
+        self.client.force_login(self.user)
+
+    def post_json(self, path, data):
+        import json
+        return self.client.post(path, data=json.dumps(data), content_type="application/json")
+
+    def edit_url(self, item=None):
+        return f"/api/finance/transactions/{(item or self.item).pk}/edit/"
+
+    def delete_url(self, item=None):
+        return f"/api/finance/transactions/{(item or self.item).pk}/delete/"
+
+    def test_delete_own_expense_and_refresh_budget(self):
+        self.budget.limit_alert_sent = True
+        self.budget.save(update_fields=["limit_alert_sent"])
+        response = self.post_json(self.delete_url(), {})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(ExpenseTransaction.objects.filter(pk=self.item.pk).exists())
+        self.budget.refresh_from_db()
+        self.assertFalse(self.budget.limit_alert_sent)
+
+    def test_cannot_delete_or_edit_another_users_transaction(self):
+        record = ExpenseTransaction.objects.create(
+            user=self.other, date=self.today, description="Other", kind="expense",
+            category="Food", amount=Decimal("25.00")
+        )
+        self.assertEqual(self.post_json(self.delete_url(record), {}).status_code, 404)
+        response = self.post_json(self.edit_url(record), {
+            "type": "income", "desc": "Changed", "category": "Salary",
+            "amount": "20.00", "date": self.today.isoformat(),
+        })
+        self.assertEqual(response.status_code, 404)
+        record.refresh_from_db()
+        self.assertEqual(record.description, "Other")
+
+    def test_anonymous_user_cannot_delete(self):
+        self.client.logout()
+        self.assertEqual(self.post_json(self.delete_url(), {}).status_code, 401)
+
+    def test_add_transaction_with_selected_date(self):
+        from datetime import timedelta
+        previous = self.today - timedelta(days=1)
+        response = self.post_json("/api/finance/transactions/", {
+            "type": "income", "desc": "Salary", "category": "Salary",
+            "amount": "250.00", "date": previous.isoformat(),
+        })
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(ExpenseTransaction.objects.filter(
+            user=self.user, date=previous, description="Salary"
+        ).exists())
+
+    def test_reject_future_and_invalid_dates(self):
+        from datetime import timedelta
+        for value in [(self.today + timedelta(days=1)).isoformat(), "2026-02-30"]:
+            response = self.post_json("/api/finance/transactions/", {
+                "type": "income", "desc": "Salary", "category": "Salary",
+                "amount": "25.00", "date": value,
+            })
+            self.assertEqual(response.status_code, 400)
+
+    def test_edit_date_between_months_and_check_new_month_budget(self):
+        from datetime import timedelta
+        previous = self.month - timedelta(days=1)
+        old = self.item.date
+        response = self.post_json(self.edit_url(), {
+            "type": "expense", "desc": "Market corrected", "category": "Groceries",
+            "amount": "40.00", "date": previous.isoformat(),
+        })
+        self.assertEqual(response.status_code, 200)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.date, previous)
+        self.assertNotEqual(self.item.date, old)
+
+    def test_edit_cannot_exceed_budget(self):
+        response = self.post_json(self.edit_url(), {
+            "type": "expense", "desc": "Too much", "category": "Groceries",
+            "amount": "101.00", "date": self.today.isoformat(),
+        })
+        self.assertEqual(response.status_code, 409)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.amount, Decimal("40.00"))
+
+    def test_edit_reducing_spending_when_budget_was_lowered(self):
+        self.budget.limit = Decimal("30.00")
+        self.budget.save(update_fields=["limit"])
+        response = self.post_json(self.edit_url(), {
+            "type": "expense", "desc": "Corrected", "category": "Groceries",
+            "amount": "35.00", "date": self.today.isoformat(),
+        })
+        self.assertEqual(response.status_code, 200)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.amount, Decimal("35.00"))
