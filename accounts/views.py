@@ -160,7 +160,7 @@ def add_financial_transaction(request):
             return JsonResponse({"error": f"Expense rejected. Remaining monthly budget: Nrs {budget.limit - spent}. No additional expense was recorded.", "locked": spent >= budget.limit}, status=409)
         tx = ExpenseTransaction.objects.create(user=request.user, date=today, description=description, category=category, kind=kind, amount=amount)
         alert_queued = False
-        if kind == "expense" and spent + amount >= budget.limit and not budget.limit_alert_sent:
+        if kind == "expense" and spent + amount >= budget.limit and not budget.limit_alert_sent and settings.EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend":
             budget.limit_alert_sent = True
             budget.save(update_fields=["limit_alert_sent"])
             email = request.user.email
