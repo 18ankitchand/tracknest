@@ -15,7 +15,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
-from .models import Profile, MonthlyBudget, ExpenseTransaction, CategoryBudget
+from .models import Profile, MonthlyBudget, ExpenseTransaction, CategoryBudget, UserPreference
 from .premium_api import evaluate_budget_alerts, category_spending
 
 logger = logging.getLogger(__name__)
@@ -189,6 +189,9 @@ def queue_budget_email(user, budget, month):
     if month != month_start(timezone.localdate()) or budget.limit_alert_sent:
         return False
     if settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":
+        return False
+    pref, _ = UserPreference.objects.get_or_create(user=user)
+    if not pref.email_alerts_enabled:
         return False
 
     budget.limit_alert_sent = True
