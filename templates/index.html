@@ -1605,6 +1605,18 @@ font-size:.83rem;cursor:pointer}
                 userBudgetLimit = state.limit;
                 currentMonthlySpent = Number(state.spent || 0);
                 budgetConfigured = state.budget_configured !== false;
+                // Render the three monthly budget cards from the authenticated
+                // Django state, not their initial static HTML placeholders.
+                const budgetAmount = Number(state.limit || 0);
+                const spentAmount = Number(state.spent || 0);
+                const budgetMoney = amount => 'Nrs ' + amount.toLocaleString('en-US', {
+                    minimumFractionDigits: 2, maximumFractionDigits: 2
+                });
+                document.getElementById('tnBudgetTotal').textContent =
+                    budgetConfigured ? budgetMoney(budgetAmount) : 'Not set';
+                document.getElementById('tnBudgetSpent').textContent = budgetMoney(spentAmount);
+                document.getElementById('tnBudgetRemaining').textContent =
+                    budgetConfigured ? budgetMoney(Math.max(0, budgetAmount - spentAmount)) : 'Not set';
                 esewaSandboxReady = Boolean(state.esewa_sandbox_ready);
                 document.getElementById('tnBudgetSetupBanner').hidden = budgetConfigured;
                 document.getElementById('newLimitInput').placeholder = budgetConfigured ? 'New limit' : 'Your chosen monthly limit';
@@ -2257,6 +2269,6 @@ font-size:.83rem;cursor:pointer}
             }
         }
     </script>
-    <script src="{% static 'js/premium-pages.js' %}?v=20261122-notification-alerts-2"></script>
+    <script src="{% static 'js/premium-pages.js' %}?v=20261122-budget-cards-categories-3"></script>
 </body>
 </html>
