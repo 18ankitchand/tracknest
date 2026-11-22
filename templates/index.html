@@ -588,6 +588,18 @@
 @media(max-width:1100px){.tn-entry-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.tn-dashboard-actions{grid-template-columns:1fr}.tn-entry-form{grid-template-columns:1fr}
 .tn-recent-item{align-items:flex-start}.tn-page .tn-workspace-row{align-items:flex-start}}
+
+/* Transaction dates, search and deletion controls */
+.tn-search-toolbar{display:grid;grid-template-columns:minmax(200px,2fr) repeat(2,minmax(160px,1fr)) auto;gap:.85rem;align-items:end;margin-bottom:.65rem}
+.tn-search-toolbar .form-group{min-width:0}
+.tn-search-toolbar input{width:100%;min-height:46px}
+.tn-search-toolbar>button{min-height:46px}
+.tn-filter-count{font-size:.78rem;color:#94a3b8;margin-bottom:.75rem}
+.tn-delete-btn{border:1px solid rgba(251,113,133,.35);border-radius:10px;padding:.45rem .8rem;background:rgba(244,63,94,.11);color:#fda4af;font-family:inherit;font-size:.78rem;font-weight:800;cursor:pointer}
+.tn-delete-btn:hover{background:rgba(244,63,94,.23);border-color:#fb7185}
+.tn-entry-form{grid-template-columns:minmax(150px,1.4fr) minmax(130px,1fr) minmax(145px,1fr) minmax(120px,1fr) auto}
+@media(max-width:1160px){.tn-entry-form{grid-template-columns:repeat(2,minmax(0,1fr))}.tn-search-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.tn-search-toolbar,.tn-entry-form{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
@@ -719,12 +731,13 @@
             
             <section class="card tn-workspace-card">
               <div class="section-label">New income</div><div class="card-title">Add income record</div>
-              <p class="card-description">Record your earnings and other money received. The transaction date is set to today.</p>
+              <p class="card-description">Record your earnings and other money received. Choose the date it was received.</p>
               <form class="tn-entry-form" onsubmit="submitTrackNestEntry(event,'income')">
                 <div class="form-group"><label for="incomeEntryDesc">Description</label><input id="incomeEntryDesc" maxlength="200" placeholder="e.g. Monthly salary" required></div>
                 <div class="form-group"><label for="incomeEntryCategory">Category</label>
                   <select id="incomeEntryCategory" required><option value="Salary">Salary</option><option value="Freelance">Freelance</option><option value="Business">Business</option><option value="Gift">Gift</option><option value="Other">Other income</option></select>
                 </div>
+                <div class="form-group"><label for="incomeEntryDate">Date</label><input type="date" id="incomeEntryDate" required></div>
                 <div class="form-group"><label for="incomeEntryAmount">Amount (Nrs)</label><input id="incomeEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn">Save Income</button>
               </form>
@@ -740,12 +753,13 @@
             
             <section class="card tn-workspace-card">
               <div class="section-label">New expense</div><div class="card-title">Add expense record</div>
-              <p class="card-description">Record your purchases and other spending. The transaction date is set to today.</p>
+              <p class="card-description">Record your purchases and other spending. Choose the date it occurred.</p>
               <form class="tn-entry-form" onsubmit="submitTrackNestEntry(event,'expense')">
                 <div class="form-group"><label for="expenseEntryDesc">Description</label><input id="expenseEntryDesc" maxlength="200" placeholder="e.g. Grocery shopping" required></div>
                 <div class="form-group"><label for="expenseEntryCategory">Category</label>
                   <select id="expenseEntryCategory" required><option value="Groceries">Groceries</option><option value="Dining">Dining</option><option value="Utilities">Utilities</option><option value="Shopping">Shopping</option><option value="Transport">Transport</option><option value="Health">Health</option><option value="Other">Other expense</option></select>
                 </div>
+                <div class="form-group"><label for="expenseEntryDate">Date</label><input type="date" id="expenseEntryDate" required></div>
                 <div class="form-group"><label for="expenseEntryAmount">Amount (Nrs)</label><input id="expenseEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn">Save Expense</button>
               </form>
@@ -757,11 +771,18 @@
             </section>
           </section>
           <section class="tn-page" id="tnPage-transactions" data-tn-page="transactions" hidden>
-            <div class="tn-page-heading"><span class="section-label">Your financial history</span><h1 class="dashboard-heading">Transactions</h1><p class="dashboard-description">View all records, filter by type, and edit transactions.</p></div>
+            <div class="tn-page-heading"><span class="section-label">Your financial history</span><h1 class="dashboard-heading">Transactions</h1><p class="dashboard-description">Search, filter, edit or delete saved transactions.</p></div>
             <div class="card" id="transactionSection">
                 <div class="card-header">
                     <div><div class="section-label">Your activity</div><div class="card-title">Transaction management</div><p class="card-description">Record and review income and expenses.</p></div><div class="tn-record-filter" id="tnRecordFilter" aria-label="Transaction filters"><button type="button" class="active" onclick="setTrackNestFilter('all')" data-filter="all">All</button><button type="button" onclick="setTrackNestFilter('income')" data-filter="income">Income</button><button type="button" onclick="setTrackNestFilter('expense')" data-filter="expense">Expenses</button></div>
                 </div>
+                <div class="tn-search-toolbar" aria-label="Search transactions">
+                    <div class="form-group"><label for="txSearch">Search</label><input type="search" id="txSearch" placeholder="Description or category" oninput="updateDashboard()" maxlength="200"></div>
+                    <div class="form-group"><label for="txDateFrom">From date</label><input type="date" id="txDateFrom" onchange="updateDashboard()"></div>
+                    <div class="form-group"><label for="txDateTo">To date</label><input type="date" id="txDateTo" onchange="updateDashboard()"></div>
+                    <button type="button" class="cancel-edit-btn" onclick="resetTransactionFilters()">Clear filters</button>
+                </div>
+                <p id="txFilterCount" class="tn-filter-count" role="status" aria-live="polite"></p>
                 <div id="editTransactionNotice" class="edit-transaction-notice" role="status" style="display:none">Editing an existing transaction — update the fields below and save your changes.</div>
                 <form id="txForm" class="form-grid" onsubmit="addTransaction(event)">
                     <div class="form-group">
@@ -789,6 +810,7 @@
                         <label>Amount (Nrs)</label>
                         <input type="number" id="txAmount" step="0.01" placeholder="5000.00" required>
                     </div>
+                    <div class="form-group"><label for="txDate">Transaction date</label><input type="date" id="txDate" required></div>
                     <div class="transaction-form-actions"><button type="submit" class="primary-btn" id="addTxBtn">Add Transaction</button>
                     <button type="button" class="cancel-edit-btn" id="cancelTxEdit" onclick="cancelTransactionEdit()" style="display:none">Cancel</button></div>
                 </form>
