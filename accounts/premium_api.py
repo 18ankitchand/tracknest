@@ -374,6 +374,9 @@ def send_threshold_notice(user, title, message, level, send_email=True):
         return
     if settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":
         return
+    if (settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+            and (not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_PASSWORD)):
+        return
     def notify():
         try:
             send_mail(title, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
@@ -383,35 +386,70 @@ def send_threshold_notice(user, title, message, level, send_email=True):
 
 
 def evaluate_budget_alerts(user, month):
-    """Persist in-app 80/90/100% alerts at most once per threshold until spending falls."""
+    """Persist each crossed threshold; 80% is in-app only, 91%+ also emails.
+
+    Values are compared using Decimal arithmetic to avoid rounding thresholds.
+    100% monthly email is handled separately by queue_budget_email().
+    """
     if month != timezone.localdate().replace(day=1):
         return
+
+    def threshold(spent, limit):
+        if spent >= limit:
+            return 100
+        if spent * 100 >= limit * 91:
+            return 91
+        if spent * 100 >= limit * 80:
+            return 80
+        return 0
+
     budget = MonthlyBudget.objects.select_for_update().filter(user=user, month=month).first()
     if budget:
-        spent = ExpenseTransaction.objects.filter(user=user, kind="expense",
-            date__year=month.year, date__month=month.month).aggregate(v=Sum("amount"))["v"] or Decimal("0")
-        level = 100 if spent >= budget.limit else 90 if spent * 100 >= budget.limit * 90 else 80 if spent * 100 >= budget.limit * 80 else 0
-        if level > budget.notified_level:
-            send_threshold_notice(user, f"TrackNest budget {level}% alert",
-                f"You have recorded Nrs {spent:.2f} out of Nrs {budget.limit:.2f} for {month:%B %Y}. " +
-                ("Further expense recording is blocked at your limit." if level == 100 else "Review your spending in TrackNest."),
-                "danger" if level == 100 else "warning",
-                send_email=(level != 100))  # The pre-existing 100% email path sends the limit email.
+        spent = ExpenseTransaction.objects.filter(
+            user=user, kind="expense", date__year=month.year, date__month=month.month
+        ).aggregate(v=Sum("amount"))["v"] or Decimal("0")
+        level = threshold(spent, budget.limit)
+        # Prior releases stored 90 as their critical milestone; treat it as 91
+        # when evaluating the new schedule so users do not get a repeat alert.
+        previous_level = 91 if budget.notified_level == 90 else budget.notified_level
+        if level > previous_level:
+            send_threshold_notice(
+                user,
+                f"TrackNest monthly budget {level}% alert",
+                f"You have recorded Nrs {spent:.2f} out of Nrs {budget.limit:.2f} "
+                f"for {month:%B %Y}. " +
+                ("Your monthly limit is reached. New expenses are blocked in TrackNest."
+                 if level == 100 else "Your spending is critical; review your remaining budget."
+                 if level == 91 else "You have used at least 80% of your budget."),
+                "danger" if level >= 91 else "warning",
+                send_email=(level == 91),  # 100% uses the dedicated limit email.
+            )
             budget.notified_level = level
             budget.save(update_fields=["notified_level"])
-        elif level < budget.notified_level:
+        elif level < previous_level or budget.notified_level != previous_level:
             budget.notified_level = level
             budget.save(update_fields=["notified_level"])
-    for item in CategoryBudget.objects.select_for_update().filter(user=user, month=month).select_related("category"):
+
+    for item in CategoryBudget.objects.select_for_update().filter(
+        user=user, month=month
+    ).select_related("category"):
         spent = category_spending(user, item.category, month)
-        level = 100 if spent >= item.limit else 90 if spent*100 >= item.limit*90 else 80 if spent*100 >= item.limit*80 else 0
-        if level > item.notified_level:
-            send_threshold_notice(user, f"TrackNest {item.category.name} budget: {level}%",
-                f"Your {item.category.name} expenses are Nrs {spent:.2f} of Nrs {item.limit:.2f} for {month:%B %Y}.",
-                "danger" if level == 100 else "warning")
+        level = threshold(spent, item.limit)
+        previous_level = 91 if item.notified_level == 90 else item.notified_level
+        if level > previous_level:
+            send_threshold_notice(
+                user,
+                f"TrackNest {item.category.name} budget: {level}%",
+                f"Your {item.category.name} expenses are Nrs {spent:.2f} "
+                f"of Nrs {item.limit:.2f} for {month:%B %Y}. "
+                + ("This category budget has reached its limit."
+                   if level == 100 else "Please review your category spending."),
+                "danger" if level >= 91 else "warning",
+                send_email=(level >= 91),
+            )
             item.notified_level = level
             item.save(update_fields=["notified_level"])
-        elif level < item.notified_level:
+        elif level < previous_level or item.notified_level != previous_level:
             item.notified_level = level
             item.save(update_fields=["notified_level"])
 
