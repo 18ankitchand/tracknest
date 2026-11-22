@@ -2,7 +2,7 @@ from decimal import Decimal
 from datetime import date
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import ExpenseTransaction, MonthlyBudget, Profile
@@ -54,3 +54,74 @@ class AdminOverviewTests(TestCase):
         response = self.client.post("/api/finance/transactions/", data=json.dumps({"type":"expense", "desc":"Extra", "category":"Food", "amount":"11.00"}), content_type="application/json")
         self.assertEqual(response.status_code, 409)
         self.assertFalse(ExpenseTransaction.objects.filter(description="Extra").exists())
+
+
+class BudgetEmailTests(TestCase):
+    def setUp(self):
+        from django.utils import timezone
+        self.user = User.objects.create_user(
+            username="alert@example.com", email="alert@example.com", password="SafePassword123!"
+        )
+        self.month = timezone.localdate().replace(day=1)
+        self.budget = MonthlyBudget.objects.create(
+            user=self.user, month=self.month, limit=Decimal("20.00")
+        )
+        self.client.force_login(self.user)
+
+    @staticmethod
+    def transaction_payload(amount):
+        import json
+        return json.dumps({
+            "type": "expense",
+            "desc": "Groceries",
+            "category": "Food",
+            "amount": amount,
+        })
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_at_limit_sends_one_email_to_registered_user(self):
+        from django.core import mail
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                "/api/finance/transactions/",
+                data=self.transaction_payload("20.00"),
+                content_type="application/json",
+            )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["alert@example.com"])
+        self.budget.refresh_from_db()
+        self.assertTrue(self.budget.limit_alert_sent)
+        response = self.client.post(
+            "/api/finance/transactions/",
+            data=self.transaction_payload("1.00"),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 409)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend")
+    def test_email_failure_does_not_undo_expense(self):
+        from unittest.mock import patch
+        with patch("accounts.views.send_limit_email", side_effect=RuntimeError("offline")):
+            with self.captureOnCommitCallbacks(execute=True):
+                response = self.client.post(
+                    "/api/finance/transactions/",
+                    data=self.transaction_payload("20.00"),
+                    content_type="application/json",
+                )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+        self.budget.refresh_from_db()
+        self.assertFalse(self.budget.limit_alert_sent)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend")
+    def test_console_backend_does_not_claim_email_sent(self):
+        response = self.client.post(
+            "/api/finance/transactions/",
+            data=self.transaction_payload("20.00"),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.budget.refresh_from_db()
+        self.assertFalse(self.budget.limit_alert_sent)
