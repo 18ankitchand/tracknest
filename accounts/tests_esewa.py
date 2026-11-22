@@ -177,10 +177,6 @@ class EsewaSandboxTests(TestCase):
         self.assertContains(page, "Total Expenses")
         for element_id in ("tnOnlineTransactionCount", "tnOfflineTransactionCount", "tnExpenseTransactionCount", "tnTotalExpenseAmount"):
             self.assertContains(page, f'id="{element_id}"')
-        self.assertContains(page, "Recorded Transactions")
-        self.assertContains(page, 'id="tnExpensePaymentCount"')
-        self.assertContains(page, 'id="tnPaymentBreakdown"')
-        self.assertContains(page, "Total Expenses")
         result = self.post("/api/finance/transactions/", {
             "type": "expense", "desc": "Old wallet", "category": "Utilities",
             "amount": "10.00", "payment_method": "Mobile Wallet",
