@@ -201,6 +201,13 @@ class EsewaSandboxTests(TestCase):
         result = self.post(f"/api/payments/esewa/{payment.transaction_uuid}/verify/", {})
         self.assertEqual(result.status_code, 404)
 
+    @override_settings(DEBUG=False, ESEWA_SANDBOX_READY=True)
+    def test_public_demo_is_disabled_outside_development(self):
+        from .esewa import configured
+        self.assertFalse(configured())
+        self.configure_budget()
+        self.assertEqual(self.start().status_code, 503)
+
     @override_settings(ESEWA_SANDBOX_READY=False)
     def test_disabled_payment_gateway_does_not_accept_checkouts(self):
         self.configure_budget()
