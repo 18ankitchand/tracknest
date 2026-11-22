@@ -15,7 +15,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
-from .models import Profile, MonthlyBudget, ExpenseTransaction, CategoryBudget, UserPreference
+from .models import Profile, MonthlyBudget, ExpenseTransaction, CategoryBudget, UserPreference, EsewaPayment
 from .premium_api import evaluate_budget_alerts, category_spending
 
 logger = logging.getLogger(__name__)
@@ -121,9 +121,12 @@ def financial_state(request):
                        and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD)
     from .esewa import pending_reserved, configured
     reserved = pending_reserved(request.user, month)
+    recent_payments = EsewaPayment.objects.filter(user=request.user).order_by("-created_at")[:10]
     return JsonResponse({"limit": float(budget.limit), "spent": float(spent), "locked": spent >= budget.limit,
                          "budget_configured": budget.is_set_by_user,
                          "esewa_sandbox_ready": configured(), "reserved": float(reserved),
+                         "esewa_payments": [{"reference": p.transaction_uuid, "status": p.status, "amount": float(p.amount),
+                                             "description": p.description, "sandbox": p.is_sandbox} for p in recent_payments],
                          "email_delivery_configured": email_ready,
                          "transactions": [serialize_tx(t) for t in txs]})
 
