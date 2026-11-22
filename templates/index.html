@@ -637,6 +637,19 @@
 #appScreen .tn-premium-empty{color:#91a0b4;padding:30px;text-align:center}
 @media(max-width:750px){#appScreen .tn-premium-grid,#appScreen .tn-budget-stats,#appScreen .tn-report-summary{grid-template-columns:1fr!important}}
 
+#appScreen .tn-search-toolbar{grid-template-columns:minmax(165px,2fr) repeat(4,minmax(120px,1fr)) auto auto!important}
+#appScreen .tn-search-toolbar button{white-space:nowrap;min-height:46px}
+.tn-details-dialog{border:1px solid #e5eafa;border-radius:17px;padding:25px;color:#25334b;background:white;
+width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
+.tn-details-dialog::backdrop{background:rgba(12,23,43,.65)}
+.tn-details-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.tn-details-header h3{font-size:1.15rem}
+.tn-details-header button{border:0;background:transparent;cursor:pointer;font-size:1.7rem;color:#64748b}
+.tn-detail-row{display:flex;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid #edf0f7}
+.tn-detail-row span{color:#7b879b}.tn-detail-row strong{overflow-wrap:anywhere;text-align:right}
+.tn-details-dialog>.primary-btn{margin-top:22px}
+@media(max-width:1200px){#appScreen .tn-search-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:620px){#appScreen .tn-search-toolbar{grid-template-columns:1fr!important}}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -843,12 +856,13 @@
                     <div><div class="section-label">Your activity</div><div class="card-title">Transaction management</div><p class="card-description">Record and review income and expenses.</p></div><div class="tn-record-filter" id="tnRecordFilter" aria-label="Transaction filters"><button type="button" class="active" onclick="setTrackNestFilter('all')" data-filter="all">All</button><button type="button" onclick="setTrackNestFilter('income')" data-filter="income">Income</button><button type="button" onclick="setTrackNestFilter('expense')" data-filter="expense">Expenses</button></div>
                 </div>
                 <div class="tn-search-toolbar" aria-label="Search transactions">
-                  <div class="form-group"><label for="tnTransactionCategoryFilter">Category</label><select id="tnTransactionCategoryFilter" onchange="updateDashboard()"><option value="">All categories</option></select></div>
-                  <div class="form-group"><label for="tnTransactionSort">Sort</label><select id="tnTransactionSort" onchange="updateDashboard()"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option></select></div>
-                    <div class="form-group"><label for="txSearch">Search</label><input type="search" id="txSearch" placeholder="Description or category" oninput="updateDashboard()" maxlength="200"></div>
-                    <div class="form-group"><label for="txDateFrom">From date</label><input type="date" id="txDateFrom" onchange="updateDashboard()"></div>
-                    <div class="form-group"><label for="txDateTo">To date</label><input type="date" id="txDateTo" onchange="updateDashboard()"></div>
+                  <div class="form-group"><label for="tnTransactionCategoryFilter">Category</label><select id="tnTransactionCategoryFilter" onchange="premiumTransactionPage=1;updateDashboard()"><option value="">All categories</option></select></div>
+                  <div class="form-group"><label for="tnTransactionSort">Sort</label><select id="tnTransactionSort" onchange="premiumTransactionPage=1;updateDashboard()"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option></select></div>
+                    <div class="form-group"><label for="txSearch">Search</label><input type="search" id="txSearch" placeholder="Description or category" oninput="premiumTransactionPage=1;updateDashboard()" maxlength="200"></div>
+                    <div class="form-group"><label for="txDateFrom">From date</label><input type="date" id="txDateFrom" onchange="premiumTransactionPage=1;updateDashboard()"></div>
+                    <div class="form-group"><label for="txDateTo">To date</label><input type="date" id="txDateTo" onchange="premiumTransactionPage=1;updateDashboard()"></div>
                     <button type="button" class="cancel-edit-btn" onclick="resetTransactionFilters()">Clear filters</button>
+                  <button type="button" class="primary-btn" onclick="downloadPremiumTransactionCSV()">Export CSV</button>
                 </div>
                 <p id="txFilterCount" class="tn-filter-count" role="status" aria-live="polite"></p>
                 <div id="editTransactionNotice" class="edit-transaction-notice" role="status" style="display:none">Editing an existing transaction — update the fields below and save your changes.</div>
@@ -1041,6 +1055,11 @@
         </main>
     </div>
 
+    <dialog id="tnTransactionDialog" class="tn-details-dialog">
+        <div class="tn-details-header"><h3>Transaction details</h3><button type="button" onclick="document.getElementById('tnTransactionDialog').close()" aria-label="Close details">×</button></div>
+        <div id="tnTransactionDetailContent"></div>
+        <button type="button" class="primary-btn" onclick="document.getElementById('tnTransactionDialog').close()">Close</button>
+    </dialog>
     <!-- Email Notification Toast -->
     <div id="emailToast">
         <div style="font-weight: 700; color: var(--danger); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -1309,6 +1328,7 @@
         function setTrackNestFilter(filter) {
             if (!['all','income','expense'].includes(filter)) return;
             trackNestRecordFilter = filter;
+            if(typeof premiumTransactionPage !== "undefined") premiumTransactionPage=1;
             document.querySelectorAll('[data-filter]').forEach(button => {
                 const active = button.dataset.filter === filter;
                 button.classList.toggle('active', active);
@@ -1412,7 +1432,7 @@
                 document.getElementById(kind+'PageRows').innerHTML = records.length ? records.map(t => `
                     <tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.category)}</td>
                     <td class="tn-table-amount ${kind}">${kind==='income'?'+':'−'}${money(Number(t.amount))}</td>
-                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})">Delete</button></td></tr>
+                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})">Delete</button><button type="button" class="edit-transaction-btn" onclick="viewTransactionDetails(${Number(t.id)})">View</button></td></tr>
                 `).join('') : '<tr><td colspan="5" class="tn-empty">No '+kind+' records yet. Use the form above to add one.</td></tr>';
             }
             const recent = transactions.slice(0,5);
@@ -1632,7 +1652,7 @@
                         <td><span class="badge ${t.type}">${t.type}</span></td>
                         <td style="font-family: 'JetBrains Mono';">${t.type === 'income' ? '+' : '-'}Nrs ${t.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                         <td>${escapeHtml(t.payment_method || 'Cash')}</td>
-                        <td><button type="button" class="edit-transaction-btn" onclick="editTransaction(${Number(t.id)})" aria-label="Edit ${escapeHtml(t.desc)}">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})" aria-label="Delete ${escapeHtml(t.desc)}">Delete</button></td>
+                        <td><button type="button" class="edit-transaction-btn" onclick="editTransaction(${Number(t.id)})" aria-label="Edit ${escapeHtml(t.desc)}">Edit</button><button type="button" class="edit-transaction-btn" onclick="viewTransactionDetails(${Number(t.id)})">View</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})" aria-label="Delete ${escapeHtml(t.desc)}">Delete</button></td>
                     </tr>
                 `).join('');
             }
@@ -1642,11 +1662,12 @@
             forecastChart.data.datasets[1].data = [null, null, null, null, monthlyExpense, predicted];
             forecastChart.update();
             renderTrackNestPageTables();
-            renderTrackNestCharts();
+            if (lastTransactionChartData !== transactions) {renderTrackNestCharts(); lastTransactionChartData = transactions;}
         }
 
 
         // Premium charts use only actual signed-in user's recorded transactions.
+        let lastTransactionChartData = null;
         let tnOverviewChart = null;
         let tnCategoryChart = null;
         function renderTrackNestCharts() {
@@ -1696,6 +1717,17 @@
                     plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8}}}
                 }
             });
+        }
+
+        function viewTransactionDetails(id) {
+            const item=transactions.find(t=>Number(t.id)===Number(id));
+            if(!item){alert('Transaction not found.');return;}
+            const label=(name,value)=>'<div class="tn-detail-row"><span>'+name+'</span><strong>'+escapeHtml(value)+'</strong></div>';
+            document.getElementById('tnTransactionDetailContent').innerHTML =
+                label('Description',item.desc)+label('Date',item.date)+label('Type',item.type)+
+                label('Category',item.category)+label('Amount',premiumMoney(item.amount))+
+                label('Payment method',item.payment_method||'Cash')+label('Notes',item.notes||'—');
+            document.getElementById('tnTransactionDialog').showModal();
         }
 
         function changePremiumTransactionPage(delta) {
