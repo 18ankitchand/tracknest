@@ -105,7 +105,14 @@ def analytics(request):
         months[month][tx["kind"]] += tx["amount"]
         if tx["kind"] == "expense":
             categories[tx["category"]] += tx["amount"]
+    current_month = timezone.localdate().replace(day=1)
+    this_month_categories = defaultdict(lambda: Decimal("0"))
+    for tx in ExpenseTransaction.objects.filter(user=request.user, kind="expense",
+            date__year=current_month.year, date__month=current_month.month).values("category", "amount"):
+        this_month_categories[tx["category"]] += tx["amount"]
     return JsonResponse({
+        "current_month_categories": [{"name": key, "amount": float(value)} for key, value in
+                                     sorted(this_month_categories.items(), key=lambda item: -item[1])],
         "income": float(totals["income"]), "expense": float(totals["expense"]),
         "balance": float(totals["income"] - totals["expense"]),
         "monthly": [{"month": key, "income": float(value["income"]), "expense": float(value["expense"])} for key, value in sorted(months.items())],
