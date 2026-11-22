@@ -15,7 +15,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
-from .models import Profile, MonthlyBudget, ExpenseTransaction, CategoryBudget, UserPreference
+from .models import Profile, MonthlyBudget, ExpenseTransaction, CategoryBudget, UserPreference, EsewaPayment
 from .premium_api import evaluate_budget_alerts, category_spending
 
 logger = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ def get_budget(user, month):
     return MonthlyBudget.objects.get_or_create(user=user, month=month)[0]
 
 def serialize_tx(tx):
-    return {"id": tx.pk, "date": tx.date.isoformat(), "desc": tx.description, "type": tx.kind, "category": tx.category, "amount": float(tx.amount), "payment_method": tx.payment_method, "notes": tx.notes}
+    return {"id": tx.pk, "date": tx.date.isoformat(), "desc": tx.description, "type": tx.kind, "category": tx.category, "amount": float(tx.amount), "payment_method": tx.payment_method, "notes": tx.notes, "verified_esewa": hasattr(tx, "esewa_payment")}
 
 def send_limit_email(email, limit, month):
     send_mail(
@@ -116,10 +116,17 @@ def financial_state(request):
     month = month_start(timezone.localdate())
     budget = get_budget(request.user, month)
     spent = monthly_spent(request.user, month)
-    txs = ExpenseTransaction.objects.filter(user=request.user).order_by("-date", "-pk")[:500]
+    txs = ExpenseTransaction.objects.filter(user=request.user).select_related("esewa_payment").order_by("-date", "-pk")[:500]
     email_ready = bool(request.user.email and settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
                        and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD)
+    from .esewa import pending_reserved, configured
+    reserved = pending_reserved(request.user, month)
+    recent_payments = EsewaPayment.objects.filter(user=request.user).order_by("-created_at")[:10]
     return JsonResponse({"limit": float(budget.limit), "spent": float(spent), "locked": spent >= budget.limit,
+                         "budget_configured": budget.is_set_by_user,
+                         "esewa_sandbox_ready": configured(), "reserved": float(reserved),
+                         "esewa_payments": [{"reference": p.transaction_uuid, "status": p.status, "amount": float(p.amount),
+                                             "description": p.description, "sandbox": p.is_sandbox} for p in recent_payments],
                          "email_delivery_configured": email_ready,
                          "transactions": [serialize_tx(t) for t in txs]})
 
@@ -138,13 +145,18 @@ def set_budget(request):
         budget = get_budget(request.user, month)
         budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)
         spent = monthly_spent(request.user, month)
+        from .esewa import pending_reserved
+        outstanding = pending_reserved(request.user, month)
+        if outstanding and value < spent + outstanding:
+            return JsonResponse({"error": "Budget cannot be lowered below recorded spending plus pending eSewa checkouts. Verify or resolve those payments first."}, status=409)
         budget.limit = value
+        budget.is_set_by_user = True
         # Moving back below the limit allows one new 100% email when reached again.
         if spent < value:
             budget.limit_alert_sent = False
-            budget.save(update_fields=["limit", "limit_alert_sent"])
+            budget.save(update_fields=["limit", "limit_alert_sent", "is_set_by_user"])
         else:
-            budget.save(update_fields=["limit"])
+            budget.save(update_fields=["limit", "is_set_by_user"])
         evaluate_budget_alerts(request.user, month)
         # Reaching 100% by lowering a budget must email just like adding an expense.
         alert_queued = spent >= value and queue_budget_email(request.user, budget, month)
@@ -237,10 +249,14 @@ def add_financial_transaction(request):
     with transaction.atomic():
         budget = get_budget(request.user, month)
         budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)
+        if not budget.is_set_by_user:
+            return JsonResponse({"error": "Set your monthly spending limit before adding income or expenses."}, status=409)
+        from .esewa import pending_reserved
         spent = monthly_spent(request.user, month)
-        if fields["kind"] == "expense" and spent + fields["amount"] > budget.limit:
+        reserved = pending_reserved(request.user, month)
+        if fields["kind"] == "expense" and spent + reserved + fields["amount"] > budget.limit:
             return JsonResponse(
-                {"error": f"Expense rejected. Remaining budget for {month:%B %Y}: Nrs {max(Decimal('0'), budget.limit - spent)}. No expense was recorded."},
+                {"error": f"Expense rejected. Available budget after pending eSewa checkouts for {month:%B %Y}: Nrs {max(Decimal('0'), budget.limit - spent - reserved)}. No expense was recorded."},
                 status=409,
             )
         if fields["kind"] == "expense":
@@ -249,7 +265,7 @@ def add_financial_transaction(request):
             ).first()
             if category_budget:
                 recorded_category = category_spending(request.user, category_budget.category, month)
-                if recorded_category + fields["amount"] > category_budget.limit:
+                if recorded_category + pending_reserved(request.user, month, category=fields["category"]) + fields["amount"] > category_budget.limit:
                     return JsonResponse({"error":
                         f"Expense rejected: {fields['category']} budget has only Nrs {max(Decimal('0'), category_budget.limit - recorded_category)} remaining."},
                         status=409)
@@ -276,6 +292,8 @@ def edit_financial_transaction(request, transaction_id):
         )
         if existing is None:
             return JsonResponse({"error": "Transaction not found."}, status=404)
+        if hasattr(existing, "esewa_payment"):
+            return JsonResponse({"error": "Verified eSewa payments cannot be edited; refunds need separate reconciliation."}, status=409)
 
         fields, error = validate_transaction_fields(payload(request), default_date=existing.date)
         if error:
@@ -305,7 +323,8 @@ def edit_financial_transaction(request, transaction_id):
 
         # If a budget was lowered below spending already recorded, still permit
         # neutral edits or corrections that reduce the amount overspent.
-        if new_contribution and revised_new > budgets[new_month].limit and revised_new > new_spent:
+        from .esewa import pending_reserved
+        if new_contribution and revised_new + pending_reserved(request.user, new_month) > budgets[new_month].limit and revised_new > new_spent:
             return JsonResponse(
                 {"error": f"Edit rejected: the new expense exceeds the {new_month:%B %Y} budget."},
                 status=409,
@@ -320,7 +339,7 @@ def edit_financial_transaction(request, transaction_id):
                 previous_category = (old_contribution if old_month == new_month and
                     existing.category.casefold() == fields["category"].casefold() else Decimal("0"))
                 new_category_total = current_category - previous_category + new_contribution
-                if new_category_total > category_budget.limit and new_category_total > current_category:
+                if new_category_total + pending_reserved(request.user, new_month, category=fields["category"]) > category_budget.limit and new_category_total > current_category:
                     return JsonResponse({"error": "Edit rejected: category spending limit exceeded."}, status=409)
 
         for attr, value in fields.items():
@@ -359,6 +378,8 @@ def delete_financial_transaction(request, transaction_id):
         )
         if existing is None:
             return JsonResponse({"error": "Transaction not found."}, status=404)
+        if hasattr(existing, "esewa_payment"):
+            return JsonResponse({"error": "Verified eSewa payments cannot be deleted; refunds require reconciliation."}, status=409)
 
         budget = get_budget(request.user, month_start(existing.date))
         budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)

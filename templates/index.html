@@ -702,6 +702,25 @@ font-size:.83rem;cursor:pointer}
 @media(max-width:600px){.tn-assistant-floating{right:14px;bottom:14px;padding:11px 14px}}
 #appScreen .tn-budget-email-status{color:#63758c;font-size:.77rem;line-height:1.5;margin-top:.55rem}
 #appScreen.tn-dark .tn-budget-email-status{color:#b8cbe0}
+
+#appScreen .tn-budget-onboarding{padding:20px 24px;border-radius:14px;background:#efecff;border:1px solid #d8d2ff;color:#43359b}
+#appScreen .tn-budget-onboarding[hidden]{display:none!important}
+#appScreen .tn-budget-onboarding strong{display:block;font-size:1.08rem;margin-bottom:8px}
+#appScreen .tn-budget-onboarding p{line-height:1.6;font-size:.87rem}
+#appScreen .tn-esewa-box{display:flex;align-items:center;flex-wrap:wrap;gap:15px;background:#e7f8f0;border:1px solid #ace8c7;padding:17px;border-radius:14px;margin-top:18px}
+#appScreen .tn-esewa-box>div{flex:1;min-width:220px}
+#appScreen .tn-esewa-box strong{color:#05663e}
+#appScreen .tn-esewa-box p{color:#34735b;font-size:.77rem;line-height:1.6;margin-top:6px}
+#appScreen .tn-esewa-pay-button{background:#119b64;color:white;border:0;padding:12px 18px;border-radius:10px;cursor:pointer;font-weight:750}
+#appScreen .tn-esewa-pay-button:disabled{opacity:.45;cursor:not-allowed}
+#appScreen #tnEsewaAvailability{font-size:.75rem;color:#416451;max-width:270px}
+#appScreen .tn-esewa-history{margin-top:21px}
+#appScreen .tn-esewa-history h3{font-size:1rem;color:#24364c}
+#appScreen .tn-esewa-history p{font-size:.76rem;color:#72829a;margin-top:6px}
+#appScreen .tn-esewa-history-row{display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #e5edf2;padding:11px 0;color:#364d61;font-size:.81rem;flex-wrap:wrap}
+#appScreen.tn-dark .tn-esewa-box,#appScreen.tn-dark .tn-budget-onboarding{background:#24394e;border-color:#48667a}
+#appScreen.tn-dark .tn-esewa-box strong,#appScreen.tn-dark .tn-esewa-history h3{color:#c6f8d7}
+#appScreen.tn-dark .tn-esewa-box p,#appScreen.tn-dark .tn-esewa-history-row,#appScreen.tn-dark .tn-budget-onboarding{color:#dbe8f5}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -896,6 +915,12 @@ font-size:.83rem;cursor:pointer}
                 <div class="form-group"><label for="expenseEntryAmount">Amount (Nrs)</label><input id="expenseEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn">Save Expense</button>
               </form>
+              <div class="tn-esewa-box">
+                <div><strong>Pay using eSewa (Sandbox)</strong><p>Use the expense description, category and amount above for a test merchant checkout. No real money is transferred.</p></div>
+                <button type="button" class="tn-esewa-pay-button" id="tnEsewaButton" onclick="startEsewaCheckout()">Pay with eSewa Test</button>
+                <span id="tnEsewaAvailability" role="status">Checking sandbox availability…</span>
+              </div>
+              <section class="tn-esewa-history"><h3>eSewa checkout attempts</h3><p>Only provider-verified successful payments become expenses.</p><div id="tnEsewaPayments"></div></section>
             </section>
             <section class="card tn-workspace-card">
               <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Expense history</h3></div>
@@ -984,6 +1009,10 @@ font-size:.83rem;cursor:pointer}
           </section>
           <section class="tn-page" id="tnPage-budget" data-tn-page="budget" hidden>
             <div class="tn-page-heading"><span class="section-label">Financial planning</span><h1 class="dashboard-heading">Monthly budget</h1><p class="dashboard-description">Set your spending limit and monitor how close you are to reaching it.</p></div>
+            <div id="tnBudgetSetupBanner" class="tn-budget-onboarding" hidden>
+                <strong>Step 1 — Set your monthly expense budget</strong>
+                <p>Enter your maximum spending for this month below and select Set Limit. After that, Income, Expenses, Transactions and the other pages become available. You can change the limit later.</p>
+             </div>
             <div id="budgetBanner" class="budget-limit-banner">
                 <div style="flex:1;min-width:0">
                     <span class="budget-flag">Monthly spending plan</span>
@@ -1158,6 +1187,8 @@ font-size:.83rem;cursor:pointer}
         // State
         let currentUser = null;
         let userBudgetLimit = 50000;
+        let budgetConfigured = true;
+        let esewaSandboxReady = false;
         let currentMonthlySpent = 0;
         let transactions = [];
         let isBudgetLocked = false;
@@ -1346,6 +1377,14 @@ font-size:.83rem;cursor:pointer}
                 const state = await response.json();
                 userBudgetLimit = state.limit;
                 currentMonthlySpent = Number(state.spent || 0);
+                budgetConfigured = state.budget_configured !== false;
+                esewaSandboxReady = Boolean(state.esewa_sandbox_ready);
+                document.getElementById('tnBudgetSetupBanner').hidden = budgetConfigured;
+                document.getElementById('newLimitInput').placeholder = budgetConfigured ? 'New limit' : 'Your chosen monthly limit';
+                document.getElementById('tnEsewaAvailability').textContent = esewaSandboxReady
+                    ? 'Sandbox available. Test transactions only.' : 'Not configured — set up private eSewa sandbox credentials first.';
+                document.getElementById('tnEsewaButton').disabled = !esewaSandboxReady || !budgetConfigured || state.locked;
+                renderEsewaAttempts(state.esewa_payments || []);
                 document.getElementById('tnBudgetEmailStatus').textContent = state.email_delivery_configured
                     ? '100% limit alerts are configured to email your registered address (subject to delivery).'
                     : 'Email alerts are not configured for inbox delivery. Set up Gmail SMTP on your Mac to receive 100% limit emails.';
@@ -1358,6 +1397,12 @@ font-size:.83rem;cursor:pointer}
                 document.getElementById("currentLimitDisplay").textContent = userBudgetLimit.toLocaleString("en-US", {minimumFractionDigits:2});
                 updateDashboard();
                 if (state.locked) lockAccount(); else unlockAccount();
+                if (!budgetConfigured) {
+                    document.getElementById('newLimitInput').value = '';
+                    document.getElementById('budgetBannerTitle').textContent = 'Monthly Budget: Not set';
+                    document.getElementById('budgetBannerSub').textContent = 'Choose your own monthly spending limit to get started.';
+                    document.getElementById('tnBudgetTotal').textContent = 'Not set';
+                }
                 if(typeof loadPremiumAnalytics === 'function') {
                     Promise.all([loadPremiumAnalytics(),loadPremiumBudgets(),loadPremiumNotifications()])
                         .catch(error=>console.error('Premium refresh failed',error));
@@ -1438,6 +1483,7 @@ font-size:.83rem;cursor:pointer}
         function navigateTrackNest(section, updateHistory = true) {
             const pages = ['dashboard','income','expense','transactions','budget','forecast','advisor','categories','reports','goals','notifications','settings','profile'];
             if (!pages.includes(section)) section = 'dashboard';
+            if (!budgetConfigured && section !== 'budget') section = 'budget';
             document.querySelectorAll('[data-tn-page]').forEach(page => {
                 page.hidden = page.dataset.tnPage !== section;
             });
@@ -1488,6 +1534,69 @@ font-size:.83rem;cursor:pointer}
                 await loadFinance();
             } finally {button.disabled = false;}
         }
+        function renderEsewaAttempts(payments) {
+            const container=document.getElementById('tnEsewaPayments');
+            container.innerHTML='';
+            if (!payments.length) {
+                const msg=document.createElement('p');
+                msg.textContent='No eSewa checkout attempts yet.';
+                container.appendChild(msg);
+                return;
+            }
+            for (const payment of payments) {
+                const row=document.createElement('div');
+                row.className='tn-esewa-history-row';
+                const info=document.createElement('span');
+                info.textContent=payment.description+' · Nrs '+Number(payment.amount).toFixed(2)+' · '+payment.status+(payment.sandbox?' (test)':'');
+                row.appendChild(info);
+                if (payment.status==='PENDING') {
+                    const button=document.createElement('button');
+                    button.type='button';
+                    button.textContent='Check status';
+                    button.className='cancel-edit-btn';
+                    button.addEventListener('click',()=>verifyEsewaAttempt(payment.reference));
+                    row.appendChild(button);
+                }
+                container.appendChild(row);
+            }
+        }
+        async function verifyEsewaAttempt(reference) {
+            try {
+                const result=await authRequest('/api/payments/esewa/'+encodeURIComponent(reference)+'/verify/',{});
+                showAccountToast(result.message, result.complete?'success':'error');
+                await loadFinance();
+            } catch(error) {showAccountToast(error.message,'error');}
+        }
+        async function startEsewaCheckout() {
+            if (!budgetConfigured) {
+                navigateTrackNest('budget');
+                showAccountToast('Set your monthly spending limit first.','error');
+                return;
+            }
+            if (!esewaSandboxReady) {
+                showAccountToast('eSewa sandbox is not configured. Check the setup instructions.','error');
+                return;
+            }
+            const description=document.getElementById('expenseEntryDesc').value.trim();
+            const category=document.getElementById('expenseEntryCategory').value;
+            const amount=document.getElementById('expenseEntryAmount').value;
+            if (!description || !category || !(Number(amount)>0)) {
+                showAccountToast('Enter a description, category and positive amount before paying.','error');
+                return;
+            }
+            if (!confirm('Start a TEST eSewa payment of Nrs '+Number(amount).toFixed(2)+' to the configured sandbox merchant? This is not a general eSewa wallet transfer.'))return;
+            const button=document.getElementById('tnEsewaButton');
+            button.disabled=true;
+            try {
+                const result=await authRequest('/api/payments/esewa/start/',{description,category,amount});
+                window.location.assign(result.checkout_url);
+            } catch(error) {
+                showAccountToast(error.message,'error');
+                button.disabled=false;
+                await loadFinance();
+            }
+        }
+
         function trackNestToday() {
             const d = new Date();
             return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') +
@@ -1592,6 +1701,7 @@ font-size:.83rem;cursor:pointer}
             try {
                 const result = await authRequest('/api/finance/budget/', {limit:value});
                 await loadFinance();
+                if (budgetConfigured) showAccountToast('Monthly budget saved. Your finance pages are ready.','success');
                 if (result.alert_queued) showBudgetToast('100% budget reached. An email notification was requested for your registered address.');
             } catch(error) { alert(error.message); }
         }

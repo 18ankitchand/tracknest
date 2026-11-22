@@ -25,7 +25,7 @@ class PremiumFinanceTests(TestCase):
         )
         self.month = timezone.localdate().replace(day=1)
         self.budget = MonthlyBudget.objects.create(
-            user=self.user, month=self.month, limit=Decimal("100.00")
+            user=self.user, month=self.month, limit=Decimal("100.00"), is_set_by_user=True
         )
         self.category = Category.objects.create(user=self.user, kind="expense", name="Groceries")
         self.client.force_login(self.user)

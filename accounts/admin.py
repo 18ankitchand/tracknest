@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 
-from .models import ExpenseTransaction, MonthlyBudget, Profile
+from .models import ExpenseTransaction, MonthlyBudget, Profile, EsewaPayment
 
 
 class ProfileInline(admin.StackedInline):
@@ -77,6 +77,28 @@ class MonthlyBudgetAdmin(admin.ModelAdmin):
     search_fields = ("user__email",)
     list_select_related = ("user",)
     readonly_fields = ("user", "month", "limit", "limit_alert_sent")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(EsewaPayment)
+class EsewaPaymentAdmin(admin.ModelAdmin):
+    """Read-only provider audit data; expenses must be created through verification."""
+    list_display = ("transaction_uuid", "user", "amount", "status", "is_sandbox", "created_at", "reference_code")
+    list_filter = ("status", "is_sandbox", "created_at")
+    search_fields = ("transaction_uuid", "reference_code", "user__email", "description")
+    list_select_related = ("user", "expense")
+    readonly_fields = (
+        "user", "transaction_uuid", "description", "category", "amount", "month",
+        "status", "reference_code", "expense", "is_sandbox", "created_at", "verified_at",
+    )
 
     def has_add_permission(self, request):
         return False
