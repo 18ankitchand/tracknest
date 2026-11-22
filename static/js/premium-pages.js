@@ -84,9 +84,20 @@ async function loadPremiumSection(section){
 }
 function renderPremiumCategorySelectors(){
   const select=$tn('tnBudgetCategory'); const keep=select.value;
-  select.innerHTML='<option value="">Select category</option>'+premiumCategories.filter(c=>c.type==='expense')
-    .map(c=>'<option value="'+c.id+'">'+escapeHtml(c.name)+'</option>').join('');
-  if(keep)select.value=keep;
+  // The Expenses form has built-in categories, while custom Category rows may be empty.
+  // Show both so users can budget existing/default expense categories without visiting Categories first.
+  const known=premiumCategories.filter(c=>c.type==='expense');
+  const names=[...new Set([
+    ...Array.from($tn('expenseEntryCategory').options).map(option=>option.value).filter(Boolean),
+    ...transactions.filter(t=>t.type==='expense').map(t=>t.category).filter(Boolean),
+    ...known.map(c=>c.name)
+  ])].sort((a,b)=>a.localeCompare(b));
+  select.innerHTML='<option value="">Select category</option>'+names.map(name=>{
+    const saved=known.find(c=>c.name.toLowerCase()===name.toLowerCase());
+    const value=saved?String(saved.id):'name:'+name;
+    return '<option value="'+escapeHtml(value)+'">'+escapeHtml(name)+'</option>';
+  }).join('');
+  if(keep && Array.from(select.options).some(option=>option.value===keep)) select.value=keep;
   const filter=$tn('tnTransactionCategoryFilter'), filterValue=filter.value;
   const names=[...new Set([...transactions.map(t=>t.category),...premiumCategories.map(c=>c.name)])].sort();
   filter.innerHTML='<option value="">All categories</option>'+names.map(x=>'<option>'+escapeHtml(x)+'</option>').join('');
@@ -169,9 +180,11 @@ async function savePremiumCategoryBudget(e){
   e.preventDefault();const id=$tn('tnCategoryBudgetId').value;
   try{
     await authRequest('/api/category-budgets/change/',{action:id?'edit':'create',
-      id:id?Number(id):undefined,category_id:Number($tn('tnBudgetCategory').value),
+      id:id?Number(id):undefined,
+      category_id:$tn('tnBudgetCategory').value.startsWith('name:')?undefined:Number($tn('tnBudgetCategory').value),
+      category_name:$tn('tnBudgetCategory').value.startsWith('name:')?$tn('tnBudgetCategory').value.slice(5):undefined,
       limit:$tn('tnBudgetAmount').value,month:trackNestToday().slice(0,7)+'-01'});
-    resetPremiumCategoryBudget();await loadPremiumBudgets();premiumSuccess('Category budget saved.');
+    resetPremiumCategoryBudget();await loadPremiumCategories();await loadPremiumBudgets();premiumSuccess('Category budget saved.');
   }catch(error){premiumError(error);}
 }
 async function deletePremiumBudget(id){
