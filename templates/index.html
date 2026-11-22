@@ -1175,15 +1175,21 @@ font-size:.83rem;cursor:pointer}
           </section>
           <section class="tn-page" id="tnPage-forecast" data-tn-page="forecast" hidden>
             <div class="tn-page-heading"><span class="section-label">Expense insights</span><h1 class="dashboard-heading">Forecast & trends</h1><p class="dashboard-description">Review the current spending projection alongside recorded expenses.</p></div>
+            <div class="tn-forecast-summary" aria-live="polite">
+              <div class="card tn-forecast-tile"><span>Current month recorded</span><strong id="tnForecastCurrentActual">Nrs 0.00</strong><small>Actual expenses so far</small></div>
+              <div class="card tn-forecast-tile"><span>Estimated month-end</span><strong id="tnForecastCurrentPrediction">Not enough data</strong><small id="tnForecastCurrentLabel">Linear Regression</small></div>
+              <div class="card tn-forecast-tile"><span>Next month forecast</span><strong id="tnForecastNextPrediction">Not enough data</strong><small id="tnForecastNextLabel">Linear Regression</small></div>
+              <div class="card tn-forecast-tile"><span>Historical backtest error</span><strong id="tnForecastMAE">Not available</strong><small>Mean absolute error (MAE)</small></div>
+            </div>
             <div class="card" id="forecastSection">
-                    <div class="card-header">
-                        <div><div class="section-label">Spending trends</div><div class="card-title">Expense flow & forecast</div><p class="card-description">Your spending and its current projection.</p></div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="forecastChart"></canvas>
-                    </div>
-                </div>
-            <p class="tn-disclaimer">Forecast values currently use a demonstration multiplier, not a trained or independently validated prediction model.</p>
+              <div class="card-header"><div>
+                <div class="section-label">Time series forecasting</div><div class="card-title">Linear Regression expense forecast</div>
+                <p class="card-description">Actual completed months and estimated future spending from your historical records.</p>
+              </div></div>
+              <div class="chart-container"><canvas id="forecastChart" role="img" aria-label="Historical expense totals and linear regression monthly forecast"></canvas></div>
+            </div>
+            <p class="tn-disclaimer" id="tnForecastExplanation" role="status">Forecast needs expenses in at least three completed months. This model cannot guarantee future spending.</p>
+            <p class="tn-disclaimer">Method: Ordinary Least Squares Linear Regression on completed monthly expense totals. The incomplete current month is excluded from training. This is an estimate, not a spending limit or payment authorization.</p>
           </section>
           <section class="tn-page" id="tnPage-advisor" data-tn-page="advisor" hidden>
             <div class="tn-page-heading"><span class="section-label">Personal financial insights</span><h1 class="dashboard-heading">TrackNest Financial Assistant</h1><p class="dashboard-description">Get clear answers based on your saved income, expenses, budgets, transactions and savings goals.</p></div>
@@ -1843,39 +1849,21 @@ font-size:.83rem;cursor:pointer}
         const ctx = document.getElementById('forecastChart').getContext('2d');
         const forecastChart = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: ['Start', 'Day 5', 'Day 10', 'Day 15', 'Today', 'Forecast +15d'],
-                datasets: [
-                    {
-                        label: 'Actual Expenses (Nrs)',
-                        data: [0, 0, 0, 0, 0, null],
-                        borderColor: '#38BDF8',
-                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                        fill: true,
-                        tension: 0.3
-                    },
-                    {
-                        label: 'Ensemble Forecast (Nrs)',
-                        data: [null, null, null, null, 0, 0],
-                        borderColor: '#FBBF24',
-                        borderDash: [5, 5],
-                        backgroundColor: 'rgba(251, 191, 36, 0.05)',
-                        fill: true,
-                        tension: 0.3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { labels: { color: '#F8FAFC', font: { family: 'Plus Jakarta Sans' } } }
-                },
-                scales: {
-                    x: { grid: { color: '#334155' }, ticks: { color: '#94A3B8' } },
-                    y: { grid: { color: '#334155' }, ticks: { color: '#94A3B8' } }
-                }
-            }
+            data: { labels: [], datasets: [
+                {label: 'Actual completed months', data: [], borderColor: '#38BDF8',
+                 backgroundColor: 'rgba(56, 189, 248, 0.13)', fill: true,
+                 tension: 0.25, spanGaps: false, pointRadius: 4},
+                {label: 'Linear Regression forecast', data: [], borderColor: '#FBBF24',
+                 borderDash: [7, 5], backgroundColor: 'rgba(251, 191, 36, 0.08)',
+                 fill: false, tension: 0.15, spanGaps: false, pointRadius: 5}
+            ] },
+            options: {responsive:true,maintainAspectRatio:false,
+                plugins:{legend:{labels:{color:'#F8FAFC'}},
+                    tooltip:{callbacks:{label:context=>context.dataset.label+': Nrs '+
+                        Number(context.parsed.y||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}}},
+                scales:{x:{grid:{color:'#334155'},ticks:{color:'#B1C4DC'}},
+                        y:{beginAtZero:true,grid:{color:'#334155'},
+                           ticks:{color:'#B1C4DC',callback:value=>Number(value).toLocaleString('en-US')}}}}
         });
 
         async function updateBudgetLimit() {
@@ -2014,9 +2002,8 @@ font-size:.83rem;cursor:pointer}
             document.getElementById('budgetProgressFill').style.width = Math.min(100, Math.max(0, pct)) + '%';
             document.getElementById('budgetProgress').setAttribute('aria-valuenow', String(Math.min(100, Math.max(0, pct))));
 
-            // Predicted month end using simple ensemble multiplier
-            const predicted = monthlyExpense * 1.25;
-            document.getElementById('predictedSpent').textContent = 'Nrs ' + predicted.toLocaleString('en-US', {minimumFractionDigits: 2});
+            // Forecast predictions are produced by the historical Linear Regression API.
+            // Never synthesize a prediction from a fixed spending multiplier.
 
             // Table rendering
             const tbody = document.getElementById('txTableBody');
@@ -2056,10 +2043,7 @@ font-size:.83rem;cursor:pointer}
                 `).join('');
             }
 
-            // Update Chart Data
-            forecastChart.data.datasets[0].data = [0, monthlyExpense * 0.3, monthlyExpense * 0.6, monthlyExpense * 0.8, monthlyExpense, null];
-            forecastChart.data.datasets[1].data = [null, null, null, null, monthlyExpense, predicted];
-            forecastChart.update();
+
             renderTrackNestPageTables();
             if (lastTransactionChartData !== transactions) {renderTrackNestCharts(); lastTransactionChartData = transactions;}
         }
