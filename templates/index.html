@@ -793,6 +793,16 @@ font-size:.83rem;cursor:pointer}
 #appScreen.tn-dark .tn-expense-test-notice{background:#1c3349;border-color:#36526c;color:#c1d4e7}
 @media(max-width:1100px){#appScreen .tn-expense-columns{grid-template-columns:1fr}#appScreen .tn-expense-history-card{min-height:360px}}
 @media(max-width:700px){#appScreen .tn-expense-stats{grid-template-columns:1fr}#appScreen .tn-expense-secondary-fields{grid-template-columns:1fr}#appScreen .tn-expense-columns>.card{padding:18px}}
+#appScreen .tn-esewa-choice.tn-is-manual{background:#eff2f8;border-color:#b6c6dc}
+#appScreen .tn-esewa-choice.tn-is-manual .tn-esewa-brand{color:#435878}
+#appScreen .tn-esewa-choice.tn-is-manual .tn-payment-choice-trailing{color:#6a7e94}
+#appScreen .tn-esewa-choice.tn-is-manual .tn-payment-radio{background:#a5afc0;border-color:#8b9caf;box-shadow:inset 0 0 0 4px #eff2f8}
+#appScreen .tn-expense-empty-history{min-height:135px;display:grid;place-content:center;gap:9px;text-align:center;border:1px dashed #c6d1e4;border-radius:14px;background:#f8fafc;padding:28px;color:#657a96}
+#appScreen .tn-expense-empty-history strong{font-size:.95rem;font-weight:600;color:#536b89}
+#appScreen .tn-expense-empty-history small{font-size:.78rem;line-height:1.55}
+#appScreen .tn-payment-verified{font-size:.7rem;font-weight:750;color:#159968;background:#dcf7e9;border-radius:8px;padding:6px 9px;display:inline-block;white-space:nowrap}
+#appScreen.tn-dark .tn-expense-empty-history{background:#182a41;border-color:#3a4e69}
+#appScreen.tn-dark .tn-expense-empty-history strong{color:#cfddf0}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -1484,6 +1494,7 @@ font-size:.83rem;cursor:pointer}
                     ? '100% limit alerts are configured to email your registered address (subject to delivery).'
                     : 'Email alerts are not configured for inbox delivery. Set up Gmail SMTP on your Mac to receive 100% limit emails.';
                 transactions = state.transactions;
+                loadExpensePaymentSummary().catch(error => console.warn('Payment summary could not load', error));
                 document.getElementById("newLimitInput").value = userBudgetLimit;
                 // Restore a stable target after previous locked-state rendering.
                 if (!document.getElementById("currentLimitDisplay")) {
@@ -1603,6 +1614,24 @@ font-size:.83rem;cursor:pointer}
         window.addEventListener('popstate', () => navigateTrackNest(trackNestCurrentSection(), false));
         window.addEventListener('hashchange', () => navigateTrackNest(window.location.hash.slice(1), false));
 
+        async function loadExpensePaymentSummary() {
+            const response = await fetch('/api/payments/esewa/summary/', {credentials:'same-origin'});
+            if (!response.ok) throw new Error('Could not load payment totals.');
+            const info = await response.json();
+            document.getElementById('tnEsewaPaidTotal').textContent =
+                'Nrs ' + Number(info.paid_total || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+            document.getElementById('tnEsewaSuccessfulCount').textContent =
+                Number(info.successful_count || 0).toLocaleString('en-US');
+        }
+        function updateExpenseMethodStyle() {
+            const method = document.getElementById('expenseEntryPayment').value;
+            const isEsewa = method === 'eSewa Demo';
+            document.querySelector('.tn-esewa-brand').textContent = isEsewa ? 'eSewa' : method;
+            document.querySelector('.tn-payment-choice-trailing').textContent = isEsewa ? 'Online payment' : 'Manual record';
+            document.querySelector('.tn-esewa-choice').classList.toggle('tn-is-manual', !isEsewa);
+            document.getElementById('tnExpenseSubmitButton').textContent =
+                isEsewa ? 'Continue to eSewa →' : 'Save Expense';
+        }
         async function submitTrackNestEntry(event, kind) {
             event.preventDefault();
             const form = event.currentTarget;
@@ -1617,15 +1646,23 @@ font-size:.83rem;cursor:pointer}
                 payment_method: document.getElementById(prefix + 'Payment').value,
                 notes: document.getElementById(prefix + 'Notes').value
             };
-            if (kind === 'expense' && data.payment_method === 'eSewa Demo') {
-                openEsewaPaymentReview();
-                return;
+            if (kind === 'expense') {
+                if (!data.category) {
+                    showAccountToast('Choose an expense category first.', 'error');
+                    return;
+                }
+                if (!data.desc) data.desc = 'Expense — ' + data.category;
+                if (data.payment_method === 'eSewa Demo') {
+                    openEsewaPaymentReview();
+                    return;
+                }
             }
             button.disabled = true;
             try {
                 const result = await authRequest('/api/finance/transactions/',data);
                 form.reset();
                 initializeTrackNestDates();
+                if (kind === 'expense') updateExpenseMethodStyle();
                 await loadFinance();
                 if (result.alert_queued) showBudgetToast('Budget limit reached. Email alert scheduled for your registered address.');
             } catch(error) {
@@ -1640,24 +1677,24 @@ font-size:.83rem;cursor:pointer}
                 return;
             }
             if (!esewaSandboxReady) {
-                showAccountToast('The eSewa demo is unavailable. Check the localhost development-mode settings.','error');
+                showAccountToast('The eSewa test checkout is unavailable. Check the localhost development settings.','error');
                 return;
             }
             const description = document.getElementById('expenseEntryDesc').value.trim();
             const category = document.getElementById('expenseEntryCategory').value;
             const amount = document.getElementById('expenseEntryAmount').value;
             const date = document.getElementById('expenseEntryDate').value;
-            if (!description || !category || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
-                showAccountToast('Enter an expense description, category and valid positive amount first.','error');
+            if (!category || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
+                showAccountToast('Choose a category and enter a valid positive amount first.','error');
                 return;
             }
             // The payment is recorded on the day eSewa confirms it, not a backdated date.
             if (date !== trackNestToday()) {
-                showAccountToast('eSewa demo payments are recorded on the verification date. Select today for this demo checkout.','error');
+                showAccountToast('Online payments are recorded on the verification date. Select today for this test checkout.','error');
                 return;
             }
             const dialog = document.getElementById('tnEsewaReviewDialog');
-            document.getElementById('tnEsewaReviewDescription').textContent = description;
+            document.getElementById('tnEsewaReviewDescription').textContent = description || 'Expense — ' + category;
             document.getElementById('tnEsewaReviewCategory').textContent = category;
             document.getElementById('tnEsewaReviewAmount').textContent =
                 'Nrs ' + Number(amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
@@ -1668,8 +1705,8 @@ font-size:.83rem;cursor:pointer}
             if (button.disabled) return;
             button.disabled = true;
             button.textContent = 'Opening eSewa…';
-            const description = document.getElementById('expenseEntryDesc').value.trim();
             const category = document.getElementById('expenseEntryCategory').value;
+            const description = document.getElementById('expenseEntryDesc').value.trim() || 'Expense — ' + category;
             const amount = document.getElementById('expenseEntryAmount').value;
             const notes = document.getElementById('expenseEntryNotes').value;
             try {
@@ -1736,8 +1773,12 @@ font-size:.83rem;cursor:pointer}
                 document.getElementById(kind+'PageRows').innerHTML = records.length ? records.map(t => `
                     <tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.category)}</td>
                     <td class="tn-table-amount ${kind}">${kind==='income'?'+':'−'}${money(Number(t.amount))}</td>
-                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})">Delete</button><button type="button" class="edit-transaction-btn" onclick="viewTransactionDetails(${Number(t.id)})">View</button></td></tr>
-                `).join('') : '<tr><td colspan="5" class="tn-empty">No '+kind+' records yet. Use the form above to add one.</td></tr>';
+                    <td>${t.verified_esewa ? '<span class="tn-payment-verified">Verified eSewa</span>' :
+                        '<button class="edit-transaction-btn" type="button" onclick="navigateTrackNest(\'transactions\');editTransaction('+Number(t.id)+')">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction('+Number(t.id)+')">Delete</button>'}
+                      <button type="button" class="edit-transaction-btn" onclick="viewTransactionDetails(${Number(t.id)})">View</button></td></tr>
+                `).join('') : (kind === 'expense' ?
+                    '<tr><td colspan="5"><div class="tn-expense-empty-history"><strong>No expenses recorded yet.</strong><small>Save a manual expense or complete an eSewa test payment to see it here.</small></div></td></tr>'
+                    : '<tr><td colspan="5" class="tn-empty">No income records yet. Use the form to add one.</td></tr>');
             }
             const recent = transactions.slice(0,5);
             document.getElementById('tnRecentTransactions').innerHTML = recent.length ? recent.map(t=>`
