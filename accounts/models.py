@@ -13,6 +13,7 @@ class MonthlyBudget(models.Model):
     limit = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("50000.00"), validators=[MinValueValidator(Decimal("0.01"))])
     limit_alert_sent = models.BooleanField(default=False)
     notified_level = models.PositiveSmallIntegerField(default=0)
+    is_set_by_user = models.BooleanField(default=False)
     class Meta:
         constraints = [models.UniqueConstraint(fields=["user", "month"], name="unique_user_budget_month")]
 
@@ -83,3 +84,24 @@ class UserPreference(models.Model):
     theme = models.CharField(max_length=5, choices=[("light", "Light"), ("dark", "Dark")], default="light")
     email_alerts_enabled = models.BooleanField(default=True)
     currency = models.CharField(max_length=3, default="NPR")
+
+
+class EsewaPayment(models.Model):
+    """eSewa ePay checkout attempt; only verified COMPLETE payments create expenses."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="esewa_payments")
+    transaction_uuid = models.CharField(max_length=64, unique=True)
+    description = models.CharField(max_length=200)
+    category = models.CharField(max_length=60)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    month = models.DateField()
+    status = models.CharField(max_length=16, default="PENDING")
+    reference_code = models.CharField(max_length=80, blank=True, default="")
+    expense = models.OneToOneField(ExpenseTransaction, on_delete=models.PROTECT, related_name="esewa_payment",
+                                   null=True, blank=True)
+    is_sandbox = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "month", "status"], name="tn_esewa_user_month_status")]
+
