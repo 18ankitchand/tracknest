@@ -654,6 +654,42 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
 #appScreen .tn-income-filters input,#appScreen .tn-income-filters select{min-width:0;width:100%}
 @media(max-width:800px){#appScreen .tn-income-filters{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){#appScreen .tn-income-filters{grid-template-columns:1fr}}
+
+/* TrackNest's database-backed financial assistant */
+#appScreen .tn-assistant-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,295px);gap:19px;align-items:start}
+#appScreen #tnPage-advisor .tn-assistant-card{height:min(72vh,710px);min-height:540px;display:flex;flex-direction:column;padding:0!important;overflow:hidden}
+#appScreen .tn-assistant-header{padding:18px 22px;border-bottom:1px solid #e9edf5;display:flex;align-items:center;gap:12px}
+#appScreen .tn-assistant-header h2{font-size:.99rem;margin-bottom:4px;color:#202c43}
+#appScreen .tn-assistant-header span{font-size:.73rem;color:#8190a4}
+#appScreen .tn-assistant-avatar{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;background:linear-gradient(130deg,#6c5bf2,#398ff6);color:white;font-size:24px;border-radius:13px}
+#appScreen .tn-online-dot{display:inline-block!important;width:7px;height:7px;border-radius:50%;background:#16b97a;margin-right:4px}
+#appScreen .tn-assistant-clear{margin-left:auto;white-space:nowrap;border:1px solid #e4e8f2;background:#f8f9fd;color:#64748b;padding:8px 10px;border-radius:9px;cursor:pointer;font:inherit;font-size:.73rem}
+#appScreen .tn-assistant-card .ai-messages{padding:24px;gap:18px;flex:1;min-height:0}
+#appScreen .tn-assistant-card .ai-msg{max-width:88%;white-space:pre-line;line-height:1.65;padding:13px 17px;font-size:.87rem;border-radius:14px;overflow-wrap:anywhere}
+#appScreen .tn-assistant-card .ai-msg.bot{background:#f2f4fb!important;color:#304059!important;border-bottom-left-radius:3px}
+#appScreen .tn-assistant-card .ai-msg.user{background:linear-gradient(115deg,#6659ed,#4e7cef)!important;color:white!important;border-bottom-right-radius:3px}
+#appScreen .tn-assistant-link{display:block;margin-top:11px;background:white;color:#6053d8;border:1px solid #dcd9fb;padding:7px 11px;border-radius:9px;cursor:pointer;font-weight:750}
+#appScreen .tn-assistant-chips{display:flex;flex-wrap:wrap;gap:7px;padding:14px 20px 5px}
+#appScreen .tn-assistant-chips button{padding:7px 11px;background:#f2f0ff;border:1px solid #e1ddff;color:#5a52ca;border-radius:999px;font:inherit;font-size:.72rem;cursor:pointer}
+#appScreen .tn-assistant-chips button:hover{background:#e9e4ff}
+#appScreen .tn-assistant-composer{display:flex;padding:16px 20px!important;gap:10px;align-items:center;border-top:0!important;background:#fff!important}
+#appScreen .tn-assistant-composer input{min-height:46px;flex:1}
+#appScreen .tn-assistant-composer button{min-height:46px;white-space:nowrap}
+#appScreen .tn-assistant-composer button:disabled{opacity:.6;cursor:wait}
+#appScreen .tn-assistant-guide{background:#fff;border:1px solid #e5eaf2;border-radius:16px;padding:23px;display:grid;gap:16px;box-shadow:0 4px 18px #2336530b}
+#appScreen .tn-assistant-guide h3{font-size:1.02rem;color:#1e2b43}
+#appScreen .tn-assistant-guide div{padding:11px 0;border-bottom:1px solid #edf1f7}
+#appScreen .tn-assistant-guide strong{display:block;color:#263552;font-size:.85rem;margin-bottom:5px}
+#appScreen .tn-assistant-guide span{font-size:.77rem;color:#8796aa;line-height:1.5}
+#appScreen .tn-assistant-guide p{font-size:.77rem;line-height:1.65;color:#7e899d}
+#appScreen.tn-dark .tn-assistant-guide{background:#1b2b42;border-color:#35465f}
+#appScreen.tn-dark .tn-assistant-guide h3,#appScreen.tn-dark .tn-assistant-guide strong,#appScreen.tn-dark .tn-assistant-header h2{color:#eaf0fa}
+#appScreen.tn-dark .tn-assistant-header,#appScreen.tn-dark .tn-assistant-guide div{border-color:#35465f}
+#appScreen.tn-dark .tn-assistant-card .ai-msg.bot{background:#263b54!important;color:#e2eaf6!important}
+#appScreen.tn-dark .tn-assistant-composer{background:#1b2b42!important}
+@media(max-width:980px){#appScreen .tn-assistant-layout{grid-template-columns:1fr}}
+@media(max-width:600px){#appScreen #tnPage-advisor .tn-assistant-card{height:70vh;min-height:490px}
+#appScreen .tn-assistant-header{padding:13px}#appScreen .tn-assistant-chips{padding:10px}#appScreen .tn-assistant-card .ai-messages{padding:14px}}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -981,22 +1017,40 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             <p class="tn-disclaimer">Forecast values currently use a demonstration multiplier, not a trained or independently validated prediction model.</p>
           </section>
           <section class="tn-page" id="tnPage-advisor" data-tn-page="advisor" hidden>
-            <div class="tn-page-heading"><span class="section-label">Financial assistance</span><h1 class="dashboard-heading">Financial advisor</h1><p class="dashboard-description">Ask questions about your current spending and budget.</p></div>
-            <div class="ai-chat-card" id="advisorSection">
-                    <div class="card-header" style="padding: 1rem 1rem 0 1rem; margin-bottom: 0.5rem;">
-                        <div class="card-title" style="font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            Financial Advisor
-                        </div>
-                    </div>
-                    <div class="ai-messages" id="aiMessages">
-                        <div class="ai-msg bot">Hello! I am your AI financial advisor. Add your income and expenses to get personalized suggestions, spending analysis, and answers about this tracker system.</div>
-                    </div>
-                    <div class="ai-input-box">
-                        <input type="text" id="aiInput" placeholder="Ask AI about your expenses or budget..." onkeypress="handleAiKeyPress(event)">
-                        <button class="primary-btn" onclick="sendAiMessage()" style="padding: 0.5rem 1rem;">Ask</button>
-                    </div>
+            <div class="tn-page-heading"><span class="section-label">Personal financial insights</span><h1 class="dashboard-heading">TrackNest Financial Assistant</h1><p class="dashboard-description">Get clear answers based on your saved income, expenses, budgets, transactions and savings goals.</p></div>
+            <div class="tn-assistant-layout">
+              <div class="ai-chat-card tn-assistant-card" id="advisorSection">
+                <div class="tn-assistant-header"><div class="tn-assistant-avatar" aria-hidden="true">✦</div>
+                  <div><h2>Ask TrackNest</h2><span><span class="tn-online-dot"></span> Financial insights · Your private records</span></div>
+                  <button type="button" class="tn-assistant-clear" onclick="clearAssistantChat()" title="Clear conversation">Clear chat</button>
                 </div>
-            <p class="tn-disclaimer">Advice is generated using the existing rule-based demo assistant; it is not a live AI service.</p>
+                <div class="ai-messages" id="aiMessages" aria-live="polite" aria-relevant="additions text" role="log">
+                  <div class="ai-msg bot">Welcome! I can review your real financial records and explain your income, spending, budgets, recent transactions, and savings goals. What would you like to know?</div>
+                </div>
+                <div class="tn-assistant-chips" aria-label="Suggested questions">
+                  <button type="button" onclick="askAssistantSuggestion('Give me my financial overview')">Financial overview</button>
+                  <button type="button" onclick="askAssistantSuggestion('How much budget do I have remaining?')">Remaining budget</button>
+                  <button type="button" onclick="askAssistantSuggestion('Where am I spending the most?')">Top expenses</button>
+                  <button type="button" onclick="askAssistantSuggestion('How are my savings goals going?')">Savings goals</button>
+                  <button type="button" onclick="askAssistantSuggestion('Show my recent transactions')">Recent transactions</button>
+                  <button type="button" onclick="askAssistantSuggestion('How can I save more money?')">Saving suggestions</button>
+                </div>
+                <form class="ai-input-box tn-assistant-composer" onsubmit="sendAiMessage(event)">
+                  <input type="text" id="aiInput" maxlength="500" autocomplete="off" placeholder="Ask about your money..." aria-label="Ask financial assistant">
+                  <button id="tnAskButton" class="primary-btn" type="submit">Send <span aria-hidden="true">➤</span></button>
+                </form>
+              </div>
+              <aside class="tn-assistant-guide" aria-label="Financial assistant abilities">
+                <h3>What I can help with</h3>
+                <div><strong>↗ Income</strong><span>Check recorded earnings and cash flow</span></div>
+                <div><strong>↘ Expenses</strong><span>Identify top spending categories</span></div>
+                <div><strong>◉ Budget</strong><span>Monitor remaining money and warnings</span></div>
+                <div><strong>▤ Transactions</strong><span>Review recent records and corrections</span></div>
+                <div><strong>◎ Savings</strong><span>Review goals and suggestions</span></div>
+                <p>I only explain your data and suggest next steps. I never change or delete financial records automatically.</p>
+              </aside>
+            </div>
+            <p class="tn-disclaimer">This version uses private, database-backed financial analysis. It is not a generative AI model or regulated financial advice. No financial records are sent to an external AI service.</p>
           </section>
 
           <section class="tn-page" id="tnPage-categories" data-tn-page="categories" hidden>
@@ -1770,49 +1824,57 @@ width:min(480px,calc(100vw - 30px));box-shadow:0 25px 75px #0f1c3755}
             updateDashboard();
         }
 
-        // AI Chatbot logic
-        function handleAiKeyPress(e) {
-            if (e.key === 'Enter') sendAiMessage();
+        // Financial assistant: real Django queries, no simulated answers.
+        let assistantBusy = false;
+        function appendAssistantMessage(message, isUser, section=null) {
+            const box = document.getElementById('aiMessages');
+            const div = document.createElement('div');
+            div.className = 'ai-msg ' + (isUser ? 'user' : 'bot');
+            div.textContent = message;
+            box.appendChild(div);
+            if (!isUser && section && section !== 'advisor') {
+                const link = document.createElement('button');
+                link.type = 'button';
+                link.className = 'tn-assistant-link';
+                const titles = {dashboard:'Dashboard',income:'Income',expense:'Expenses',transactions:'Transactions',
+                    budget:'Budgets',goals:'Savings Goals',reports:'Reports'};
+                link.textContent = 'Open ' + (titles[section] || section) + ' →';
+                link.addEventListener('click',()=>navigateTrackNest(section));
+                div.appendChild(link);
+            }
+            box.scrollTop = box.scrollHeight;
         }
-
-        function sendAiMessage() {
-            const input = document.getElementById('aiInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const msgBox = document.getElementById('aiMessages');
-
-            // User msg
-            const userDiv = document.createElement('div');
-            userDiv.className = 'ai-msg user';
-            userDiv.textContent = text;
-            msgBox.appendChild(userDiv);
-            input.value = '';
-            msgBox.scrollTop = msgBox.scrollHeight;
-
-            // AI Response simulation
-            setTimeout(() => {
-                const botDiv = document.createElement('div');
-                botDiv.className = 'ai-msg bot';
-                botDiv.textContent = generateAiResponse(text);
-                msgBox.appendChild(botDiv);
-                msgBox.scrollTop = msgBox.scrollHeight;
-            }, 600);
+        function clearAssistantChat() {
+            document.getElementById('aiMessages').innerHTML = '';
+            appendAssistantMessage('Your chat view is cleared. Your financial records are unchanged. What would you like to check?', false);
         }
-
-        function generateAiResponse(query) {
-            const q = query.toLowerCase();
-            const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-            const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-
-            if (q.includes('cut') || q.includes('save') || q.includes('suggest')) {
-                return `Based on your current spending of Nrs ${totalExpense.toLocaleString()}, I recommend setting strict category limits on Dining and Shopping. Try keeping discretionary expenses under 30% of your total income (Nrs ${totalIncome.toLocaleString()}).`;
-            } else if (q.includes('block') || q.includes('hold') || q.includes('limit')) {
-                return `When your total monthly expense reaches your budget limit of Nrs ${userBudgetLimit.toLocaleString()}, our threshold algorithm locks new transactions and holds further spending to prevent over-budgeting. You can increase your limit above to resume transactions!`;
-            } else if (q.includes('forecast') || q.includes('predict')) {
-                return `Our ensemble forecasting engine (combining weighted moving average, exponential smoothing, and linear regression) predicts your month-end expense will be approximately Nrs ${(totalExpense * 1.25).toLocaleString()}.`;
-            } else {
-                return `I'm your AI financial assistant for the Expanse Tracker System. You have a balance of Nrs ${(totalIncome - totalExpense).toLocaleString()} with Nrs ${totalExpense.toLocaleString()} spent out of Nrs ${userBudgetLimit.toLocaleString()} limit. How else can I help you manage your money?`;
+        function askAssistantSuggestion(question) {
+            document.getElementById('aiInput').value = question;
+            sendAiMessage();
+        }
+        async function sendAiMessage(event) {
+            if(event) event.preventDefault();
+            if(assistantBusy) return;
+            const input=document.getElementById('aiInput');
+            const question=input.value.trim();
+            if(!question) return;
+            if(question.length > 500) {appendAssistantMessage('Please shorten your question to 500 characters.',false);return;}
+            assistantBusy=true;
+            const button=document.getElementById('tnAskButton');
+            button.disabled=true;
+            button.textContent='Checking…';
+            appendAssistantMessage(question,true);
+            input.value='';
+            try {
+                const result = await authRequest('/api/assistant/ask/', {message: question});
+                appendAssistantMessage(result.reply, false, result.section);
+            } catch(error) {
+                appendAssistantMessage('I could not check your records: '+error.message+'. Please try again.',false);
+            } finally {
+                assistantBusy=false;
+                button.disabled=false;
+                button.innerHTML='Send <span aria-hidden="true">➤</span>';
+                input.focus();
             }
         }
     </script>
