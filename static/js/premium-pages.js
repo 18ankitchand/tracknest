@@ -307,6 +307,14 @@ function updatePremiumOverviewCharts(data){
     tnCategoryChart.update();
   }
 }
+function downloadPremiumTransactionCSV(){
+  const query=new URLSearchParams();
+  const from=$tn('txDateFrom').value,to=$tn('txDateTo').value;
+  if(from)query.set('from',from);
+  if(to)query.set('to',to);
+  window.location.href='/api/finance/export.csv?'+query.toString();
+}
+
 function downloadPremiumReport(format){
   const query=new URLSearchParams();
   if($tn('tnReportFrom').value)query.set('from',$tn('tnReportFrom').value);
