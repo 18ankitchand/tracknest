@@ -117,7 +117,11 @@ def financial_state(request):
     budget = get_budget(request.user, month)
     spent = monthly_spent(request.user, month)
     txs = ExpenseTransaction.objects.filter(user=request.user).order_by("-date", "-pk")[:500]
-    return JsonResponse({"limit": float(budget.limit), "spent": float(spent), "locked": spent >= budget.limit, "transactions": [serialize_tx(t) for t in txs]})
+    email_ready = bool(request.user.email and settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+                       and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD)
+    return JsonResponse({"limit": float(budget.limit), "spent": float(spent), "locked": spent >= budget.limit,
+                         "email_delivery_configured": email_ready,
+                         "transactions": [serialize_tx(t) for t in txs]})
 
 @require_POST
 def set_budget(request):
@@ -132,10 +136,19 @@ def set_budget(request):
     month = month_start(timezone.localdate())
     with transaction.atomic():
         budget = get_budget(request.user, month)
+        budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)
+        spent = monthly_spent(request.user, month)
         budget.limit = value
-        budget.save(update_fields=["limit"])
+        # Moving back below the limit allows one new 100% email when reached again.
+        if spent < value:
+            budget.limit_alert_sent = False
+            budget.save(update_fields=["limit", "limit_alert_sent"])
+        else:
+            budget.save(update_fields=["limit"])
         evaluate_budget_alerts(request.user, month)
-    return JsonResponse({"limit": float(value), "spent": float(monthly_spent(request.user, month))})
+        # Reaching 100% by lowering a budget must email just like adding an expense.
+        alert_queued = spent >= value and queue_budget_email(request.user, budget, month)
+    return JsonResponse({"limit": float(value), "spent": float(spent), "alert_queued": alert_queued})
 
 
 def validate_transaction_fields(data, default_date=None):
@@ -186,7 +199,7 @@ def validate_transaction_fields(data, default_date=None):
 
 def queue_budget_email(user, budget, month):
     """Mark a current-month alert and send after commit. Reset the flag on delivery failure."""
-    if month != month_start(timezone.localdate()) or budget.limit_alert_sent:
+    if month != month_start(timezone.localdate()) or budget.limit_alert_sent or not user.email:
         return False
     if settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":
         return False
