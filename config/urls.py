@@ -19,4 +19,5 @@ urlpatterns = [
     path("api/finance/budget/", views.set_budget),
     path("api/finance/transactions/", views.add_financial_transaction),
     path("api/finance/transactions/<int:transaction_id>/edit/", views.edit_financial_transaction),
+    path("api/finance/transactions/<int:transaction_id>/delete/", views.delete_financial_transaction),
 ]
