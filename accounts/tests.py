@@ -185,6 +185,30 @@ class BudgetEmailTests(TestCase):
         self.assertFalse(state.json()["email_delivery_configured"])
 
 
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
+        EMAIL_HOST_USER="",
+        EMAIL_HOST_PASSWORD="",
+    )
+    def test_missing_smtp_credentials_does_not_queue_email(self):
+        response = self.client.post(
+            "/api/finance/transactions/",
+            data=self.transaction_payload("20.00"),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertFalse(response.json()["alert_queued"])
+        self.budget.refresh_from_db()
+        self.assertFalse(self.budget.limit_alert_sent)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+        blocked = self.client.post(
+            "/api/finance/transactions/",
+            data=self.transaction_payload("1.00"),
+            content_type="application/json",
+        )
+        self.assertEqual(blocked.status_code, 409)
+
+
 
 class TransactionManagementTests(TestCase):
     def setUp(self):
