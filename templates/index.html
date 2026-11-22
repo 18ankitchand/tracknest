@@ -492,6 +492,19 @@
 @media(max-width:1190px){.app-screen .metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.app-screen .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.app-screen .dashboard-grid{grid-template-columns:1fr}.dashboard-intro{align-items:flex-start;flex-direction:column}}
 @media(max-width:640px){.app-screen header{padding:.8rem 1rem}.app-screen .brand-title{font-size:.95rem}.app-screen .user-email{display:none}.app-screen .user-nav{gap:.5rem}.app-screen .logout-btn{padding:.6rem .7rem}.app-screen main{padding:1rem;gap:1rem}.app-screen .metrics-grid{gap:.7rem}.app-screen .metric-card{padding:1rem;min-height:150px}.app-screen .metric-label{font-size:.61rem}.app-screen .metric-value{font-size:1.12rem}.metric-symbol{width:27px;height:27px;font-size:.85rem}.app-screen .budget-limit-banner{flex-direction:column;align-items:stretch;padding:1.1rem}.budget-edit input{flex:1;max-width:none}.app-screen .form-grid{grid-template-columns:1fr}.app-screen .chart-container{height:245px}}
+
+        /* Transaction editing */
+        .edit-transaction-notice {color:#bae6fd;background:rgba(56,189,248,.09);
+            border:1px solid rgba(56,189,248,.3);padding:.85rem 1rem;
+            border-radius:11px;margin:0 0 1rem;font-size:.86rem;line-height:1.5}
+        .transaction-form-actions {display:flex;flex-wrap:wrap;gap:.55rem;align-items:end}
+        .transaction-form-actions button {min-height:45px}
+        .cancel-edit-btn,.edit-transaction-btn {border:1px solid #4b6480;border-radius:10px;
+            padding:.65rem .95rem;background:#253953;color:#e0f2fe;font-weight:750;
+            cursor:pointer;white-space:nowrap}
+        .cancel-edit-btn:hover,.edit-transaction-btn:hover {background:#334e6b;border-color:#7dd3fc}
+        .edit-transaction-btn {padding:.45rem .8rem;font-size:.78rem}
+        .transaction-form-actions button:disabled {opacity:.6;cursor:wait}
     </style>
 </head>
 <body>
@@ -636,6 +649,7 @@
                 <div class="card-header">
                     <div><div class="section-label">Your activity</div><div class="card-title">Transaction management</div><p class="card-description">Record and review income and expenses.</p></div>
                 </div>
+                <div id="editTransactionNotice" class="edit-transaction-notice" role="status" style="display:none">Editing an existing transaction — update the fields below and save your changes.</div>
                 <form id="txForm" class="form-grid" onsubmit="addTransaction(event)">
                     <div class="form-group">
                         <label>Description</label>
@@ -662,7 +676,8 @@
                         <label>Amount (Nrs)</label>
                         <input type="number" id="txAmount" step="0.01" placeholder="5000.00" required>
                     </div>
-                    <button type="submit" class="primary-btn" id="addTxBtn">Add Transaction</button>
+                    <div class="transaction-form-actions"><button type="submit" class="primary-btn" id="addTxBtn">Add Transaction</button>
+                    <button type="button" class="cancel-edit-btn" id="cancelTxEdit" onclick="cancelTransactionEdit()" style="display:none">Cancel</button></div>
                 </form>
 
                 <div class="table-scroll"><table class="transactions-table">
@@ -673,11 +688,12 @@
                             <th>Category</th>
                             <th>Type</th>
                             <th>Amount</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="txTableBody">
                         <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td>
                         </tr>
                     </tbody>
                 </table></div>
@@ -938,12 +954,58 @@
                 category:document.getElementById('txCategory').value,
                 amount:document.getElementById('txAmount').value
             };
+            const isEditing = editingTransactionId !== null;
+            const button = document.getElementById('addTxBtn');
+            button.disabled = true;
             try {
-                const result = await authRequest('/api/finance/transactions/', data);
-                document.getElementById('txForm').reset();
+                const url = isEditing
+                    ? '/api/finance/transactions/' + editingTransactionId + '/edit/'
+                    : '/api/finance/transactions/';
+                const result = await authRequest(url, data);
+                cancelTransactionEdit();
                 await loadFinance();
                 if (result.alert_queued) showBudgetToast('Budget limit reached. Email alert scheduled for your registered address.');
-            } catch(error) { alert(error.message); await loadFinance(); }
+            } catch(error) {
+                alert(error.message);
+                if (!isEditing) await loadFinance();
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        let editingTransactionId = null;
+        function editTransaction(id) {
+            const record = transactions.find(t => Number(t.id) === Number(id));
+            if (!record) { alert('Transaction not found. Refresh the page.'); return; }
+            editingTransactionId = record.id;
+            document.getElementById('txDesc').value = record.desc;
+            document.getElementById('txType').value = record.type;
+            const categoryInput = document.getElementById('txCategory');
+            const extraOption = categoryInput.querySelector('[data-transaction-edit-option]');
+            if (extraOption) extraOption.remove();
+            if (![...categoryInput.options].some(option => option.value === record.category)) {
+                const option = new Option(record.category, record.category);
+                option.setAttribute('data-transaction-edit-option', 'true');
+                categoryInput.add(option);
+            }
+            categoryInput.value = record.category;
+            document.getElementById('txAmount').value = Number(record.amount).toFixed(2);
+            document.getElementById('addTxBtn').textContent = 'Save Changes';
+            document.getElementById('cancelTxEdit').style.display = 'inline-flex';
+            document.getElementById('editTransactionNotice').style.display = 'block';
+            document.getElementById('txForm').scrollIntoView({behavior:'smooth',block:'center'});
+            document.getElementById('txDesc').focus({preventScroll:true});
+        }
+
+        function cancelTransactionEdit() {
+            editingTransactionId = null;
+            document.getElementById('txForm').reset();
+            const extra = document.querySelector('#txCategory [data-transaction-edit-option]');
+            if (extra) extra.remove();
+            document.getElementById('editTransactionNotice').style.display = 'none';
+            document.getElementById('cancelTxEdit').style.display = 'none';
+            document.getElementById('addTxBtn').textContent = isBudgetLocked
+                ? 'Limit Reached (Locked)' : 'Add Transaction';
         }
 
         function lockAccount() {
@@ -1002,7 +1064,7 @@
             // Table rendering
             const tbody = document.getElementById('txTableBody');
             if (transactions.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions added yet. Add your income or expenses above.</td></tr>`;
             } else {
                 tbody.innerHTML = transactions.map(t => `
                     <tr>
@@ -1011,6 +1073,7 @@
                         <td>${escapeHtml(t.category)}</td>
                         <td><span class="badge ${t.type}">${t.type}</span></td>
                         <td style="font-family: 'JetBrains Mono';">${t.type === 'income' ? '+' : '-'}Nrs ${t.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                        <td><button type="button" class="edit-transaction-btn" onclick="editTransaction(${Number(t.id)})" aria-label="Edit ${escapeHtml(t.desc)}">Edit</button></td>
                     </tr>
                 `).join('');
             }
