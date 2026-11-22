@@ -1067,6 +1067,7 @@
             document.getElementById('appScreen').classList.add('active');
             document.getElementById('displayUserName').textContent = currentUser.name;
             document.getElementById('displayUserEmail').textContent = currentUser.email;
+            initializeTrackNestDates();
             await loadFinance();
             navigateTrackNest(window.location.hash.slice(1) || "dashboard", false);
         }
@@ -1170,12 +1171,14 @@
                 type: kind,
                 desc: document.getElementById(prefix + 'Desc').value.trim(),
                 category: document.getElementById(prefix + 'Category').value,
-                amount: document.getElementById(prefix + 'Amount').value
+                amount: document.getElementById(prefix + 'Amount').value,
+                date: document.getElementById(prefix + 'Date').value
             };
             button.disabled = true;
             try {
                 const result = await authRequest('/api/finance/transactions/',data);
                 form.reset();
+                initializeTrackNestDates();
                 await loadFinance();
                 if (result.alert_queued) showBudgetToast('Budget limit reached. Email alert scheduled for your registered address.');
             } catch(error) {
@@ -1183,6 +1186,40 @@
                 await loadFinance();
             } finally {button.disabled = false;}
         }
+        function trackNestToday() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') +
+                '-' + String(d.getDate()).padStart(2,'0');
+        }
+        function initializeTrackNestDates() {
+            const today = trackNestToday();
+            for (const id of ['incomeEntryDate','expenseEntryDate','txDate']) {
+                const input = document.getElementById(id);
+                input.min = '2000-01-01';
+                input.max = today;
+                if (!input.value || input.value > today) input.value = today;
+            }
+            for (const id of ['txDateFrom','txDateTo']) document.getElementById(id).max = today;
+        }
+        function resetTransactionFilters() {
+            document.getElementById('txSearch').value = '';
+            document.getElementById('txDateFrom').value = '';
+            document.getElementById('txDateTo').value = '';
+            setTrackNestFilter('all');
+        }
+        async function deleteTransaction(id) {
+            const record = transactions.find(t=>Number(t.id) === Number(id));
+            if (!record) { alert('Transaction not found. Refresh the page.'); return; }
+            const amount = Number(record.amount).toLocaleString('en-US',{minimumFractionDigits:2});
+            if (!confirm('Permanently delete "' + record.desc + '" ('+record.type+
+                ', Nrs '+amount+')? This cannot be undone.')) return;
+            try {
+                await authRequest('/api/finance/transactions/' + Number(id) + '/delete/', {});
+                if (Number(editingTransactionId) === Number(id)) cancelTransactionEdit();
+                await loadFinance();
+            } catch(error) { alert(error.message); await loadFinance(); }
+        }
+
         function renderTrackNestPageTables() {
             const money = n => 'Nrs ' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
             const total = kind => transactions.filter(t=>t.type===kind).reduce((sum,t)=>sum+Number(t.amount),0);
@@ -1192,7 +1229,7 @@
                 document.getElementById(kind+'PageRows').innerHTML = records.length ? records.map(t => `
                     <tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.category)}</td>
                     <td class="tn-table-amount ${kind}">${kind==='income'?'+':'−'}${money(Number(t.amount))}</td>
-                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button></td></tr>
+                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})">Delete</button></td></tr>
                 `).join('') : '<tr><td colspan="5" class="tn-empty">No '+kind+' records yet. Use the form above to add one.</td></tr>';
             }
             const recent = transactions.slice(0,5);
@@ -1255,7 +1292,8 @@
                 desc:document.getElementById('txDesc').value,
                 type:document.getElementById('txType').value,
                 category:document.getElementById('txCategory').value,
-                amount:document.getElementById('txAmount').value
+                amount:document.getElementById('txAmount').value,
+                date:document.getElementById('txDate').value
             };
             const isEditing = editingTransactionId !== null;
             const button = document.getElementById('addTxBtn');
@@ -1293,6 +1331,7 @@
             }
             categoryInput.value = record.category;
             document.getElementById('txAmount').value = Number(record.amount).toFixed(2);
+            document.getElementById('txDate').value = record.date;
             document.getElementById('addTxBtn').textContent = 'Save Changes';
             document.getElementById('cancelTxEdit').style.display = 'inline-flex';
             document.getElementById('editTransactionNotice').style.display = 'block';
@@ -1303,6 +1342,7 @@
         function cancelTransactionEdit() {
             editingTransactionId = null;
             document.getElementById('txForm').reset();
+            initializeTrackNestDates();
             const extra = document.querySelector('#txCategory [data-transaction-edit-option]');
             if (extra) extra.remove();
             document.getElementById('editTransactionNotice').style.display = 'none';
@@ -1368,8 +1408,17 @@
 
             // Table rendering
             const tbody = document.getElementById('txTableBody');
-            const visibleTransactions = trackNestRecordFilter === 'all'
-                ? transactions : transactions.filter(t => t.type === trackNestRecordFilter);
+            const query = document.getElementById('txSearch').value.trim().toLocaleLowerCase();
+            const from = document.getElementById('txDateFrom').value;
+            const to = document.getElementById('txDateTo').value;
+            const visibleTransactions = transactions.filter(t => {
+                if (trackNestRecordFilter !== 'all' && t.type !== trackNestRecordFilter) return false;
+                if (from && t.date < from) return false;
+                if (to && t.date > to) return false;
+                return !query || (t.desc + ' ' + t.category).toLocaleLowerCase().includes(query);
+            });
+            document.getElementById('txFilterCount').textContent = visibleTransactions.length +
+                ' of ' + transactions.length + ' transaction(s) shown';
             if (visibleTransactions.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No ${trackNestRecordFilter === 'all' ? 'transactions' : trackNestRecordFilter + ' records'} yet. Add a transaction above to get started.</td></tr>`;
             } else {
@@ -1380,7 +1429,7 @@
                         <td>${escapeHtml(t.category)}</td>
                         <td><span class="badge ${t.type}">${t.type}</span></td>
                         <td style="font-family: 'JetBrains Mono';">${t.type === 'income' ? '+' : '-'}Nrs ${t.amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                        <td><button type="button" class="edit-transaction-btn" onclick="editTransaction(${Number(t.id)})" aria-label="Edit ${escapeHtml(t.desc)}">Edit</button></td>
+                        <td><button type="button" class="edit-transaction-btn" onclick="editTransaction(${Number(t.id)})" aria-label="Edit ${escapeHtml(t.desc)}">Edit</button><button type="button" class="tn-delete-btn" onclick="deleteTransaction(${Number(t.id)})" aria-label="Delete ${escapeHtml(t.desc)}">Delete</button></td>
                     </tr>
                 `).join('');
             }
