@@ -114,14 +114,27 @@ def response_signature_valid(data, payment):
 
 @require_GET
 def payment_summary(request):
-    """Owner-only totals of successful verified eSewa checkouts, never pending ones."""
+    """Owner-only grouped expense totals. Only eSewa is provider-verified."""
     if not request.user.is_authenticated:
         return JsonResponse({"error": "Sign in required."}, status=401)
     paid = EsewaPayment.objects.filter(user=request.user, status="COMPLETE", expense__isnull=False)
     summary = paid.aggregate(amount=Sum("amount"))
+    # Card/bank transactions are manually entered records, not provider confirmations.
+    expenses = ExpenseTransaction.objects.filter(user=request.user, kind="expense")
+    online_methods = ("eSewa (Sandbox)", "Card", "Bank Transfer")
+    online = expenses.filter(payment_method__in=online_methods)
+    offline = expenses.exclude(payment_method__in=online_methods)
+    online_totals = online.aggregate(amount=Sum("amount"))
+    offline_totals = offline.aggregate(amount=Sum("amount"))
     return JsonResponse({
         "paid_total": float(summary["amount"] or Decimal("0")),
         "successful_count": paid.count(),
+        "online_total": float(online_totals["amount"] or Decimal("0")),
+        "online_count": online.count(),
+        "offline_total": float(offline_totals["amount"] or Decimal("0")),
+        "offline_count": offline.count(),
+        "online_methods": ["eSewa", "Card", "Bank Transfer"],
+        "offline_methods": ["Cash", "Other"],
         "is_test_environment": True,
     })
 
