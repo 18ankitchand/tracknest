@@ -92,7 +92,7 @@ class PremiumFinanceTests(TestCase):
         )
         response = self.client.get("/api/finance/export.csv")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("'+=SUM(A1:A2)"[1:], response.content.decode())
+        self.assertIn("\'=SUM(A1:A2)", response.content.decode())
         self.assertNotIn("Private entry", response.content.decode())
 
     def test_reports_pdf_download(self):
