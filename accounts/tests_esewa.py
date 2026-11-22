@@ -175,6 +175,8 @@ class EsewaSandboxTests(TestCase):
         self.assertContains(page, "Online Expenses")
         self.assertContains(page, "Cash &amp; Other Expenses")
         self.assertContains(page, "Total Expenses")
+        self.assertContains(page, 'id="tnOnlineTransactionCount"')
+        self.assertContains(page, 'id="tnOfflineTransactionCount"')
         self.assertContains(page, 'id="tnTotalExpenseAmount"')
         self.assertContains(page, 'id="tnExpenseTransactionCount"')
         result = self.post("/api/finance/transactions/", {
