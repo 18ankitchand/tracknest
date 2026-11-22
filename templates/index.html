@@ -548,6 +548,46 @@
         @media(max-width:680px){.tn-menu-button{width:37px;height:37px;flex:0 0 37px}
             .app-screen .brand{gap:.5rem}.app-screen .brand-icon{width:35px;height:35px}
             .tn-record-filter{width:100%}.tn-record-filter button{flex:1}}
+
+/* Dedicated TrackNest pages */
+.app-screen #tnMainContent{display:block}
+.tn-page{display:grid;gap:1.5rem;animation:tnPageIn .18s ease-out}
+.tn-page[hidden]{display:none!important}
+@keyframes tnPageIn{from{opacity:.7;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.tn-page-heading{padding:.45rem 0 .3rem}
+.tn-page-heading .section-label{display:block;margin-bottom:.75rem}
+.tn-workspace-card{margin:0}
+.tn-entry-form{display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:1rem;align-items:end;margin-top:1.5rem}
+.tn-entry-form .form-group{min-width:0}
+.tn-entry-form .form-group input,.tn-entry-form select{width:100%;min-height:47px}
+.tn-entry-form .primary-btn{min-height:47px}
+.tn-page .tn-workspace-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.tn-page-total{font-family:'JetBrains Mono',monospace;color:#7dd3fc;font-size:1.17rem}
+.tn-empty{text-align:center;color:var(--text-muted);padding:2rem!important}
+.tn-table-amount{white-space:nowrap;font-weight:800}
+.tn-table-amount.income{color:#34d399}
+.tn-table-amount.expense{color:#fda4af}
+.tn-dashboard-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.tn-action-card{display:flex;flex-direction:column;gap:.35rem;text-align:left;border:1px solid rgba(148,163,184,.18);
+ background:linear-gradient(135deg,#213552,#17263b);border-radius:15px;padding:1.15rem;color:#f8fafc;cursor:pointer;font-family:inherit}
+.tn-action-card:hover{border-color:#38bdf8;background:#24405f}
+.tn-action-card strong{font-size:1rem}
+.tn-action-card span{color:#9fb3cb;font-size:.78rem}
+.tn-view-all{background:transparent;color:#7dd3fc;border:0;cursor:pointer;font-weight:800;font-family:inherit;font-size:.85rem}
+.tn-recent-list{margin-top:1.1rem}
+.tn-recent-item{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+ padding:1rem .25rem;border-bottom:1px solid #31445b}
+.tn-recent-item:last-child{border-bottom:0}
+.tn-recent-item strong{display:block}
+.tn-recent-item small{display:block;color:#8ca6be;margin-top:.35rem}
+.tn-budget-note{line-height:1.7;color:#a9bdd3}
+.tn-budget-note p{margin:1rem 0}
+.tn-disclaimer{font-size:.83rem;color:#93a8bf;line-height:1.7}
+#tnPage-advisor .ai-chat-card{min-height:530px}
+#tnPage-forecast .chart-container{height:400px}
+@media(max-width:1100px){.tn-entry-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.tn-dashboard-actions{grid-template-columns:1fr}.tn-entry-form{grid-template-columns:1fr}
+.tn-recent-item{align-items:flex-start}.tn-page .tn-workspace-row{align-items:flex-start}}
     </style>
 </head>
 <body>
@@ -616,7 +656,7 @@
                 <button type="button" class="tn-nav-item" data-tracknest-nav="forecast" onclick="navigateTrackNest('forecast')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19V5m0 14h18M6 15l5-5 4 3 5-7"/></svg><span class="tn-nav-label"><strong>Forecast chart</strong><small>Spending trends</small></span></button>
                 <button type="button" class="tn-nav-item" data-tracknest-nav="advisor" onclick="navigateTrackNest('advisor')"><svg viewBox="0 0 24 24" class="tn-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M12 3v4M9 13h.01M15 13h.01M9 17h6"/></svg><span class="tn-nav-label"><strong>Financial advisor</strong><small>Ask about expenses</small></span></button>
             </nav>
-            <p class="tn-sidebar-note">Income and Expenses filter your existing transactions. Budget and Forecast open the existing dashboard sections.</p>
+            <p class="tn-sidebar-note">Each item opens its own workspace. All pages use your existing saved financial data.</p>
         </aside>
         <header>
             <div class="brand">
@@ -633,31 +673,18 @@
             </div>
         </header>
 
-        <main>
+
+        <main id="tnMainContent">
+          <section class="tn-page" id="tnPage-dashboard" data-tn-page="dashboard">
             <section class="dashboard-intro" id="dashboardOverview" aria-label="Dashboard overview">
                 <div><div class="dashboard-kicker">Your financial workspace</div>
                 <h1 class="dashboard-heading">Financial overview</h1>
                 <p class="dashboard-description">Your spending, budget and transactions — all in one place.</p></div>
                 <nav class="dashboard-shortcuts" aria-label="Dashboard shortcuts">
-                    <a href="#budgetBanner" class="dashboard-shortcut">Manage budget</a>
-                    <a href="#transactionSection" class="dashboard-shortcut primary">+ Add transaction</a>
+                    <a href="#budget" onclick="navigateTrackNest('budget');return false;" class="dashboard-shortcut">Manage budget</a>
+                    <a href="#transactions" onclick="navigateTrackNest('transactions');return false;" class="dashboard-shortcut primary">+ Add transaction</a>
                 </nav>
             </section>
-            <!-- Budget Limit Banner -->
-            <div id="budgetBanner" class="budget-limit-banner">
-                <div style="flex:1;min-width:0">
-                    <span class="budget-flag">Monthly spending plan</span>
-                    <strong id="budgetBannerTitle">Monthly Budget Limit: Nrs <span id="currentLimitDisplay">50,000.00</span></strong>
-                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="budgetBannerSub">Current spent: Nrs 0.00 (0% of limit)</div>
-                    <div id="budgetProgress" class="budget-progress" role="progressbar" aria-label="Monthly budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="budgetProgressFill" class="budget-progress-fill"></div></div>
-                </div>
-                <div class="budget-edit">
-                    <input type="number" id="newLimitInput" placeholder="New limit" style="width: 140px; padding: 0.5rem;" value="50000">
-                    <button class="primary-btn" onclick="updateBudgetLimit()" style="padding: 0.5rem 1rem;">Set Limit</button>
-                </div>
-            </div>
-
-            <!-- Top Metrics -->
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-heading"><div class="metric-label">Total Balance</div><span class="metric-symbol" aria-hidden="true">↗</span></div>
@@ -680,36 +707,57 @@
                     <div class="metric-sub">Ensemble forecasting model</div>
                 </div>
             </div>
-
-            <!-- Charts & AI Bot Grid -->
-            <div class="dashboard-grid">
-                <div class="card" id="forecastSection">
-                    <div class="card-header">
-                        <div><div class="section-label">Spending trends</div><div class="card-title">Expense flow & forecast</div><p class="card-description">Your spending and its current projection.</p></div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="forecastChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- AI Bot Card -->
-                <div class="ai-chat-card" id="advisorSection">
-                    <div class="card-header" style="padding: 1rem 1rem 0 1rem; margin-bottom: 0.5rem;">
-                        <div class="card-title" style="font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            Financial Advisor
-                        </div>
-                    </div>
-                    <div class="ai-messages" id="aiMessages">
-                        <div class="ai-msg bot">Hello! I am your AI financial advisor. Add your income and expenses to get personalized suggestions, spending analysis, and answers about this tracker system.</div>
-                    </div>
-                    <div class="ai-input-box">
-                        <input type="text" id="aiInput" placeholder="Ask AI about your expenses or budget..." onkeypress="handleAiKeyPress(event)">
-                        <button class="primary-btn" onclick="sendAiMessage()" style="padding: 0.5rem 1rem;">Ask</button>
-                    </div>
-                </div>
+            <div class="tn-dashboard-actions">
+              <button type="button" class="tn-action-card" onclick="navigateTrackNest('income')"><strong>＋ Add income</strong><span>Record money received</span></button>
+              <button type="button" class="tn-action-card" onclick="navigateTrackNest('expense')"><strong>− Add expense</strong><span>Track your spending</span></button>
+              <button type="button" class="tn-action-card" onclick="navigateTrackNest('budget')"><strong>◎ Monthly budget</strong><span>Manage spending limits</span></button>
             </div>
-
-            <!-- Add Transaction & Transactions Table -->
+            <section class="card"><div class="tn-workspace-row"><div><div class="section-label">Recent activity</div><h3 class="card-title">Latest transactions</h3></div><button class="tn-view-all" type="button" onclick="navigateTrackNest('transactions')">View all →</button></div><div id="tnRecentTransactions" class="tn-recent-list"></div></section>
+          </section>
+          <section class="tn-page" id="tnPage-income" data-tn-page="income" hidden>
+            <div class="tn-page-heading"><span class="section-label">Income management</span><h1 class="dashboard-heading">Income</h1><p class="dashboard-description">Add income, review sources, and edit existing records.</p></div>
+            
+            <section class="card tn-workspace-card">
+              <div class="section-label">New income</div><div class="card-title">Add income record</div>
+              <p class="card-description">Record your earnings and other money received. The transaction date is set to today.</p>
+              <form class="tn-entry-form" onsubmit="submitTrackNestEntry(event,'income')">
+                <div class="form-group"><label for="incomeEntryDesc">Description</label><input id="incomeEntryDesc" maxlength="200" placeholder="e.g. Monthly salary" required></div>
+                <div class="form-group"><label for="incomeEntryCategory">Category</label>
+                  <select id="incomeEntryCategory" required><option value="Salary">Salary</option><option value="Freelance">Freelance</option><option value="Business">Business</option><option value="Gift">Gift</option><option value="Other">Other income</option></select>
+                </div>
+                <div class="form-group"><label for="incomeEntryAmount">Amount (Nrs)</label><input id="incomeEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
+                <button type="submit" class="primary-btn">Save Income</button>
+              </form>
+            </section>
+            <section class="card tn-workspace-card">
+              <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Income history</h3></div>
+                <strong class="tn-page-total" id="incomePageTotal">Nrs 0.00</strong></div>
+              <div class="table-scroll"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="incomePageRows"></tbody></table></div>
+            </section>
+          </section>
+          <section class="tn-page" id="tnPage-expense" data-tn-page="expense" hidden>
+            <div class="tn-page-heading"><span class="section-label">Spending management</span><h1 class="dashboard-heading">Expenses</h1><p class="dashboard-description">Record expenses and review how you spend your money.</p></div>
+            
+            <section class="card tn-workspace-card">
+              <div class="section-label">New expense</div><div class="card-title">Add expense record</div>
+              <p class="card-description">Record your purchases and other spending. The transaction date is set to today.</p>
+              <form class="tn-entry-form" onsubmit="submitTrackNestEntry(event,'expense')">
+                <div class="form-group"><label for="expenseEntryDesc">Description</label><input id="expenseEntryDesc" maxlength="200" placeholder="e.g. Grocery shopping" required></div>
+                <div class="form-group"><label for="expenseEntryCategory">Category</label>
+                  <select id="expenseEntryCategory" required><option value="Groceries">Groceries</option><option value="Dining">Dining</option><option value="Utilities">Utilities</option><option value="Shopping">Shopping</option><option value="Transport">Transport</option><option value="Health">Health</option><option value="Other">Other expense</option></select>
+                </div>
+                <div class="form-group"><label for="expenseEntryAmount">Amount (Nrs)</label><input id="expenseEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
+                <button type="submit" class="primary-btn">Save Expense</button>
+              </form>
+            </section>
+            <section class="card tn-workspace-card">
+              <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Expense history</h3></div>
+                <strong class="tn-page-total" id="expensePageTotal">Nrs 0.00</strong></div>
+              <div class="table-scroll"><table class="transactions-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expensePageRows"></tbody></table></div>
+            </section>
+          </section>
+          <section class="tn-page" id="tnPage-transactions" data-tn-page="transactions" hidden>
+            <div class="tn-page-heading"><span class="section-label">Your financial history</span><h1 class="dashboard-heading">Transactions</h1><p class="dashboard-description">View all records, filter by type, and edit transactions.</p></div>
             <div class="card" id="transactionSection">
                 <div class="card-header">
                     <div><div class="section-label">Your activity</div><div class="card-title">Transaction management</div><p class="card-description">Record and review income and expenses.</p></div><div class="tn-record-filter" id="tnRecordFilter" aria-label="Transaction filters"><button type="button" class="active" onclick="setTrackNestFilter('all')" data-filter="all">All</button><button type="button" onclick="setTrackNestFilter('income')" data-filter="income">Income</button><button type="button" onclick="setTrackNestFilter('expense')" data-filter="expense">Expenses</button></div>
@@ -763,6 +811,56 @@
                     </tbody>
                 </table></div>
             </div>
+          </section>
+          <section class="tn-page" id="tnPage-budget" data-tn-page="budget" hidden>
+            <div class="tn-page-heading"><span class="section-label">Financial planning</span><h1 class="dashboard-heading">Monthly budget</h1><p class="dashboard-description">Set your spending limit and monitor how close you are to reaching it.</p></div>
+            <div id="budgetBanner" class="budget-limit-banner">
+                <div style="flex:1;min-width:0">
+                    <span class="budget-flag">Monthly spending plan</span>
+                    <strong id="budgetBannerTitle">Monthly Budget Limit: Nrs <span id="currentLimitDisplay">50,000.00</span></strong>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="budgetBannerSub">Current spent: Nrs 0.00 (0% of limit)</div>
+                    <div id="budgetProgress" class="budget-progress" role="progressbar" aria-label="Monthly budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="budgetProgressFill" class="budget-progress-fill"></div></div>
+                </div>
+                <div class="budget-edit">
+                    <input type="number" id="newLimitInput" placeholder="New limit" style="width: 140px; padding: 0.5rem;" value="50000">
+                    <button class="primary-btn" onclick="updateBudgetLimit()" style="padding: 0.5rem 1rem;">Set Limit</button>
+                </div>
+            </div>
+            <section class="card tn-budget-note"><h3 class="card-title">How budget protection works</h3>
+              <p>Below 80%: normal. From 80%: warning. From 90%: critical. At 100%: TrackNest blocks additional expense recording. Income recording remains available.</p>
+              <p>Budget limits apply to records inside TrackNest, not outside payments.</p>
+              <button class="tn-view-all" onclick="navigateTrackNest('expense')" type="button">View expenses →</button></section>
+          </section>
+          <section class="tn-page" id="tnPage-forecast" data-tn-page="forecast" hidden>
+            <div class="tn-page-heading"><span class="section-label">Expense insights</span><h1 class="dashboard-heading">Forecast & trends</h1><p class="dashboard-description">Review the current spending projection alongside recorded expenses.</p></div>
+            <div class="card" id="forecastSection">
+                    <div class="card-header">
+                        <div><div class="section-label">Spending trends</div><div class="card-title">Expense flow & forecast</div><p class="card-description">Your spending and its current projection.</p></div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+            <p class="tn-disclaimer">Forecast values currently use a demonstration multiplier, not a trained or independently validated prediction model.</p>
+          </section>
+          <section class="tn-page" id="tnPage-advisor" data-tn-page="advisor" hidden>
+            <div class="tn-page-heading"><span class="section-label">Financial assistance</span><h1 class="dashboard-heading">Financial advisor</h1><p class="dashboard-description">Ask questions about your current spending and budget.</p></div>
+            <div class="ai-chat-card" id="advisorSection">
+                    <div class="card-header" style="padding: 1rem 1rem 0 1rem; margin-bottom: 0.5rem;">
+                        <div class="card-title" style="font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            Financial Advisor
+                        </div>
+                    </div>
+                    <div class="ai-messages" id="aiMessages">
+                        <div class="ai-msg bot">Hello! I am your AI financial advisor. Add your income and expenses to get personalized suggestions, spending analysis, and answers about this tracker system.</div>
+                    </div>
+                    <div class="ai-input-box">
+                        <input type="text" id="aiInput" placeholder="Ask AI about your expenses or budget..." onkeypress="handleAiKeyPress(event)">
+                        <button class="primary-btn" onclick="sendAiMessage()" style="padding: 0.5rem 1rem;">Ask</button>
+                    </div>
+                </div>
+            <p class="tn-disclaimer">Advice is generated using the existing rule-based demo assistant; it is not a live AI service.</p>
+          </section>
         </main>
     </div>
 
@@ -948,6 +1046,7 @@
             document.getElementById('displayUserName').textContent = currentUser.name;
             document.getElementById('displayUserEmail').textContent = currentUser.email;
             await loadFinance();
+            navigateTrackNest(window.location.hash.slice(1) || "dashboard", false);
         }
 
         async function loadFinance() {
@@ -1009,31 +1108,72 @@
             });
             updateDashboard();
         }
-        function navigateTrackNest(section) {
-            const targets = {
-                dashboard: 'dashboardOverview',
-                income: 'transactionSection',
-                expense: 'transactionSection',
-                transactions: 'transactionSection',
-                budget: 'budgetBanner',
-                forecast: 'forecastSection',
-                advisor: 'advisorSection'
-            };
-            if (!targets[section]) return;
-            if (section === 'income' || section === 'expense') {
-                setTrackNestFilter(section);
-                document.getElementById('txType').value = section;
-            } else if (section === 'transactions') {
-                setTrackNestFilter('all');
-            }
+
+        function navigateTrackNest(section, updateHistory = true) {
+            const pages = ['dashboard','income','expense','transactions','budget','forecast','advisor'];
+            if (!pages.includes(section)) section = 'dashboard';
+            document.querySelectorAll('[data-tn-page]').forEach(page => {
+                page.hidden = page.dataset.tnPage !== section;
+            });
             document.querySelectorAll('[data-tracknest-nav]').forEach(button => {
                 const active = button.dataset.tracknestNav === section;
                 button.classList.toggle('active', active);
                 if (active) button.setAttribute('aria-current', 'page');
                 else button.removeAttribute('aria-current');
             });
+            if (section === 'income' || section === 'expense') setTrackNestFilter(section);
+            if (section === 'transactions') setTrackNestFilter('all');
+            if (updateHistory && window.location.hash !== '#' + section) {
+                history.pushState(null, '', '#' + section);
+            }
             closeTrackNestMenu();
-            document.getElementById(targets[section]).scrollIntoView({behavior:'smooth',block:'start'});
+            window.scrollTo({top:0,behavior:'instant'});
+            if (section === 'forecast' && typeof forecastChart !== 'undefined') {
+                requestAnimationFrame(() => forecastChart.resize());
+            }
+        }
+        window.addEventListener('popstate', () => navigateTrackNest(window.location.hash.slice(1), false));
+        window.addEventListener('hashchange', () => navigateTrackNest(window.location.hash.slice(1), false));
+
+        async function submitTrackNestEntry(event, kind) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const button = form.querySelector('button[type="submit"]');
+            const prefix = kind === 'income' ? 'incomeEntry' : 'expenseEntry';
+            const data = {
+                type: kind,
+                desc: document.getElementById(prefix + 'Desc').value.trim(),
+                category: document.getElementById(prefix + 'Category').value,
+                amount: document.getElementById(prefix + 'Amount').value
+            };
+            button.disabled = true;
+            try {
+                const result = await authRequest('/api/finance/transactions/',data);
+                form.reset();
+                await loadFinance();
+                if (result.alert_queued) showBudgetToast('Budget limit reached. Email alert scheduled for your registered address.');
+            } catch(error) {
+                alert(error.message);
+                await loadFinance();
+            } finally {button.disabled = false;}
+        }
+        function renderTrackNestPageTables() {
+            const money = n => 'Nrs ' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+            const total = kind => transactions.filter(t=>t.type===kind).reduce((sum,t)=>sum+Number(t.amount),0);
+            for (const kind of ['income','expense']) {
+                const records = transactions.filter(t=>t.type===kind);
+                document.getElementById(kind+'PageTotal').textContent = money(total(kind));
+                document.getElementById(kind+'PageRows').innerHTML = records.length ? records.map(t => `
+                    <tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.category)}</td>
+                    <td class="tn-table-amount ${kind}">${kind==='income'?'+':'−'}${money(Number(t.amount))}</td>
+                    <td><button class="edit-transaction-btn" type="button" onclick="navigateTrackNest('transactions');editTransaction(${Number(t.id)})">Edit</button></td></tr>
+                `).join('') : '<tr><td colspan="5" class="tn-empty">No '+kind+' records yet. Use the form above to add one.</td></tr>';
+            }
+            const recent = transactions.slice(0,5);
+            document.getElementById('tnRecentTransactions').innerHTML = recent.length ? recent.map(t=>`
+                <div class="tn-recent-item"><span><strong>${escapeHtml(t.desc)}</strong><small>${escapeHtml(t.category)} · ${escapeHtml(t.date)}</small></span>
+                <strong class="tn-table-amount ${t.type}">${t.type==='income'?'+':'−'}${money(Number(t.amount))}</strong></div>`
+            ).join('') : '<p class="tn-empty">No transactions yet. Add your first income or expense using the menu.</p>';
         }
 
         // Chart Initialization
@@ -1221,6 +1361,7 @@
             forecastChart.data.datasets[0].data = [0, totalExpense * 0.3, totalExpense * 0.6, totalExpense * 0.8, totalExpense, null];
             forecastChart.data.datasets[1].data = [null, null, null, null, totalExpense, predicted];
             forecastChart.update();
+            renderTrackNestPageTables();
         }
 
         // AI Chatbot logic
