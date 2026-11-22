@@ -24,4 +24,4 @@ class ExpenseTransaction(models.Model):
     category = models.CharField(max_length=60)
     amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
     class Meta:
-        indexes = [models.Index(fields=["user", "date"])]
+        indexes = [models.Index(fields=["user", "date"], name="accounts_ex_user_id_fab11e_idx")]
