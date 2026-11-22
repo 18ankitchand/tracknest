@@ -213,7 +213,12 @@ def queue_budget_email(user, budget, month):
     """Mark a current-month alert and send after commit. Reset the flag on delivery failure."""
     if month != month_start(timezone.localdate()) or budget.limit_alert_sent or not user.email:
         return False
+    # A console backend only prints messages; incomplete SMTP credentials must
+    # never be reported to the UI as a queued real-email alert.
     if settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":
+        return False
+    if (settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+            and (not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_PASSWORD)):
         return False
     pref, _ = UserPreference.objects.get_or_create(user=user)
     if not pref.email_alerts_enabled:
