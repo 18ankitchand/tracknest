@@ -238,8 +238,20 @@ The Expenses page's former **Monthly expense trend** line chart had only a singl
 
 **4. Rule-based financial assistant — implemented** in `accounts/financial_assistant.py`. A keyword/intent classifier selects prewritten analysis branches and reads the current user's income, expense, budget, transaction or savings data. No LLM, external AI API or training takes place. Chat cannot change the records.
 
-**5. Expense forecasting demonstration — NOT a trained algorithm** in `templates/index.html:updateDashboard`. The current value is `predicted = monthlyExpense * 1.25` and illustrative Chart.js points, not a fitted ensemble model or Linear Regression. It is a UI example only.
+**5. Time Series Forecasting with Linear Regression — implemented** in `accounts/forecasting.py` using the Ordinary Least Squares fitting algorithm on actual completed calendar-month expense totals. The `GET /api/finance/forecast/` endpoint feeds the Forecast & Trends page through `static/js/premium-pages.js:loadExpenseForecast`. Unlike the previous demonstration, there is no fixed 1.25 multiplier or fabricated data. Minimum training requirements are three **different completed calendar months with nonzero spending**; otherwise the UI clearly says "Not enough data" instead of showing a prediction. Missing months inside the historical range are included as zero-spending training points. The current incomplete month is excluded from training. The model predicts current-month end and next-month totals and clamps negative predictions to zero. With at least five training months, rolling-origin one-step-ahead evaluation reports MAE (mean absolute error). This model identifies a linear trend; it does not model seasonal effects and does not guarantee the actual amount.
 
-**Not implemented:** the proposed Z-score anomaly detector (`Z = (X - mean) / standard_deviation`, unusual if `|Z| > 2.5`) and trained/evaluated Linear Regression time-series expense forecasting. These are planned academic modules and must not be reported as tested functional algorithms.
+**Not implemented:** Z-score anomaly detection (outside the two core algorithms in the project's official title).
 
 To test the new Spending Overview endpoint and its privacy restrictions: `python manage.py test accounts.tests_spending_overview`. Run the full suite with `python manage.py test accounts` and inspect the Expense dashboard in a browser for responsive chart rendering.
+
+
+## Academic algorithm scope: TRACKNEST: A BUDGET TRACKING SYSTEM USING BUDGET THRESHOLD & TIME SERIES FORECASTING
+
+The project has **two primary academic algorithms**:
+
+1. **Budget Threshold Monitoring** — `accounts/premium_api.py:evaluate_budget_alerts` and `accounts/views.py`. Calculate `usage_percentage = 100 * sum(monthly_expenses) / monthly_budget_limit`. Normal <80%, warning >=80% and <90%, critical >=90% and <100%, at/above 100% block new expense recording or a new in-app eSewa checkout. Email/in-app notifications are sent according to configured preferences. External payments cannot be blocked.
+2. **Time Series Forecasting using Linear Regression** — `accounts/forecasting.py`. Convert monthly historical expense totals into ordered pairs `(month_index, amount)`. Fit `y_hat = intercept + slope * month_index` by Ordinary Least Squares (OLS). Project the current/next month and evaluate out-of-sample error through rolling-origin backtests when enough months exist. Uses only the user's own expenses and excludes incomplete months from fitting. This is trend-based forecasting; with sparse history the application gives no forecast.
+
+**Data flow:** Authenticated expense entries/eSewa-verified entries -> `accounts.ExpenseTransaction` -> monthly aggregation -> (a) threshold enforcement and notifications; (b) Linear Regression historical trend fitting -> forecast JSON -> Chart.js plot with real months and projected values.
+
+**Validation:** Run `python manage.py test accounts.tests_forecasting` and `python manage.py test accounts` in the project virtual environment. No model migration or new dependency is required: OLS is implemented explicitly in Python to make the mathematical formula auditable for TU evaluation. Compare chart values against test fixtures and explain that MAE is only shown when historical backtests were possible. Document the observed test results and any real-user forecasting accuracy only after running those checks.
