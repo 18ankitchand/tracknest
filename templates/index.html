@@ -746,6 +746,8 @@ font-size:.83rem;cursor:pointer}
 .tn-esewa-review-actions button:disabled{opacity:.6;cursor:wait}
 @media(max-width:470px){.tn-esewa-review-actions{flex-direction:column-reverse}
 .tn-esewa-review-actions button{width:100%}}
+#appScreen .tn-expense-payment-hint{display:block;margin-top:7px;color:#78899d;font-size:.73rem;line-height:1.5}
+#appScreen.tn-dark .tn-expense-payment-hint{color:#b8c8dc}
     </style>
     <link rel="stylesheet" href="{% static 'css/premium-dashboard.css' %}">
 </head>
@@ -935,17 +937,11 @@ font-size:.83rem;cursor:pointer}
                   <select id="expenseEntryCategory" required><option value="Groceries">Groceries</option><option value="Dining">Dining</option><option value="Utilities">Utilities</option><option value="Shopping">Shopping</option><option value="Transport">Transport</option><option value="Health">Health</option><option value="Other">Other expense</option></select>
                 </div>
                 <div class="form-group"><label for="expenseEntryDate">Date</label><input type="date" id="expenseEntryDate" required></div>
-                <div class="form-group"><label for="expenseEntryPayment">Payment method</label><select id="expenseEntryPayment" onchange="updateExpensePaymentChoice()"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option><option value="eSewa Demo">eSewa Demo (test payment)</option></select></div>
+                <div class="form-group"><label for="expenseEntryPayment">Payment method</label><select id="expenseEntryPayment"><option value="eSewa Demo">eSewa Demo (test payment)</option><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Mobile Wallet</option><option>Other</option></select><small class="tn-expense-payment-hint">eSewa Demo opens the payment checkout after Save Expense. Manual methods record an already-paid expense.</small></div>
                 <div class="form-group"><label for="expenseEntryNotes">Notes</label><input id="expenseEntryNotes" maxlength="1000" placeholder="Optional notes"></div>
                 <div class="form-group"><label for="expenseEntryAmount">Amount (Nrs)</label><input id="expenseEntryAmount" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
                 <button type="submit" class="primary-btn" id="tnExpenseSubmitButton">Save Expense</button>
               </form>
-              <div class="tn-esewa-box">
-                <div><strong>Pay with eSewa Demo — No Merchant Account Needed</strong><p>Choose <b>eSewa Demo</b> under Payment method, then select <b>Continue to Payment</b>. After your confirmation, you will be redirected to eSewa's official test login, OTP, and payment screen, just like the example video. A successful test payment is saved as an expense only after verification.</p><p><a href="https://developer.esewa.com.np/pages/Test-credentials" target="_blank" rel="noopener noreferrer">Official eSewa test login and OTP details</a></p></div>
-                <button type="button" class="tn-esewa-pay-button" id="tnEsewaButton" onclick="openEsewaPaymentReview()">Pay with eSewa Demo</button>
-                <span id="tnEsewaAvailability" role="status">Checking sandbox availability…</span>
-              </div>
-              <section class="tn-esewa-history"><h3>eSewa checkout attempts</h3><p>Only provider-verified successful payments become expenses.</p><div id="tnEsewaPayments"></div></section>
             </section>
             <section class="card tn-workspace-card">
               <div class="tn-workspace-row"><div><div class="section-label">Your records</div><h3 class="card-title">Expense history</h3></div>
@@ -1425,10 +1421,6 @@ font-size:.83rem;cursor:pointer}
                 esewaSandboxReady = Boolean(state.esewa_sandbox_ready);
                 document.getElementById('tnBudgetSetupBanner').hidden = budgetConfigured;
                 document.getElementById('newLimitInput').placeholder = budgetConfigured ? 'New limit' : 'Your chosen monthly limit';
-                document.getElementById('tnEsewaAvailability').textContent = esewaSandboxReady
-                    ? 'Official eSewa UAT demo is ready (EPAYTEST). No merchant registration required.' : 'Demo is disabled in production or by local configuration. Run TrackNest in development mode.';
-                document.getElementById('tnEsewaButton').disabled = !esewaSandboxReady || !budgetConfigured || state.locked;
-                renderEsewaAttempts(state.esewa_payments || []);
                 document.getElementById('tnBudgetEmailStatus').textContent = state.email_delivery_configured
                     ? '100% limit alerts are configured to email your registered address (subject to delivery).'
                     : 'Email alerts are not configured for inbox delivery. Set up Gmail SMTP on your Mac to receive 100% limit emails.';
@@ -1575,51 +1567,12 @@ font-size:.83rem;cursor:pointer}
                 const result = await authRequest('/api/finance/transactions/',data);
                 form.reset();
                 initializeTrackNestDates();
-                if (kind === 'expense') updateExpensePaymentChoice();
                 await loadFinance();
                 if (result.alert_queued) showBudgetToast('Budget limit reached. Email alert scheduled for your registered address.');
             } catch(error) {
                 alert(error.message);
                 await loadFinance();
             } finally {button.disabled = false;}
-        }
-        function renderEsewaAttempts(payments) {
-            const container=document.getElementById('tnEsewaPayments');
-            container.innerHTML='';
-            if (!payments.length) {
-                const msg=document.createElement('p');
-                msg.textContent='No eSewa checkout attempts yet.';
-                container.appendChild(msg);
-                return;
-            }
-            for (const payment of payments) {
-                const row=document.createElement('div');
-                row.className='tn-esewa-history-row';
-                const info=document.createElement('span');
-                info.textContent=payment.description+' · Nrs '+Number(payment.amount).toFixed(2)+' · '+payment.status+(payment.sandbox?' (test)':'');
-                row.appendChild(info);
-                if (payment.status==='PENDING') {
-                    const button=document.createElement('button');
-                    button.type='button';
-                    button.textContent='Check status';
-                    button.className='cancel-edit-btn';
-                    button.addEventListener('click',()=>verifyEsewaAttempt(payment.reference));
-                    row.appendChild(button);
-                }
-                container.appendChild(row);
-            }
-        }
-        async function verifyEsewaAttempt(reference) {
-            try {
-                const result=await authRequest('/api/payments/esewa/'+encodeURIComponent(reference)+'/verify/',{});
-                showAccountToast(result.message, result.complete?'success':'error');
-                await loadFinance();
-            } catch(error) {showAccountToast(error.message,'error');}
-        }
-        function updateExpensePaymentChoice() {
-            const isDemo = document.getElementById('expenseEntryPayment').value === 'eSewa Demo';
-            document.getElementById('tnExpenseSubmitButton').textContent =
-                isDemo ? 'Continue to Payment' : 'Save Expense';
         }
         function openEsewaPaymentReview() {
             if (!budgetConfigured) {
@@ -1673,7 +1626,6 @@ font-size:.83rem;cursor:pointer}
                 button.textContent = 'Continue to Payment';
             }
         }
-        function startEsewaCheckout() { openEsewaPaymentReview(); }
 
         function trackNestToday() {
             const d = new Date();
