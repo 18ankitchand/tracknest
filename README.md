@@ -1,4 +1,38 @@
-# TrackNest / Expanse Tracker — Django authentication, monthly budgets and email alerts
+# TrackNest — Personal Finance & Budget Tracking System
+TrackNest is a personal finance management system designed to help users track income, expenses, budgets and savings while making informed financial decisions.
+
+## Key Features
+
+- Interactive financial dashboard
+- Income and expense management
+- Transaction history and categorization
+- Monthly budget management
+- Budget threshold notifications
+- Time series expense forecasting
+- Savings goal management
+- Financial reports and analytics
+- eSewa payment integration
+- Email budget alerts
+- Secure user authentication
+
+## Core Algorithms
+
+### 1. Budget Threshold Algorithm
+
+Monitors monthly expenses against the user's configured budget limit and helps prevent overspending through threshold-based notifications and transaction restrictions.
+
+### 2. Time Series Forecasting
+
+Uses historical financial transactions to estimate future spending patterns and support financial planning.
+
+## Technology Stack
+
+- Backend: Python, Django
+- Frontend: HTML, CSS, JavaScript, Bootstrap
+- Database: SQLite, PostgreSQL
+- Payment Integration: eSewa
+- Deployment: Vercel
+
 
 ## Local setup
 ```bash
