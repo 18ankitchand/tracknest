@@ -170,12 +170,15 @@ def financial_state(request):
     )
     preference, _ = UserPreference.objects.get_or_create(user=request.user)
     from .esewa import pending_reserved, configured
-    if not settings.DEBUG:
-        esewa_reason = "eSewa is available only in the local test environment; online production checkout is disabled."
-    elif not configured():
-        esewa_reason = "The eSewa test checkout is disabled by your local sandbox configuration."
-    else:
+    if configured():
         esewa_reason = ""
+    elif not settings.DEBUG:
+        esewa_reason = (
+            "eSewa test checkout is disabled on this hosted site. The site owner "
+            "must explicitly configure hosted UAT test mode. No real payments are supported."
+        )
+    else:
+        esewa_reason = "The eSewa test checkout is disabled by your local sandbox configuration."
     reserved = pending_reserved(request.user, month)
     recent_payments = EsewaPayment.objects.filter(user=request.user).order_by("-created_at")[:10]
     return JsonResponse({"limit": float(budget.limit), "spent": float(spent), "locked": spent >= budget.limit,
