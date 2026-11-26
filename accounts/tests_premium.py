@@ -104,6 +104,55 @@ class PremiumFinanceTests(TestCase):
         self.assertEqual(TrackNestNotification.objects.filter(user=self.user).count(), 3)
         self.assertEqual(self.expense("1.00").status_code, 409)
 
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_legacy_90_alert_reconciles_to_91_without_extra_expense(self):
+        self.budget.notified_level = 90
+        self.budget.save(update_fields=["notified_level"])
+        ExpenseTransaction.objects.create(
+            user=self.user, date=self.month, kind="expense",
+            description="Previous purchases", category="Groceries",
+            amount=Decimal("98.00"), payment_method="Cash",
+        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post("/api/notifications/sync/", {})
+        self.assertEqual(response.status_code, 200)
+        self.budget.refresh_from_db()
+        self.assertEqual(self.budget.notified_level, 91)
+        alerts = TrackNestNotification.objects.filter(user=self.user)
+        self.assertEqual(alerts.count(), 1)
+        self.assertIn("91%", alerts.first().title)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("91%", mail.outbox[0].subject)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.post("/api/notifications/sync/", {}).status_code, 200)
+        self.assertEqual(alerts.count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_legacy_category_90_alert_reconciles_to_91_once(self):
+        budget = CategoryBudget.objects.create(
+            user=self.user, category=self.category, month=self.month,
+            limit=Decimal("100.00"), notified_level=90,
+        )
+        ExpenseTransaction.objects.create(
+            user=self.user, date=self.month, kind="expense",
+            description="Previous purchases", category="Groceries",
+            amount=Decimal("95.00"), payment_method="Cash",
+        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post("/api/notifications/sync/", {})
+        self.assertEqual(response.status_code, 200)
+        budget.refresh_from_db()
+        self.assertEqual(budget.notified_level, 91)
+        self.assertEqual(len(mail.outbox), 2)  # monthly and category
+        self.assertTrue(any("Groceries" in message.subject for message in mail.outbox))
+
+    def test_notification_sync_requires_authentication(self):
+        self.client.logout()
+        response = self.post("/api/notifications/sync/", {})
+        self.assertEqual(response.status_code, 401)
+
     def test_transactions_csv_filtered_and_private(self):
         ExpenseTransaction.objects.create(
             user=self.user, date=timezone.localdate(), kind="expense",
