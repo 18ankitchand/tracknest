@@ -1186,14 +1186,15 @@ font-size:.83rem;cursor:pointer}
           <section class="tn-page" id="tnPage-budget" data-tn-page="budget" hidden>
             <div class="tn-page-heading"><span class="section-label">Financial planning</span><h1 class="dashboard-heading">Monthly budget</h1><p class="dashboard-description">Set your spending limit and monitor how close you are to reaching it.</p></div>
             <div id="tnBudgetSetupBanner" class="tn-budget-onboarding" hidden>
-                <strong>Step 1 — Set your monthly expense budget</strong>
-                <p>Enter your maximum spending for this month below and select Set Limit. After that, Income, Expenses, Transactions and the other pages become available. You can change the limit later.</p>
+                <strong>First record income, then set your monthly expense budget</strong>
+                <p>Open Income and record your income sources first. Your monthly budget cannot exceed your recorded income for that month. After saving the budget, you can record expenses.</p>
              </div>
             <div id="budgetBanner" class="budget-limit-banner">
                 <div style="flex:1;min-width:0">
                     <span class="budget-flag">Monthly spending plan</span>
                     <strong id="budgetBannerTitle">Monthly Budget Limit: Nrs <span id="currentLimitDisplay">50,000.00</span></strong>
                     <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="budgetBannerSub">Current spent: Nrs 0.00 (0% of limit)</div>
+                    <p id="tnIncomeBudgetGuidance" class="tn-budget-email-status" role="status">Checking your monthly income…</p>
                     <p id="tnBudgetEmailStatus" class="tn-budget-email-status" role="status">Checking email alert configuration…</p>
                     <button type="button" class="cancel-edit-btn" id="tnTestEmailButton" onclick="testTrackNestBudgetEmail()" style="margin-top:9px;padding:8px 12px">Send test email to my registered address</button>
                     <div id="budgetProgress" class="budget-progress" role="progressbar" aria-label="Monthly budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="budgetProgressFill" class="budget-progress-fill"></div></div>
@@ -1429,6 +1430,7 @@ font-size:.83rem;cursor:pointer}
         let currentUser = null;
         let userBudgetLimit = 50000;
         let budgetConfigured = true;
+        let currentMonthlyIncome = 0;
         let esewaSandboxReady = false;
         let esewaUnavailableReason = '';
         let esewaReserved = 0;
@@ -1620,6 +1622,7 @@ font-size:.83rem;cursor:pointer}
                 const state = await response.json();
                 userBudgetLimit = state.limit;
                 currentMonthlySpent = Number(state.spent || 0);
+                currentMonthlyIncome = Number(state.monthly_income || 0);
                 budgetConfigured = state.budget_configured !== false;
                 // Render the three monthly budget cards from the authenticated
                 // Django state, not their initial static HTML placeholders.
@@ -1637,6 +1640,9 @@ font-size:.83rem;cursor:pointer}
                 esewaUnavailableReason = state.esewa_unavailable_reason || '';
                 esewaReserved = Number(state.reserved || 0);
                 document.getElementById('tnBudgetSetupBanner').hidden = budgetConfigured;
+                document.getElementById('tnIncomeBudgetGuidance').textContent =
+                    'Recorded income this month: Nrs ' + currentMonthlyIncome.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) +
+                    '. Maximum budget you can set: Nrs ' + currentMonthlyIncome.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '.';
                 document.getElementById('newLimitInput').placeholder = budgetConfigured ? 'New limit' : 'Your chosen monthly limit';
                 document.getElementById('tnBudgetEmailStatus').textContent =
                     !state.email_alerts_enabled
@@ -1752,7 +1758,7 @@ font-size:.83rem;cursor:pointer}
         function navigateTrackNest(section, updateHistory = true) {
             const pages = ['dashboard','income','expense','transactions','budget','forecast','advisor','categories','reports','goals','notifications','settings','profile'];
             if (!pages.includes(section)) section = 'dashboard';
-            if (!budgetConfigured && section !== 'budget') section = 'budget';
+            if (!budgetConfigured && !['income','budget'].includes(section)) section = currentMonthlyIncome > 0 ? 'budget' : 'income';
             document.querySelectorAll('[data-tn-page]').forEach(page => {
                 page.hidden = page.dataset.tnPage !== section;
             });
@@ -1913,6 +1919,7 @@ font-size:.83rem;cursor:pointer}
                 initializeTrackNestDates();
                 if (kind === 'expense') updateExpenseMethodStyle();
                 await loadFinance();
+                if (kind === 'income') showAccountToast('Income saved. A new notification was added to Notifications.', 'success');
                 if (result.alert_queued) showBudgetToast('Budget limit reached. Email alert scheduled for your registered address.');
             } catch(error) {
                 alert(error.message);
@@ -2069,6 +2076,15 @@ font-size:.83rem;cursor:pointer}
 
         async function updateBudgetLimit() {
             const value = document.getElementById('newLimitInput').value;
+            if (currentMonthlyIncome <= 0) {
+                showAccountToast('Please add income for this month before setting a budget.','error');
+                navigateTrackNest('income');
+                return;
+            }
+            if (Number(value) > currentMonthlyIncome) {
+                showAccountToast('Budget cannot exceed recorded monthly income of Nrs '+currentMonthlyIncome.toFixed(2)+'.','error');
+                return;
+            }
             try {
                 const result = await authRequest('/api/finance/budget/', {limit:value});
                 await loadFinance();
