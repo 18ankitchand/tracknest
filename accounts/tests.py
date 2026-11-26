@@ -210,6 +210,55 @@ class BudgetEmailTests(TestCase):
 
 
 
+
+class EmailDeliveryDiagnosticTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="mailtest@example.com", email="mailtest@example.com",
+            password="SafePassword123!"
+        )
+        self.client.force_login(self.user)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend")
+    def test_unconfigured_mail_shows_actionable_error(self):
+        result = self.client.post("/api/finance/email/test/", content_type="application/json")
+        self.assertEqual(result.status_code, 503)
+        self.assertIn("not configured", result.json()["error"])
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
+        EMAIL_HOST="smtp.gmail.com", EMAIL_HOST_USER="test@example.com",
+        EMAIL_HOST_PASSWORD="not-a-real-password",
+    )
+    def test_email_probe_sends_to_registered_user_and_is_throttled(self):
+        from unittest.mock import patch
+        from django.core.cache import cache
+        cache.clear()
+        with patch("accounts.views.send_mail", return_value=1) as sender:
+            first = self.client.post("/api/finance/email/test/", content_type="application/json")
+            second = self.client.post("/api/finance/email/test/", content_type="application/json")
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 429)
+        self.assertEqual(sender.call_count, 1)
+        self.assertEqual(sender.call_args.args[3], ["mailtest@example.com"])
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
+        EMAIL_HOST="smtp.gmail.com", EMAIL_HOST_USER="test@example.com",
+        EMAIL_HOST_PASSWORD="not-a-real-password",
+    )
+    def test_email_probe_reports_backend_failure_without_touching_finances(self):
+        from unittest.mock import patch
+        from django.core.cache import cache
+        cache.clear()
+        with patch("accounts.views.send_mail", side_effect=OSError("SMTP unavailable")):
+            result = self.client.post("/api/finance/email/test/", content_type="application/json")
+        self.assertEqual(result.status_code, 503)
+        self.assertFalse(MonthlyBudget.objects.filter(user=self.user).exists())
+        self.assertFalse(ExpenseTransaction.objects.filter(user=self.user).exists())
+
+
+
 class TransactionManagementTests(TestCase):
     def setUp(self):
         from django.utils import timezone
