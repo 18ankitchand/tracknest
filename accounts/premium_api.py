@@ -325,6 +325,30 @@ def goals_change(request):
     return JsonResponse({"id": goal.id, "ok": True})
 
 
+
+@require_POST
+def synchronize_budget_notifications(request):
+    """Reconcile previously missed current-month alerts without adding expenses.
+
+    Safe to retry: notified_level and limit_alert_sent prevent duplicates.
+    """
+    problem = forbidden(request)
+    if problem:
+        return problem
+    month = timezone.localdate().replace(day=1)
+    with transaction.atomic():
+        evaluate_budget_alerts(request.user, month)
+        # If an older release missed a 100% limit email, handle it through
+        # the same guarded delivery path as newly recorded expenses.
+        from .views import monthly_spent, queue_budget_email
+        budget = MonthlyBudget.objects.select_for_update().filter(
+            user=request.user, month=month, is_set_by_user=True
+        ).first()
+        if budget and monthly_spent(request.user, month) >= budget.limit:
+            queue_budget_email(request.user, budget, month)
+    return JsonResponse({"ok": True})
+
+
 @require_GET
 def notifications_list(request):
     problem = forbidden(request)
