@@ -148,6 +148,48 @@ class PremiumFinanceTests(TestCase):
         self.assertEqual(len(mail.outbox), 2)  # monthly and category
         self.assertTrue(any("Groceries" in message.subject for message in mail.outbox))
 
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_recovery_uses_notification_history_when_milestone_stuck_at_91(self):
+        self.budget.notified_level = 91
+        self.budget.save(update_fields=["notified_level"])
+        ExpenseTransaction.objects.create(
+            user=self.user, date=timezone.localdate(), kind="expense",
+            category="Groceries", description="Current spending",
+            amount=Decimal("99.00"),
+        )
+        # A previous version updated the milestone, but failed to save the
+        # corresponding notification. Reconciliation must recover it once.
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post("/api/notifications/sync/", {})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(TrackNestNotification.objects.filter(
+            user=self.user, title="TrackNest monthly budget 91% alert"
+        ).exists())
+        self.assertEqual(len(mail.outbox), 1)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.post("/api/notifications/sync/", {}).status_code, 200)
+        self.assertEqual(TrackNestNotification.objects.filter(
+            user=self.user, title="TrackNest monthly budget 91% alert"
+        ).count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_recovery_after_old_100_milestone_with_current_91_usage(self):
+        self.budget.notified_level = 100
+        self.budget.save(update_fields=["notified_level"])
+        ExpenseTransaction.objects.create(
+            user=self.user, date=timezone.localdate(), kind="expense",
+            category="Groceries", description="Recent expense",
+            amount=Decimal("99.00"),
+        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post("/api/notifications/sync/", {})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(TrackNestNotification.objects.filter(
+            user=self.user, title="TrackNest monthly budget 91% alert"
+        ).count(), 1)
+
     def test_notification_sync_requires_authentication(self):
         self.client.logout()
         response = self.post("/api/notifications/sync/", {})
