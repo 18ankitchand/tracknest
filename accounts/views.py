@@ -16,7 +16,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 from .models import Profile, MonthlyBudget, ExpenseTransaction, CategoryBudget, UserPreference, EsewaPayment
-from .premium_api import evaluate_budget_alerts, category_spending
+from .premium_api import evaluate_budget_alerts, category_spending, send_critical_expense_reminder
 
 logger = logging.getLogger(__name__)
 
@@ -337,6 +337,12 @@ def add_financial_transaction(request):
                         status=409)
         tx = ExpenseTransaction.objects.create(user=request.user, **fields)
         evaluate_budget_alerts(request.user, month)
+        # Follow-up expense while already in the 91%-below-100% band:
+        # issue a new reminder only for the actual saved expense, not refreshes.
+        if fields["kind"] == "expense" and spent * 100 >= budget.limit * 91:
+            send_critical_expense_reminder(
+                request.user, month, budget.limit, spent + fields["amount"], tx.pk
+            )
         alert_queued = (
             fields["kind"] == "expense"
             and spent < budget.limit <= spent + fields["amount"]
