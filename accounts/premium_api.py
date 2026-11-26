@@ -464,7 +464,18 @@ def evaluate_budget_alerts(user, month):
         # the current 91% email threshold: allow one new critical alert
         # when a previously notified user reaches at least 91%.
         previous_level = budget.notified_level
-        if level > previous_level:
+        # Older releases could advance notified_level without persisting the
+        # corresponding new 91% notice. Recover it from the actual alert history,
+        # rather than trusting the counter alone. Never duplicate an existing
+        # notification for this budget month.
+        missing_critical = (
+            level == 91
+            and not TrackNestNotification.objects.filter(
+                user=user, title="TrackNest monthly budget 91% alert",
+                message__contains=f"for {month:%B %Y}"
+            ).exists()
+        )
+        if level > previous_level or missing_critical:
             send_threshold_notice(
                 user,
                 f"TrackNest monthly budget {level}% alert",
@@ -488,7 +499,15 @@ def evaluate_budget_alerts(user, month):
         spent = category_spending(user, item.category, month)
         level = threshold(spent, item.limit)
         previous_level = item.notified_level
-        if level > previous_level:
+        missing_critical = (
+            level == 91
+            and not TrackNestNotification.objects.filter(
+                user=user,
+                title=f"TrackNest {item.category.name} budget: 91%",
+                message__contains=f"for {month:%B %Y}"
+            ).exists()
+        )
+        if level > previous_level or missing_critical:
             send_threshold_notice(
                 user,
                 f"TrackNest {item.category.name} budget: {level}%",
