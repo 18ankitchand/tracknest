@@ -46,8 +46,14 @@ def money(value):
 
 
 def configured():
-    # Defense in depth: public UAT checkout must never run on a production server.
-    return bool(settings.DEBUG and settings.ESEWA_SANDBOX_READY)
+    # eSewa UAT is deliberately test-only, including on an explicitly
+    # opted-in hosted showcase. Real production merchant payments are not
+    # implemented here.
+    return bool(
+        settings.ESEWA_SANDBOX_READY
+        and (settings.DEBUG or getattr(settings, "ESEWA_HOSTED_TEST_ENABLED", False))
+        and settings.ESEWA_PRODUCT_CODE == "EPAYTEST"
+    )
 
 
 def signature(message):
