@@ -79,7 +79,16 @@ async function loadPremiumSection(section){
     if(section==='categories') await loadPremiumCategories();
     else if(section==='budget') {await loadPremiumCategories();await loadPremiumBudgets();}
     else if(section==='goals') await loadPremiumGoals();
-    else if(section==='notifications') await loadPremiumNotifications();
+    else if(section==='notifications') {
+      // Opening this page must reconcile missed alerts, not merely list stale
+      // records. Show failures rather than silently hiding them.
+      try {
+        await authRequest('/api/notifications/sync/', {});
+      } catch(error) {
+        premiumError(new Error('Budget alert check failed: ' + error.message));
+      }
+      await loadPremiumNotifications();
+    }
     else if(section==='reports') await loadPremiumAnalytics();
   else if(section==='forecast') await loadExpenseForecast();
     else if(section==='settings') await loadPremiumSettings();
