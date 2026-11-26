@@ -1618,11 +1618,16 @@ font-size:.83rem;cursor:pointer}
                 document.getElementById('tnBudgetRemaining').textContent =
                     budgetConfigured ? budgetMoney(Math.max(0, budgetAmount - spentAmount)) : 'Not set';
                 esewaSandboxReady = Boolean(state.esewa_sandbox_ready);
+                esewaUnavailableReason = state.esewa_unavailable_reason || '';
+                esewaReserved = Number(state.reserved || 0);
                 document.getElementById('tnBudgetSetupBanner').hidden = budgetConfigured;
                 document.getElementById('newLimitInput').placeholder = budgetConfigured ? 'New limit' : 'Your chosen monthly limit';
-                document.getElementById('tnBudgetEmailStatus').textContent = state.email_delivery_configured
-                    ? 'Critical (91%) and limit-reached (100%) alerts are configured for email (subject to delivery).'
-                    : 'Email alerts are not configured for inbox delivery. Set up Gmail SMTP to receive critical and limit-reached emails.';
+                document.getElementById('tnBudgetEmailStatus').textContent =
+                    !state.email_alerts_enabled
+                        ? 'Budget email alerts are turned off in Settings. Website notifications remain active.'
+                        : state.email_delivery_configured
+                            ? 'Gmail SMTP is configured for 91% and 100% alerts. Inbox delivery still depends on Gmail accepting the message.'
+                            : 'Real email delivery is not configured on this Django server. Set sender credentials on the server running TrackNest (Mac or online host).';
                 transactions = state.transactions;
                 loadExpensePaymentSummary().catch(error => console.warn('Payment summary could not load', error));
                 document.getElementById("newLimitInput").value = userBudgetLimit;
@@ -1830,7 +1835,7 @@ font-size:.83rem;cursor:pointer}
                 return;
             }
             if (!esewaSandboxReady) {
-                showAccountToast('The eSewa test checkout is unavailable. Check the localhost development settings.','error');
+                showAccountToast(esewaUnavailableReason || 'The eSewa test checkout is unavailable on this server.', 'error');
                 return;
             }
             const description = document.getElementById('expenseEntryDesc').value.trim();
@@ -1839,6 +1844,14 @@ font-size:.83rem;cursor:pointer}
             const date = document.getElementById('expenseEntryDate').value;
             if (!category || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
                 showAccountToast('Choose a category and enter a valid positive amount first.','error');
+                return;
+            }
+            // Give the customer a useful explanation before opening a gateway
+            // when the amount is already above their available in-app budget.
+            const available = Math.max(0, userBudgetLimit - currentMonthlySpent - esewaReserved);
+            if (Number(amount) > available) {
+                showAccountToast('eSewa checkout cannot start. Remaining monthly budget after pending payments: Nrs ' +
+                    available.toFixed(2) + '. Reduce the expense or update your budget.', 'error');
                 return;
             }
             // The payment is recorded on the day eSewa confirms it, not a backdated date.
