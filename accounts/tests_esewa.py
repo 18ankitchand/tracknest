@@ -29,7 +29,11 @@ class EsewaSandboxTests(TestCase):
         return self.client.post(path, json.dumps(values), content_type="application/json")
 
     def configure_budget(self, value="100"):
-        result = self.post("/api/finance/budget/", {"limit": value})
+        # These pre-existing eSewa tests exercise payment behavior, not income
+        # onboarding. Provide an existing income ceiling without inserting
+        # an extra transaction into their expense-history fixtures.
+        with patch("accounts.views.monthly_income", return_value=Decimal("100000.00")):
+            result = self.post("/api/finance/budget/", {"limit": value})
         self.assertEqual(result.status_code, 200)
 
     def start(self, value="60.00"):
