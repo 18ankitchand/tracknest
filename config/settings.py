@@ -59,9 +59,15 @@ if _local_mail_file.is_file():
 _mail_user = os.environ.get("DJANGO_EMAIL_HOST_USER", _local_mail.get("email", ""))
 _mail_password = os.environ.get("DJANGO_EMAIL_HOST_PASSWORD", _local_mail.get("app_password", ""))
 _use_real_mail = bool(_mail_user and _mail_password)
+# Production can use Resend over HTTPS instead of Gmail SMTP, avoiding
+# the SMTP authentication disconnect observed on Vercel.
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "")
+_resend_ready = bool(RESEND_API_KEY and RESEND_FROM_EMAIL)
 EMAIL_BACKEND = os.environ.get(
     "DJANGO_EMAIL_BACKEND",
-    "django.core.mail.backends.smtp.EmailBackend" if _use_real_mail
+    "config.resend_email.ResendEmailBackend" if _resend_ready
+    else "django.core.mail.backends.smtp.EmailBackend" if _use_real_mail
     else "django.core.mail.backends.console.EmailBackend",
 )
 EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "smtp.gmail.com" if _use_real_mail else "")
