@@ -63,6 +63,10 @@ function premiumError(error){showAccountToast(error.message || 'Unable to save c
 function premiumSuccess(message){showAccountToast(message,'success');}
 async function loadPremiumModules(){
   try {
+    // Recover missed current-month milestone alerts from older TrackNest
+    // versions. This endpoint is idempotent and does not edit transactions.
+    try { await authRequest('/api/notifications/sync/', {}); }
+    catch(error) { console.warn('Budget alert reconciliation unavailable:', error.message); }
     await Promise.all([loadPremiumCategories(),loadPremiumNotifications(),loadPremiumAnalytics(),loadPremiumSettings()]);
     await Promise.all([loadPremiumBudgets(),loadPremiumGoals()]);
     renderPremiumCategorySelectors();
