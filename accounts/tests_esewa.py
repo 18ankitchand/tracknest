@@ -94,15 +94,17 @@ class EsewaSandboxTests(TestCase):
         self.assertFalse(configured())
         self.assertEqual(self.start("50").status_code, 503)
 
-    def test_new_user_must_set_budget_before_transactions_or_payment(self):
+    def test_new_user_records_income_before_budget_and_esewa(self):
         state = self.client.get("/api/finance/state/").json()
         self.assertFalse(state["budget_configured"])
         self.assertEqual(self.start().status_code, 409)
         income = self.post("/api/finance/transactions/", {
             "type": "income", "desc": "Salary", "category": "Salary", "amount": "200",
         })
-        self.assertEqual(income.status_code, 409)
-        self.configure_budget("100")
+        self.assertEqual(income.status_code, 201)
+        self.assertEqual(self.client.get("/api/finance/state/").json()["monthly_income"], 200)
+        self.assertEqual(self.post("/api/finance/budget/", {"limit": "201"}).status_code, 409)
+        self.assertEqual(self.post("/api/finance/budget/", {"limit": "100"}).status_code, 200)
         self.assertTrue(self.client.get("/api/finance/state/").json()["budget_configured"])
         self.assertEqual(self.start().status_code, 200)
 
