@@ -27,7 +27,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .models import EsewaPayment, ExpenseTransaction, MonthlyBudget, CategoryBudget
 from .views import monthly_spent, get_budget, queue_budget_email
-from .premium_api import evaluate_budget_alerts, category_spending
+from .premium_api import evaluate_budget_alerts, category_spending, send_critical_expense_reminder
 
 logger = logging.getLogger(__name__)
 FORM_URL = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"
@@ -255,8 +255,13 @@ def finalize(payment, provider_result):
         item.save(update_fields=["expense", "status", "reference_code", "verified_at"])
         current_budget = get_budget(item.user, record_month)
         current_budget = MonthlyBudget.objects.select_for_update().get(pk=current_budget.pk)
+        current_spent = monthly_spent(item.user, record_month)
         evaluate_budget_alerts(item.user, record_month)
-        if monthly_spent(item.user, record_month) >= current_budget.limit:
+        if (current_spent - item.amount) * 100 >= current_budget.limit * 91:
+            send_critical_expense_reminder(
+                item.user, record_month, current_budget.limit, current_spent, expense.pk
+            )
+        if current_spent >= current_budget.limit:
             queue_budget_email(item.user, current_budget, record_month)
     return True
 
