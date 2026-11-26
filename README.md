@@ -306,3 +306,49 @@ The Budget page now has a dynamic usage bar with 80%, 90% and 100% landmarks, a 
 
 ### Tests
 `python manage.py test accounts.tests_income_overview accounts.tests_forecasting accounts.tests_spending_overview` verifies calculations and the page markup. Run `python manage.py test accounts` for a full suite. Chart.js rendering and mobile layout should also be reviewed in Safari after your local GitHub auto-sync pulls the update.
+
+## Hosted TrackNest: Gmail alerts and eSewa test checkout
+
+The local Mac configuration at `~/.tracknest/email.json` is **not** available to
+the deployed website. Set the following server-side environment variables in
+the hosting provider's project settings (never in Git or browser JavaScript):
+
+- `DJANGO_DEBUG=0`
+- `DJANGO_SECRET_KEY` — strong unique secret
+- `DJANGO_ALLOWED_HOSTS` — your actual deployment hostname(s)
+- `DJANGO_CSRF_TRUSTED_ORIGINS` — your exact HTTPS origins
+- `DATABASE_URL` — a persistent PostgreSQL database
+- `DJANGO_EMAIL_HOST_USER` — the authorized Gmail SMTP sender
+- `DJANGO_EMAIL_HOST_PASSWORD` — its Google App Password (secret)
+- `DJANGO_EMAIL_HOST=smtp.gmail.com`, `DJANGO_EMAIL_PORT=587`,
+  `DJANGO_EMAIL_USE_TLS=1`, `DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`
+
+After redeployment, use **Monthly Budget → Send test email to my registered
+address**. The 80% milestone is website-only; at 91% and 100% the application
+requests an email if alerts are enabled for that user. Successful SMTP acceptance
+does not guarantee inbox delivery. Hosting may impose execution-time or SMTP
+network restrictions; production-scale sending requires a reliable outbox/worker.
+
+### Explicit hosted eSewa UAT showcase (never real funds)
+
+The built-in eSewa checkout is **test-only**. For a hosted university-project
+showcase, explicitly opt in with these hosting environment variables:
+
+- `TRACKNEST_ESEWA_HOSTED_TEST=1`
+- `TRACKNEST_ESEWA_SANDBOX=1`
+- `TRACKNEST_ESEWA_PRODUCT_CODE=EPAYTEST`
+- `TRACKNEST_ESEWA_SECRET_KEY` — use **only** the publicly documented eSewa
+  UAT test key from https://developer.esewa.com.np/pages/Test-credentials
+
+Both the opt-in and the correct UAT credentials are required, even with
+`DJANGO_DEBUG=0`. Leave `TRACKNEST_ESEWA_HOSTED_TEST` disabled on a
+real payment site. The code never uses a production eSewa gateway and must
+not be supplied with live merchant credentials. Confirmed UAT payments are
+recorded with the `eSewa (Sandbox)` method after signed callback and provider
+status verification. The app does **not** block payments initiated outside
+TrackNest. Use eSewa's published sandbox accounts, not personal wallet credentials.
+
+These environment variables must be configured in the hosting control panel
+and a new deployment made. Committing GitHub code alone does not activate
+hosted SMTP or UAT payments. Back up your data before hosting changes; local
+SQLite records are not automatically transferred to the hosted PostgreSQL DB.
