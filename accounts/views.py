@@ -148,9 +148,15 @@ def test_budget_email(request):
     return JsonResponse({"ok": True, "message": "SMTP accepted the test email. Check your inbox and Spam folder."})
 
 
-def send_limit_email(email, limit, month):
+def send_limit_email(email, limit, month, triggering_expense=None):
+    expense_detail = (
+        f"This expense: Nrs {triggering_expense.amount:.2f} "
+        f"({triggering_expense.category}). "
+        if triggering_expense is not None else ""
+    )
     send_mail(
         "TrackNest: Monthly expense limit reached",
+        expense_detail +
         f"Your recorded expenses have reached your monthly limit of Nrs {limit} for {month:%B %Y}. "
         "TrackNest will not allow additional expenses for this month unless you increase your budget. "
         "This restriction applies only to expense recording in TrackNest, not external bank or card payments.",
@@ -270,7 +276,7 @@ def validate_transaction_fields(data, default_date=None):
     }, None
 
 
-def queue_budget_email(user, budget, month):
+def queue_budget_email(user, budget, month, triggering_expense=None):
     """Mark a current-month alert and send after commit. Reset the flag on delivery failure."""
     if month != month_start(timezone.localdate()) or budget.limit_alert_sent or not user.email:
         return False
@@ -293,7 +299,7 @@ def queue_budget_email(user, budget, month):
 
     def notify():
         try:
-            send_limit_email(email, limit, month)
+            send_limit_email(email, limit, month, triggering_expense=triggering_expense)
         except Exception:
             logger.exception("TrackNest budget email delivery failed for budget %s", budget_id)
             MonthlyBudget.objects.filter(pk=budget_id).update(limit_alert_sent=False)
@@ -336,7 +342,10 @@ def add_financial_transaction(request):
                         f"Expense rejected: {fields['category']} budget has only Nrs {max(Decimal('0'), category_budget.limit - recorded_category)} remaining."},
                         status=409)
         tx = ExpenseTransaction.objects.create(user=request.user, **fields)
-        evaluate_budget_alerts(request.user, month)
+        evaluate_budget_alerts(
+            request.user, month,
+            triggering_expense=tx if fields["kind"] == "expense" else None
+        )
         # Follow-up expense while already in the 91%-below-100% band:
         # issue a new reminder only for the actual saved expense, not refreshes.
         if fields["kind"] == "expense" and spent * 100 >= budget.limit * 91:
@@ -346,7 +355,7 @@ def add_financial_transaction(request):
         alert_queued = (
             fields["kind"] == "expense"
             and spent < budget.limit <= spent + fields["amount"]
-            and queue_budget_email(request.user, budget, month)
+            and queue_budget_email(request.user, budget, month, triggering_expense=tx)
         )
     return JsonResponse({"transaction": serialize_tx(tx), "alert_queued": alert_queued}, status=201)
 
