@@ -436,9 +436,10 @@ def evaluate_budget_alerts(user, month):
             user=user, kind="expense", date__year=month.year, date__month=month.month
         ).aggregate(v=Sum("amount"))["v"] or Decimal("0")
         level = threshold(spent, budget.limit)
-        # Prior releases stored 90 as their critical milestone; treat it as 91
-        # when evaluating the new schedule so users do not get a repeat alert.
-        previous_level = 91 if budget.notified_level == 90 else budget.notified_level
+        # Older versions used 90 as a milestone. It is NOT equivalent to
+        # the current 91% email threshold: allow one new critical alert
+        # when a previously notified user reaches at least 91%.
+        previous_level = budget.notified_level
         if level > previous_level:
             send_threshold_notice(
                 user,
@@ -462,7 +463,7 @@ def evaluate_budget_alerts(user, month):
     ).select_related("category"):
         spent = category_spending(user, item.category, month)
         level = threshold(spent, item.limit)
-        previous_level = 91 if item.notified_level == 90 else item.notified_level
+        previous_level = item.notified_level
         if level > previous_level:
             send_threshold_notice(
                 user,
