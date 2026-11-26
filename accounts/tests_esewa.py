@@ -47,6 +47,21 @@ class EsewaSandboxTests(TestCase):
             "status": "COMPLETE", "ref_id": "SANDBOX-TEST-REFERENCE",
         }
 
+    def test_financial_state_explains_esewa_and_mail_configuration(self):
+        self.configure_budget("100")
+        state = self.client.get("/api/finance/state/").json()
+        self.assertTrue(state["esewa_sandbox_ready"])
+        self.assertEqual(state["esewa_unavailable_reason"], "")
+        self.assertTrue(state["email_alerts_enabled"])
+        self.assertFalse(state["email_delivery_configured"])
+
+    @override_settings(DEBUG=False, ESEWA_SANDBOX_READY=True)
+    def test_production_never_offers_test_gateway(self):
+        state = self.client.get("/api/finance/state/").json()
+        self.assertFalse(state["esewa_sandbox_ready"])
+        self.assertIn("production", state["esewa_unavailable_reason"])
+        self.assertEqual(self.start().status_code, 503)
+
     def test_new_user_must_set_budget_before_transactions_or_payment(self):
         state = self.client.get("/api/finance/state/").json()
         self.assertFalse(state["budget_configured"])
