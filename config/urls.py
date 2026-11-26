@@ -29,6 +29,7 @@ urlpatterns = [
     path("api/auth/logout/", views.sign_out),
     path("api/auth/me/", views.me),
     path("api/finance/state/", views.financial_state),
+    path("api/finance/email/test/", views.test_budget_email, name="tn_email_test"),
     path("api/payments/esewa/start/", esewa.start_checkout, name="tn_esewa_start"),
     path("api/payments/esewa/summary/", esewa.payment_summary, name="tn_esewa_summary"),
     path("payments/esewa/checkout/<str:reference>/", esewa.checkout_form, name="tn_esewa_checkout"),
