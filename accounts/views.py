@@ -451,6 +451,22 @@ def edit_financial_transaction(request, transaction_id):
                 if new_category_total + pending_reserved(request.user, new_month, category=fields["category"]) > category_budget.limit and new_category_total > current_category:
                     return JsonResponse({"error": "Edit rejected: category spending limit exceeded."}, status=409)
 
+        # Income corrections must not silently reduce the available income
+        # below a user-set budget. Legacy over-income budgets are grandfathered:
+        # never allow an income edit to make that mismatch worse.
+        if existing.kind == "income" or fields["kind"] == "income":
+            for check_month in months:
+                recorded = monthly_income(request.user, check_month)
+                original = existing.amount if existing.kind == "income" and old_month == check_month else Decimal("0")
+                replacement = fields["amount"] if fields["kind"] == "income" and new_month == check_month else Decimal("0")
+                revised = recorded - original + replacement
+                limit_record = budgets[check_month]
+                if (limit_record.is_set_by_user and revised < limit_record.limit
+                        and revised < recorded):
+                    return JsonResponse({
+                        "error": f"Income edit rejected: the {check_month:%B %Y} budget is Nrs {limit_record.limit:.2f}. Lower that budget before reducing this income."
+                    }, status=409)
+
         for attr, value in fields.items():
             setattr(existing, attr, value)
         existing.save(update_fields=list(fields))
@@ -492,6 +508,12 @@ def delete_financial_transaction(request, transaction_id):
 
         budget = get_budget(request.user, month_start(existing.date))
         budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)
+        if existing.kind == "income" and budget.is_set_by_user:
+            earned = monthly_income(request.user, month_start(existing.date))
+            if earned - existing.amount < budget.limit and earned - existing.amount < earned:
+                return JsonResponse({
+                    "error": f"Cannot delete this income while your monthly budget is Nrs {budget.limit:.2f}. Lower your budget first."
+                }, status=409)
         old_spent = monthly_spent(request.user, month_start(existing.date))
         after_spent = old_spent - (existing.amount if existing.kind == "expense" else Decimal("0"))
         existing.delete()
