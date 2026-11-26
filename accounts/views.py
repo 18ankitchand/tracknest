@@ -174,7 +174,7 @@ def financial_state(request):
         esewa_reason = ""
     elif not settings.DEBUG:
         esewa_reason = (
-            "eSewa test checkout is disabled on this hosted site. The site owner "
+            "eSewa test checkout is disabled in production by default on this hosted site. The site owner "
             "must explicitly configure hosted UAT test mode. No real payments are supported."
         )
     else:
