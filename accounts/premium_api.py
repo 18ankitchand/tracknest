@@ -436,6 +436,35 @@ def send_threshold_notice(user, title, message, level, send_email=True):
     transaction.on_commit(notify)
 
 
+
+def send_critical_expense_reminder(user, month, limit, spent, expense_id):
+    """Notify once for a newly recorded expense while spending remains critical.
+
+    Called only by successful expense creation, never page refresh or syncing.
+    The expense ID is used to prevent repeated reminders for a transaction.
+    """
+    if month != timezone.localdate().replace(day=1):
+        return False
+    if not (spent * 100 >= limit * 91 and spent < limit):
+        return False
+    title = "TrackNest critical spending reminder"
+    token = f"Expense reference: {expense_id}; month: {month:%Y-%m}"
+    if TrackNestNotification.objects.filter(user=user, title=title, message__contains=token).exists():
+        return False
+    percentage = (spent / limit * Decimal("100")).quantize(Decimal("0.01"))
+    send_threshold_notice(
+        user,
+        title,
+        f"Your recent expense brought current-month spending to Nrs {spent:.2f} "
+        f"out of Nrs {limit:.2f} ({percentage}% used). "
+        f"Remaining this month: Nrs {limit-spent:.2f}. "
+        f"Review your spending before the limit is reached. {token}",
+        "danger",
+        send_email=True,
+    )
+    return True
+
+
 def evaluate_budget_alerts(user, month):
     """Persist each crossed threshold; 80% is in-app only, 91%+ also emails.
 
