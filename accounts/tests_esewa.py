@@ -62,6 +62,34 @@ class EsewaSandboxTests(TestCase):
         self.assertIn("production", state["esewa_unavailable_reason"])
         self.assertEqual(self.start().status_code, 503)
 
+    @override_settings(
+        DEBUG=False,
+        ESEWA_HOSTED_TEST_ENABLED=True,
+        ESEWA_SANDBOX_READY=True,
+        ESEWA_PRODUCT_CODE="EPAYTEST",
+    )
+    def test_explicit_hosted_uat_checkout_uses_sandbox_not_real_money(self):
+        from .esewa import configured, FORM_URL
+        self.assertTrue(configured())
+        self.configure_budget("100")
+        response = self.start("50")
+        self.assertEqual(response.status_code, 200)
+        checkout = self.client.get(response.json()["checkout_url"])
+        self.assertEqual(checkout.status_code, 200)
+        self.assertContains(checkout, FORM_URL)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
+
+    @override_settings(
+        DEBUG=False,
+        ESEWA_HOSTED_TEST_ENABLED=True,
+        ESEWA_SANDBOX_READY=True,
+        ESEWA_PRODUCT_CODE="LIVE-MERCHANT",
+    )
+    def test_hosted_uat_rejects_non_test_merchant_code(self):
+        from .esewa import configured
+        self.assertFalse(configured())
+        self.assertEqual(self.start("50").status_code, 503)
+
     def test_new_user_must_set_budget_before_transactions_or_payment(self):
         state = self.client.get("/api/finance/state/").json()
         self.assertFalse(state["budget_configured"])
