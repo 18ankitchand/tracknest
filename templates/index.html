@@ -731,6 +731,11 @@ font-size:.83rem;cursor:pointer}
 #appScreen .tn-esewa-box a{color:#146c53;font-weight:750;text-decoration:underline}
 #appScreen.tn-dark .tn-esewa-box a{color:#96eac0}
 
+#appScreen .tn-pending-esewa-card{margin-top:0;min-width:0}
+#appScreen .tn-pending-esewa-item{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid var(--tn-border,#d7e2ee);border-radius:12px;padding:12px;margin-top:12px}
+#appScreen .tn-pending-esewa-actions{display:flex;flex-wrap:wrap;gap:8px}
+#appScreen .tn-pending-esewa-actions button{padding:9px 13px;border-radius:10px;cursor:pointer;font-weight:750}
+#appScreen .tn-pending-esewa-actions button:disabled{opacity:.55;cursor:wait}
 /* Optional eSewa demo is a reviewed, two-step checkout; manual Save remains direct. */
 .tn-esewa-review-dialog{border:0;border-radius:18px;padding:0;width:min(490px,calc(100vw - 28px));
  background:#fff;color:#172237;box-shadow:0 28px 85px #0b18384d}
@@ -1055,6 +1060,14 @@ font-size:.83rem;cursor:pointer}
                   <button type="submit" class="primary-btn tn-expense-pay-submit" id="tnExpenseSubmitButton">Continue to eSewa →</button>
                   <p class="tn-expense-test-notice"><strong>Test environment:</strong> eSewa UAT requires an enabled test checkout (local or explicitly configured hosted showcase), and the expense must fit within your remaining budget. No real money is transferred. An eSewa expense is saved only after the payment provider confirms success. Other methods record an already-paid expense.</p>
                 </form>
+              </section>
+              <section class="card tn-workspace-card tn-pending-esewa-card" aria-labelledby="tnPendingEsewaTitle">
+                <div class="tn-workspace-row">
+                  <div><h2 id="tnPendingEsewaTitle" class="card-title">Pending eSewa Payments</h2>
+                  <p class="card-description">Payments are reserved for 15 minutes. Resume your checkout or request cancellation. TrackNest checks eSewa before releasing reserved funds.</p></div>
+                  <button type="button" class="cancel-edit-btn" onclick="loadPendingEsewaPayments()">Refresh</button>
+                </div>
+                <div id="tnPendingEsewaList" role="status" aria-live="polite"><p class="card-description">Checking pending payments…</p></div>
               </section>
               <section class="card tn-workspace-card tn-expense-history-card">
                 <div class="tn-workspace-row tn-expense-history-header"><div><h2 class="card-title">Expense History</h2><p class="card-description">Your saved expenses, including verified eSewa payments.</p></div><strong class="tn-page-total" id="expensePageTotal">Nrs 0.00</strong></div>
@@ -1633,6 +1646,7 @@ font-size:.83rem;cursor:pointer}
                             : 'Real email delivery is not configured on this Django server. Set sender credentials on the server running TrackNest (Mac or online host).';
                 transactions = state.transactions;
                 loadExpensePaymentSummary().catch(error => console.warn('Payment summary could not load', error));
+                loadPendingEsewaPayments().catch(error => console.warn('Pending payments could not load',error));
                 document.getElementById("newLimitInput").value = userBudgetLimit;
                 // Restore a stable target after previous locked-state rendering.
                 if (!document.getElementById("currentLimitDisplay")) {
@@ -1776,6 +1790,65 @@ font-size:.83rem;cursor:pointer}
             } finally {
                 button.disabled = false;
                 button.textContent = previousLabel;
+            }
+        }
+        async function loadPendingEsewaPayments() {
+            const list = document.getElementById('tnPendingEsewaList');
+            if (!list) return;
+            try {
+                const response = await fetch('/api/payments/esewa/pending/', {credentials:'same-origin'});
+                if (!response.ok) throw new Error('Unable to load pending eSewa payments.');
+                const data = await response.json();
+                list.replaceChildren();
+                if (!data.payments.length) {
+                    const empty = document.createElement('p');
+                    empty.className = 'card-description';
+                    empty.textContent = 'No active pending eSewa payments are reserving your budget.';
+                    list.appendChild(empty);
+                    return;
+                }
+                for (const payment of data.payments) {
+                    const item = document.createElement('div');
+                    item.className = 'tn-pending-esewa-item';
+                    const detail = document.createElement('div');
+                    const heading = document.createElement('strong');
+                    heading.textContent = 'Nrs ' + Number(payment.amount).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' — ' + payment.category;
+                    const note = document.createElement('p');
+                    note.className = 'card-description';
+                    note.textContent = payment.description + ' · Reserved until ' + new Date(payment.expires_at).toLocaleTimeString();
+                    detail.append(heading,note);
+                    const actions = document.createElement('div');
+                    actions.className = 'tn-pending-esewa-actions';
+                    const resume = document.createElement('button');
+                    resume.type='button';
+                    resume.className='primary-btn';
+                    resume.textContent='Resume';
+                    resume.onclick=()=>window.location.assign(payment.checkout_url);
+                    const cancel = document.createElement('button');
+                    cancel.type='button';
+                    cancel.className='cancel-edit-btn';
+                    cancel.textContent='Cancel pending payment';
+                    cancel.onclick=async()=>{
+                        if (!confirm('Check eSewa and cancel this pending checkout only if the provider confirms no completed payment?')) return;
+                        resume.disabled=true;
+                        cancel.disabled=true;
+                        cancel.textContent='Checking eSewa…';
+                        try {
+                            const result=await authRequest('/api/payments/esewa/'+encodeURIComponent(payment.reference)+'/cancel/', {});
+                            showAccountToast(result.message || 'Reservation released.', 'success');
+                        } catch(error) {
+                            showAccountToast(error.message || 'Cancellation could not be verified.', 'error');
+                        } finally {
+                            await loadFinance();
+                            await loadPendingEsewaPayments();
+                        }
+                    };
+                    actions.append(resume,cancel);
+                    item.append(detail,actions);
+                    list.appendChild(item);
+                }
+            } catch(error) {
+                list.textContent=error.message;
             }
         }
         async function loadExpensePaymentSummary() {
