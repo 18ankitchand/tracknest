@@ -50,6 +50,7 @@ urlpatterns = [
     path("api/goals/", premium_api.goals_list),
     path("api/goals/change/", premium_api.goals_change),
     path("api/notifications/", premium_api.notifications_list),
+    path("api/notifications/sync/", premium_api.synchronize_budget_notifications),
     path("api/notifications/read/", premium_api.notifications_read),
     path("api/preferences/", premium_api.preference_detail),
     path("api/preferences/change/", premium_api.preference_change),
