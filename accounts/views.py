@@ -98,6 +98,15 @@ def get_budget(user, month):
 def serialize_tx(tx):
     return {"id": tx.pk, "date": tx.date.isoformat(), "desc": tx.description, "type": tx.kind, "category": tx.category, "amount": float(tx.amount), "payment_method": tx.payment_method, "notes": tx.notes, "verified_esewa": hasattr(tx, "esewa_payment")}
 
+def email_transport_configured():
+    """Safe readiness check for either Gmail SMTP or Resend HTTPS."""
+    if settings.EMAIL_BACKEND == "config.resend_email.ResendEmailBackend":
+        return bool(getattr(settings, "RESEND_API_KEY", "") and getattr(settings, "RESEND_FROM_EMAIL", ""))
+    if settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+        return bool(settings.EMAIL_HOST and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD)
+    return False
+
+
 @require_POST
 def test_budget_email(request):
     """Send a user-requested delivery diagnostic only to their registered address.
@@ -106,15 +115,11 @@ def test_budget_email(request):
     """
     if not request.user.is_authenticated:
         return JsonResponse({"error": "Sign in required."}, status=401)
-    ready = bool(
-        request.user.email
-        and settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
-        and settings.EMAIL_HOST and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD
-    )
+    ready = email_transport_configured() and bool(request.user.email)
     if not ready:
         return JsonResponse({
             "error": "Real email sending is not configured on this Django server. "
-                     "Mac email.json is not available to online deployments."
+                     "Configure Resend on the hosted deployment or Gmail SMTP locally."
         }, status=503)
 
     from django.core.cache import cache
@@ -137,8 +142,8 @@ def test_budget_email(request):
         logger.exception("TrackNest authenticated test email failed for user %s", request.user.pk)
         cache.delete(throttle_key)
         return JsonResponse({
-            "error": "The mail server did not accept the test email. "
-                     "Check the Django server terminal for the SMTP error."
+            "error": "The email provider did not accept the test message. "
+                     "Check the server logs for a delivery error."
         }, status=503)
     return JsonResponse({"ok": True, "message": "SMTP accepted the test email. Check your inbox and Spam folder."})
 
@@ -162,12 +167,7 @@ def financial_state(request):
     budget = get_budget(request.user, month)
     spent = monthly_spent(request.user, month)
     txs = ExpenseTransaction.objects.filter(user=request.user).select_related("esewa_payment").order_by("-date", "-pk")[:500]
-    email_ready = bool(
-        request.user.email
-        and settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
-        and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD
-        and settings.EMAIL_HOST
-    )
+    email_ready = email_transport_configured() and bool(request.user.email)
     preference, _ = UserPreference.objects.get_or_create(user=request.user)
     from .esewa import pending_reserved, configured
     if configured():
