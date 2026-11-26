@@ -1053,7 +1053,7 @@ font-size:.83rem;cursor:pointer}
                     <select id="expenseEntryPayment" aria-label="Choose payment method" onchange="updateExpenseMethodStyle()"><option value="eSewa Demo">eSewa</option><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Other</option></select>
                   </div>
                   <button type="submit" class="primary-btn tn-expense-pay-submit" id="tnExpenseSubmitButton">Continue to eSewa →</button>
-                  <p class="tn-expense-test-notice"><strong>Test environment:</strong> No real money is transferred. An eSewa expense is saved only after the payment provider confirms success. Other methods record an already-paid expense.</p>
+                  <p class="tn-expense-test-notice"><strong>Test environment:</strong> eSewa is available only on the local development server, and the expense must fit within your remaining budget. No real money is transferred. An eSewa expense is saved only after the payment provider confirms success. Other methods record an already-paid expense.</p>
                 </form>
               </section>
               <section class="card tn-workspace-card tn-expense-history-card">
@@ -1416,6 +1416,8 @@ font-size:.83rem;cursor:pointer}
         let userBudgetLimit = 50000;
         let budgetConfigured = true;
         let esewaSandboxReady = false;
+        let esewaUnavailableReason = '';
+        let esewaReserved = 0;
         let currentMonthlySpent = 0;
         let transactions = [];
         let isBudgetLocked = false;
@@ -2282,6 +2284,6 @@ font-size:.83rem;cursor:pointer}
             }
         }
     </script>
-    <script src="{% static 'js/premium-pages.js' %}?v=20261122-dashboard-js-hotfix-4"></script>
+    <script src="{% static 'js/premium-pages.js' %}?v=20261126-esewa-mail-diagnostics-5"></script>
 </body>
 </html>
