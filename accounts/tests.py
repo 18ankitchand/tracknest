@@ -66,6 +66,11 @@ class BudgetEmailTests(TestCase):
         self.budget = MonthlyBudget.objects.create(
             user=self.user, month=self.month, limit=Decimal("20.00"), is_set_by_user=True
         )
+        # Existing budget-email tests start with a valid recorded monthly income.
+        ExpenseTransaction.objects.create(
+            user=self.user, date=self.month, kind="income",
+            description="Salary", category="Salary", amount=Decimal("100.00"),
+        )
         self.client.force_login(self.user)
 
     @staticmethod
@@ -88,7 +93,7 @@ class BudgetEmailTests(TestCase):
                 content_type="application/json",
             )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user, kind="expense").count(), 1)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ["alert@example.com"])
         self.budget.refresh_from_db()
@@ -111,7 +116,7 @@ class BudgetEmailTests(TestCase):
                     content_type="application/json",
                 )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user, kind="expense").count(), 1)
         self.budget.refresh_from_db()
         self.assertFalse(self.budget.limit_alert_sent)
 
@@ -200,7 +205,7 @@ class BudgetEmailTests(TestCase):
         self.assertFalse(response.json()["alert_queued"])
         self.budget.refresh_from_db()
         self.assertFalse(self.budget.limit_alert_sent)
-        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user, kind="expense").count(), 1)
         blocked = self.client.post(
             "/api/finance/transactions/",
             data=self.transaction_payload("1.00"),
