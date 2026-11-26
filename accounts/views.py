@@ -92,6 +92,12 @@ def month_start(day):
 def monthly_spent(user, month):
     return ExpenseTransaction.objects.filter(user=user, kind="expense", date__year=month.year, date__month=month.month).aggregate(total=Sum("amount"))["total"] or Decimal("0")
 
+def monthly_income(user, month):
+    return ExpenseTransaction.objects.filter(
+        user=user, kind="income", date__year=month.year, date__month=month.month
+    ).aggregate(total=Sum("amount"))["total"] or Decimal("0")
+
+
 def get_budget(user, month):
     return MonthlyBudget.objects.get_or_create(user=user, month=month)[0]
 
@@ -172,6 +178,7 @@ def financial_state(request):
     month = month_start(timezone.localdate())
     budget = get_budget(request.user, month)
     spent = monthly_spent(request.user, month)
+    earned = monthly_income(request.user, month)
     txs = ExpenseTransaction.objects.filter(user=request.user).select_related("esewa_payment").order_by("-date", "-pk")[:500]
     email_ready = email_transport_configured() and bool(request.user.email)
     preference, _ = UserPreference.objects.get_or_create(user=request.user)
@@ -187,7 +194,7 @@ def financial_state(request):
         esewa_reason = "The eSewa test checkout is disabled by your local sandbox configuration."
     reserved = pending_reserved(request.user, month)
     recent_payments = EsewaPayment.objects.filter(user=request.user).order_by("-created_at")[:10]
-    return JsonResponse({"limit": float(budget.limit), "spent": float(spent), "locked": spent >= budget.limit,
+    return JsonResponse({"limit": float(budget.limit), "spent": float(spent), "monthly_income": float(earned), "locked": spent >= budget.limit,
                          "budget_configured": budget.is_set_by_user,
                          "esewa_sandbox_ready": configured(), "reserved": float(reserved),
                          "esewa_payments": [{"reference": p.transaction_uuid, "status": p.status, "amount": float(p.amount),
@@ -212,6 +219,13 @@ def set_budget(request):
         budget = get_budget(request.user, month)
         budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)
         spent = monthly_spent(request.user, month)
+        earned = monthly_income(request.user, month)
+        if earned <= 0:
+            return JsonResponse({"error": "Record an income source for this month before setting a budget."}, status=409)
+        if value > earned:
+            return JsonResponse({
+                "error": f"Monthly budget cannot exceed your recorded income of Nrs {earned:.2f} for {month:%B %Y}."
+            }, status=409)
         from .esewa import pending_reserved
         outstanding = pending_reserved(request.user, month)
         if outstanding and value < spent + outstanding:
@@ -321,8 +335,8 @@ def add_financial_transaction(request):
     with transaction.atomic():
         budget = get_budget(request.user, month)
         budget = MonthlyBudget.objects.select_for_update().get(pk=budget.pk)
-        if not budget.is_set_by_user:
-            return JsonResponse({"error": "Set your monthly spending limit before adding income or expenses."}, status=409)
+        if not budget.is_set_by_user and fields["kind"] == "expense":
+            return JsonResponse({"error": "Record income, then set your monthly budget before adding expenses."}, status=409)
         from .esewa import pending_reserved
         spent = monthly_spent(request.user, month)
         reserved = pending_reserved(request.user, month)
@@ -342,6 +356,20 @@ def add_financial_transaction(request):
                         f"Expense rejected: {fields['category']} budget has only Nrs {max(Decimal('0'), category_budget.limit - recorded_category)} remaining."},
                         status=409)
         tx = ExpenseTransaction.objects.create(user=request.user, **fields)
+        if fields["kind"] == "income":
+            from .models import TrackNestNotification
+            new_income = monthly_income(request.user, month)
+            TrackNestNotification.objects.create(
+                user=request.user,
+                title="Income recorded: Nrs {:.2f}".format(tx.amount),
+                message=(
+                    f"Added Nrs {tx.amount:.2f} from {tx.category} "
+                    f"({tx.description}) on {tx.date:%d %b %Y}. "
+                    f"Total income for {month:%B %Y}: Nrs {new_income:.2f}. "
+                    "This is an in-website notification only."
+                ),
+                level="info",
+            )
         evaluate_budget_alerts(
             request.user, month,
             triggering_expense=tx if fields["kind"] == "expense" else None
