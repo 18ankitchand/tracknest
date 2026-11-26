@@ -1182,6 +1182,7 @@ font-size:.83rem;cursor:pointer}
                     <strong id="budgetBannerTitle">Monthly Budget Limit: Nrs <span id="currentLimitDisplay">50,000.00</span></strong>
                     <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="budgetBannerSub">Current spent: Nrs 0.00 (0% of limit)</div>
                     <p id="tnBudgetEmailStatus" class="tn-budget-email-status" role="status">Checking email alert configuration…</p>
+                    <button type="button" class="cancel-edit-btn" id="tnTestEmailButton" onclick="testTrackNestBudgetEmail()" style="margin-top:9px;padding:8px 12px">Send test email to my registered address</button>
                     <div id="budgetProgress" class="budget-progress" role="progressbar" aria-label="Monthly budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="budgetProgressFill" class="budget-progress-fill"></div></div>
                 </div>
                 <div class="budget-edit">
@@ -1762,6 +1763,21 @@ font-size:.83rem;cursor:pointer}
         window.addEventListener('popstate', () => navigateTrackNest(trackNestCurrentSection(), false));
         window.addEventListener('hashchange', () => navigateTrackNest(window.location.hash.slice(1), false));
 
+        async function testTrackNestBudgetEmail() {
+            const button = document.getElementById('tnTestEmailButton');
+            button.disabled = true;
+            const previousLabel = button.textContent;
+            button.textContent = 'Testing Gmail SMTP…';
+            try {
+                const result = await authRequest('/api/finance/email/test/', {});
+                showAccountToast(result.message || 'SMTP accepted the test message.', 'success');
+            } catch(error) {
+                showAccountToast(error.message || 'Email test failed. Check the server logs.', 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = previousLabel;
+            }
+        }
         async function loadExpensePaymentSummary() {
             const response = await fetch('/api/payments/esewa/summary/', {credentials:'same-origin'});
             if (!response.ok) throw new Error('Could not load payment totals.');
@@ -2284,6 +2300,6 @@ font-size:.83rem;cursor:pointer}
             }
         }
     </script>
-    <script src="{% static 'js/premium-pages.js' %}?v=20261126-esewa-mail-diagnostics-5"></script>
+    <script src="{% static 'js/premium-pages.js' %}?v=20261126-esewa-mail-test-6"></script>
 </body>
 </html>
