@@ -105,6 +105,41 @@ class PremiumFinanceTests(TestCase):
         self.assertEqual(self.expense("1.00").status_code, 409)
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_each_subsequent_critical_expense_sends_reminder_once(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.expense("91.00").status_code, 201)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(TrackNestNotification.objects.filter(user=self.user).count(), 1)
+        with self.captureOnCommitCallbacks(execute=True):
+            next_response = self.expense("8.00")
+        self.assertEqual(next_response.status_code, 201)
+        reminder = TrackNestNotification.objects.filter(
+            user=self.user, title="TrackNest critical spending reminder"
+        ).get()
+        self.assertIn("99.00%", reminder.message)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertIn("critical spending reminder", mail.outbox[1].subject)
+        # Refresh/reconcile should never create or resend an expense reminder.
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.post("/api/notifications/sync/", {}).status_code, 200)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(TrackNestNotification.objects.filter(user=self.user).count(), 2)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.expense("1.00").status_code, 201)
+        self.assertEqual(len(mail.outbox), 3)  # distinct 100% limit email
+        self.assertEqual(self.expense("1.00").status_code, 409)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_initial_91_percent_crossing_does_not_send_duplicate_reminder(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.expense("90.00").status_code, 201)
+            self.assertEqual(self.expense("1.00").status_code, 201)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertFalse(TrackNestNotification.objects.filter(
+            user=self.user, title="TrackNest critical spending reminder"
+        ).exists())
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_legacy_90_alert_reconciles_to_91_without_extra_expense(self):
         self.budget.notified_level = 90
         self.budget.save(update_fields=["notified_level"])
