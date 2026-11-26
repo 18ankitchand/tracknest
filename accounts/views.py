@@ -117,9 +117,20 @@ def financial_state(request):
     budget = get_budget(request.user, month)
     spent = monthly_spent(request.user, month)
     txs = ExpenseTransaction.objects.filter(user=request.user).select_related("esewa_payment").order_by("-date", "-pk")[:500]
-    email_ready = bool(request.user.email and settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
-                       and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD)
+    email_ready = bool(
+        request.user.email
+        and settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+        and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD
+        and settings.EMAIL_HOST
+    )
+    preference, _ = UserPreference.objects.get_or_create(user=request.user)
     from .esewa import pending_reserved, configured
+    if not settings.DEBUG:
+        esewa_reason = "eSewa is available only in the local test environment; online production checkout is disabled."
+    elif not configured():
+        esewa_reason = "The eSewa test checkout is disabled by your local sandbox configuration."
+    else:
+        esewa_reason = ""
     reserved = pending_reserved(request.user, month)
     recent_payments = EsewaPayment.objects.filter(user=request.user).order_by("-created_at")[:10]
     return JsonResponse({"limit": float(budget.limit), "spent": float(spent), "locked": spent >= budget.limit,
@@ -128,6 +139,8 @@ def financial_state(request):
                          "esewa_payments": [{"reference": p.transaction_uuid, "status": p.status, "amount": float(p.amount),
                                              "description": p.description, "sandbox": p.is_sandbox} for p in recent_payments],
                          "email_delivery_configured": email_ready,
+                         "email_alerts_enabled": preference.email_alerts_enabled,
+                         "esewa_unavailable_reason": esewa_reason,
                          "transactions": [serialize_tx(t) for t in txs]})
 
 @require_POST
