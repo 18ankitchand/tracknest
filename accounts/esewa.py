@@ -256,13 +256,15 @@ def finalize(payment, provider_result):
         current_budget = get_budget(item.user, record_month)
         current_budget = MonthlyBudget.objects.select_for_update().get(pk=current_budget.pk)
         current_spent = monthly_spent(item.user, record_month)
-        evaluate_budget_alerts(item.user, record_month)
+        evaluate_budget_alerts(item.user, record_month, triggering_expense=expense)
         if (current_spent - item.amount) * 100 >= current_budget.limit * 91:
             send_critical_expense_reminder(
                 item.user, record_month, current_budget.limit, current_spent, expense.pk
             )
         if current_spent >= current_budget.limit:
-            queue_budget_email(item.user, current_budget, record_month)
+            queue_budget_email(
+                item.user, current_budget, record_month, triggering_expense=expense
+            )
     return True
 
 
