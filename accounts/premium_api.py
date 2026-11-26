@@ -452,9 +452,17 @@ def send_critical_expense_reminder(user, month, limit, spent, expense_id):
     if TrackNestNotification.objects.filter(user=user, title=title, message__contains=token).exists():
         return False
     percentage = (spent / limit * Decimal("100")).quantize(Decimal("0.01"))
+    expense = ExpenseTransaction.objects.filter(
+        pk=expense_id, user=user, kind="expense"
+    ).first()
+    transaction_detail = (
+        f"This expense: Nrs {expense.amount:.2f} ({expense.category}). "
+        if expense else ""
+    )
     send_threshold_notice(
         user,
         title,
+        transaction_detail +
         f"Your recent expense brought current-month spending to Nrs {spent:.2f} "
         f"out of Nrs {limit:.2f} ({percentage}% used). "
         f"Remaining this month: Nrs {limit-spent:.2f}. "
@@ -465,7 +473,7 @@ def send_critical_expense_reminder(user, month, limit, spent, expense_id):
     return True
 
 
-def evaluate_budget_alerts(user, month):
+def evaluate_budget_alerts(user, month, triggering_expense=None):
     """Persist each crossed threshold; 80% is in-app only, 91%+ also emails.
 
     Values are compared using Decimal arithmetic to avoid rounding thresholds.
@@ -473,6 +481,15 @@ def evaluate_budget_alerts(user, month):
     """
     if month != timezone.localdate().replace(day=1):
         return
+
+    # A budget edit or recovery request has no new transaction to display.
+    # Only show an amount when a saved expense actually triggered the alert.
+    expense_detail = (
+        f"This expense: Nrs {triggering_expense.amount:.2f} "
+        f"({triggering_expense.category}). "
+        if triggering_expense is not None and triggering_expense.kind == "expense"
+        else ""
+    )
 
     def threshold(spent, limit):
         if spent >= limit:
@@ -508,6 +525,7 @@ def evaluate_budget_alerts(user, month):
             send_threshold_notice(
                 user,
                 f"TrackNest monthly budget {level}% alert",
+                expense_detail +
                 f"You have recorded Nrs {spent:.2f} out of Nrs {budget.limit:.2f} "
                 f"for {month:%B %Y}. " +
                 ("Your monthly limit is reached. New expenses are blocked in TrackNest."
@@ -540,6 +558,9 @@ def evaluate_budget_alerts(user, month):
             send_threshold_notice(
                 user,
                 f"TrackNest {item.category.name} budget: {level}%",
+                (expense_detail if triggering_expense is not None and
+                 triggering_expense.category.casefold() == item.category.name.casefold()
+                 else "") +
                 f"Your {item.category.name} expenses are Nrs {spent:.2f} "
                 f"of Nrs {item.limit:.2f} for {month:%B %Y}. "
                 + ("This category budget has reached its limit."
