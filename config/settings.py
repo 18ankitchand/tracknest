@@ -100,9 +100,18 @@ ESEWA_PRODUCT_CODE = os.environ.get(
 ESEWA_SECRET_KEY = os.environ.get(
     "TRACKNEST_ESEWA_SECRET_KEY", _esewa_local.get("secret_key", _ESEWA_PUBLIC_UAT_KEY if DEBUG else "")
 )
-# The sandbox checkout is intentionally disabled in any production deployment,
-# even if an environment variable accidentally enables UAT credentials.
+# The public eSewa UAT sandbox is opt-in on a hosted showcase. Never
+# enable Django DEBUG just to make sandbox payments work on a public site.
+# Hosted use requires all three environment variables:
+# TRACKNEST_ESEWA_HOSTED_TEST=1, TRACKNEST_ESEWA_SANDBOX=1,
+# TRACKNEST_ESEWA_SECRET_KEY=<the public UAT *test* key>.
+# It NEVER authorizes real merchant credentials or live money.
+ESEWA_HOSTED_TEST_ENABLED = (
+    not DEBUG and os.environ.get("TRACKNEST_ESEWA_HOSTED_TEST", "0") == "1"
+)
 ESEWA_SANDBOX_READY = bool(
-    DEBUG and ESEWA_SANDBOX_ENABLED
-    and ESEWA_PRODUCT_CODE == _ESEWA_PUBLIC_UAT_CODE and ESEWA_SECRET_KEY
+    (DEBUG or ESEWA_HOSTED_TEST_ENABLED)
+    and ESEWA_SANDBOX_ENABLED
+    and ESEWA_PRODUCT_CODE == _ESEWA_PUBLIC_UAT_CODE
+    and ESEWA_SECRET_KEY == _ESEWA_PUBLIC_UAT_KEY
 )
