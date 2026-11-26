@@ -197,6 +197,71 @@ def start_checkout(request):
 
 
 @require_GET
+def pending_checkouts(request):
+    """Only the signed-in user's active, reserving eSewa checkouts."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Sign in required."}, status=401)
+    cutoff = timezone.now() - timedelta(minutes=15)
+    qs = EsewaPayment.objects.filter(
+        user=request.user, status="PENDING", created_at__gte=cutoff
+    ).order_by("-created_at")[:30]
+    payments = [{
+        "reference": p.transaction_uuid, "amount": float(p.amount),
+        "category": p.category, "description": p.description,
+        "created_at": p.created_at.isoformat(),
+        "expires_at": (p.created_at + timedelta(minutes=15)).isoformat(),
+        "checkout_url": reverse("tn_esewa_checkout", args=[p.transaction_uuid]),
+    } for p in qs]
+    return JsonResponse({"payments": payments})
+
+
+@require_POST
+def cancel_pending_checkout(request, reference):
+    """Release reservation only after provider confirms payment is not complete.
+
+    PENDING, unknown status, or verification errors are NOT safe to cancel.
+    A provider-confirmed COMPLETE payment is finalized, never discarded.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Sign in required."}, status=401)
+    if not configured():
+        return JsonResponse({"error": "eSewa verification is unavailable."}, status=503)
+    with transaction.atomic():
+        payment = EsewaPayment.objects.select_for_update().filter(
+            user=request.user, transaction_uuid=reference
+        ).first()
+        if payment is None:
+            return JsonResponse({"error": "Payment not found."}, status=404)
+        if payment.status != "PENDING":
+            return JsonResponse({"error": "This payment is no longer pending."}, status=409)
+        try:
+            result = status_from_esewa(payment)
+        except (ValueError, URLError, HTTPError, TimeoutError, json.JSONDecodeError, OSError):
+            logger.warning("Cannot safely release pending checkout %s: verification failed", payment.pk)
+            return JsonResponse({
+                "error": "Could not verify this payment with eSewa. Reservation remains protected; retry or allow the 15-minute reservation to expire."
+            }, status=503)
+        provider_status = str(result.get("status", "")).upper()
+        if provider_status == "COMPLETE":
+            # Finalization must happen even if the user pressed Cancel.
+            finalized = finalize(payment, result)
+            return JsonResponse({
+                "error": "eSewa already confirmed payment. It has been recorded, not cancelled." if finalized
+                else "Payment confirmed but recording needs investigation.",
+                "complete": finalized
+            }, status=409)
+        if provider_status not in {"NOT_FOUND", "CANCELED", "CANCELLED", "FAILED", "EXPIRED"}:
+            return JsonResponse({
+                "error": f"eSewa reports {provider_status or 'UNKNOWN'}. The payment may still complete, so its reservation cannot safely be cancelled. You can resume it or let the 15-minute reservation expire."
+            }, status=409)
+        payment.status = "CANCELLED"
+        payment.save(update_fields=["status"])
+    return JsonResponse({
+        "ok": True, "message": "Provider confirmed no completed payment. The pending reservation was released; no expense was recorded."
+    })
+
+
+@require_GET
 def checkout_form(request, reference):
     if not request.user.is_authenticated:
         return redirect("/?login=1")
