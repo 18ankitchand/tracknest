@@ -120,6 +120,65 @@ class EsewaSandboxTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(MonthlyBudget.objects.get(user=self.user, month=self.month).limit, Decimal("100.00"))
 
+    def test_pending_checkout_list_and_resume_are_private(self):
+        self.configure_budget("100")
+        self.assertEqual(self.start("60").status_code, 200)
+        payment = EsewaPayment.objects.get(user=self.user)
+        response = self.client.get("/api/payments/esewa/pending/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["payments"]), 1)
+        self.assertEqual(response.json()["payments"][0]["amount"], 60.0)
+        self.assertIn(payment.transaction_uuid, response.json()["payments"][0]["checkout_url"])
+        self.assertEqual(self.client.get(
+            response.json()["payments"][0]["checkout_url"]).status_code, 200)
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get("/api/payments/esewa/pending/").json()["payments"], [])
+        self.assertEqual(self.post(
+            f"/api/payments/esewa/{payment.transaction_uuid}/cancel/", {}).status_code, 404)
+
+    def test_cancel_provider_not_found_releases_reservation_without_expense(self):
+        self.configure_budget("100")
+        self.assertEqual(self.start("90").status_code, 200)
+        payment = EsewaPayment.objects.get(user=self.user)
+        from .esewa import pending_reserved
+        self.assertEqual(pending_reserved(self.user, self.month), Decimal("90.00"))
+        response_data = self.verified_payload(payment)
+        response_data["status"] = "NOT_FOUND"
+        with patch("accounts.esewa.status_from_esewa", return_value=response_data):
+            result = self.post(f"/api/payments/esewa/{payment.transaction_uuid}/cancel/", {})
+        self.assertEqual(result.status_code, 200)
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, "CANCELLED")
+        self.assertEqual(pending_reserved(self.user, self.month), Decimal("0"))
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 0)
+        self.assertEqual(self.start("90").status_code, 200)
+
+    def test_pending_or_unreachable_provider_cannot_release_reservation(self):
+        self.configure_budget("100")
+        self.assertEqual(self.start("90").status_code, 200)
+        payment = EsewaPayment.objects.get(user=self.user)
+        provider = self.verified_payload(payment)
+        provider["status"] = "PENDING"
+        path = f"/api/payments/esewa/{payment.transaction_uuid}/cancel/"
+        with patch("accounts.esewa.status_from_esewa", return_value=provider):
+            self.assertEqual(self.post(path, {}).status_code, 409)
+        with patch("accounts.esewa.status_from_esewa", side_effect=OSError("network")):
+            self.assertEqual(self.post(path, {}).status_code, 503)
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, "PENDING")
+        self.assertEqual(self.start("20").status_code, 409)
+
+    def test_cancel_complete_is_not_allowed_to_discard_verified_payment(self):
+        self.configure_budget("100")
+        self.assertEqual(self.start("90").status_code, 200)
+        payment = EsewaPayment.objects.get(user=self.user)
+        with patch("accounts.esewa.status_from_esewa", return_value=self.verified_payload(payment)):
+            result = self.post(f"/api/payments/esewa/{payment.transaction_uuid}/cancel/", {})
+        self.assertEqual(result.status_code, 409)
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, "COMPLETE")
+        self.assertEqual(ExpenseTransaction.objects.filter(user=self.user).count(), 1)
+
     def test_unverified_checkout_does_not_create_expense(self):
         self.configure_budget()
         result = self.start("50")
