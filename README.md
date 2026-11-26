@@ -352,3 +352,32 @@ These environment variables must be configured in the hosting control panel
 and a new deployment made. Committing GitHub code alone does not activate
 hosted SMTP or UAT payments. Back up your data before hosting changes; local
 SQLite records are not automatically transferred to the hosted PostgreSQL DB.
+
+## Resend HTTPS email delivery on Vercel
+
+On hosted Vercel, Gmail SMTP may disconnect during authentication. TrackNest
+also supports Resend's authenticated HTTPS email API with the built-in Django
+email backend `config.resend_email.ResendEmailBackend`. It works with the
+existing Django `send_mail()` calls; **no changes to threshold enforcement**.
+
+In Vercel → TrackNest → Settings → Environment Variables → Production set:
+
+- `RESEND_API_KEY`: a new **send-only** Resend API key (mark Sensitive).
+- `RESEND_FROM_EMAIL`: `TrackNest <alerts@your-verified-domain.example>`
+  using an address at a domain verified in *your* Resend account.
+- `DJANGO_EMAIL_BACKEND=config.resend_email.ResendEmailBackend` (optional;
+  becomes the default automatically when both variables above are set).
+
+Redeploy after saving. The local Mac keeps its working Gmail SMTP setup unless
+you also opt into Resend locally. The backend sends via
+`POST https://api.resend.com/emails`; API tokens never enter browser code.
+Resend's `onboarding@resend.dev` cannot send to arbitrary users: for real
+TrackNest registered-user alerts you must verify a sender domain. Prefer
+a dedicated sending subdomain for TrackNest, and use a distinct API key from
+other projects. Test with Monthly Budget → Send test email, then check Resend
+delivery events.
+
+Do not remove your existing production SMTP variables until Resend delivery
+has been verified. Backend selection prefers configured Resend over Gmail.
+Sending HTTP 200/201 with a Resend message ID means accepted for delivery,
+not necessarily delivered into the recipient's inbox.
