@@ -1195,6 +1195,7 @@ font-size:.83rem;cursor:pointer}
                     <strong id="budgetBannerTitle">Monthly Budget Limit: Nrs <span id="currentLimitDisplay">50,000.00</span></strong>
                     <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="budgetBannerSub">Current spent: Nrs 0.00 (0% of limit)</div>
                     <p id="tnIncomeBudgetGuidance" class="tn-budget-email-status" role="status">Checking your monthly income…</p>
+                    <p id="tnIncomeBudgetWarning" class="tn-budget-email-status" role="alert" style="color:#b45309" hidden></p>
                     <p id="tnBudgetEmailStatus" class="tn-budget-email-status" role="status">Checking email alert configuration…</p>
                     <button type="button" class="cancel-edit-btn" id="tnTestEmailButton" onclick="testTrackNestBudgetEmail()" style="margin-top:9px;padding:8px 12px">Send test email to my registered address</button>
                     <div id="budgetProgress" class="budget-progress" role="progressbar" aria-label="Monthly budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="budgetProgressFill" class="budget-progress-fill"></div></div>
@@ -1644,6 +1645,11 @@ font-size:.83rem;cursor:pointer}
                     'Recorded income this month: Nrs ' + currentMonthlyIncome.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) +
                     '. Maximum budget you can set: Nrs ' + currentMonthlyIncome.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '.';
                 document.getElementById('newLimitInput').placeholder = budgetConfigured ? 'New limit' : 'Your chosen monthly limit';
+                document.getElementById('newLimitInput').max = String(currentMonthlyIncome);
+                const incomeMismatch = document.getElementById('tnIncomeBudgetWarning');
+                incomeMismatch.hidden = !(budgetConfigured && budgetAmount > currentMonthlyIncome);
+                if (!incomeMismatch.hidden) incomeMismatch.textContent =
+                    'Your existing monthly budget exceeds your recorded income. Existing records remain unchanged; lower the budget or record additional income before the next budget update.';
                 document.getElementById('tnBudgetEmailStatus').textContent =
                     !state.email_alerts_enabled
                         ? 'Budget email alerts are turned off in Settings. Website notifications remain active.'
