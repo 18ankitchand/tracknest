@@ -98,6 +98,7 @@ class PremiumFinanceTests(TestCase):
             self.assertEqual(self.expense("1.00").status_code, 201)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn("91%", mail.outbox[0].subject)
+        self.assertIn("This expense: Nrs 1.00 (Groceries)", mail.outbox[0].body)
         with self.captureOnCommitCallbacks(execute=True):
             self.assertEqual(self.expense("9.00").status_code, 201)
         self.assertEqual(len(mail.outbox), 2)
@@ -117,7 +118,9 @@ class PremiumFinanceTests(TestCase):
             user=self.user, title="TrackNest critical spending reminder"
         ).get()
         self.assertIn("99.00%", reminder.message)
+        self.assertIn("This expense: Nrs 8.00 (Groceries)", reminder.message)
         self.assertEqual(len(mail.outbox), 2)
+        self.assertIn("This expense: Nrs 8.00 (Groceries)", mail.outbox[1].body)
         self.assertIn("critical spending reminder", mail.outbox[1].subject)
         # Refresh/reconcile should never create or resend an expense reminder.
         with self.captureOnCommitCallbacks(execute=True):
@@ -127,6 +130,11 @@ class PremiumFinanceTests(TestCase):
         with self.captureOnCommitCallbacks(execute=True):
             self.assertEqual(self.expense("1.00").status_code, 201)
         self.assertEqual(len(mail.outbox), 3)  # distinct 100% limit email
+        self.assertIn("This expense: Nrs 1.00 (Groceries)", mail.outbox[2].body)
+        self.assertIn(
+            "This expense: Nrs 1.00 (Groceries)",
+            TrackNestNotification.objects.get(user=self.user, title="TrackNest monthly budget 100% alert").message,
+        )
         self.assertEqual(self.expense("1.00").status_code, 409)
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
