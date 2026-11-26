@@ -98,6 +98,51 @@ def get_budget(user, month):
 def serialize_tx(tx):
     return {"id": tx.pk, "date": tx.date.isoformat(), "desc": tx.description, "type": tx.kind, "category": tx.category, "amount": float(tx.amount), "payment_method": tx.payment_method, "notes": tx.notes, "verified_esewa": hasattr(tx, "esewa_payment")}
 
+@require_POST
+def test_budget_email(request):
+    """Send a user-requested delivery diagnostic only to their registered address.
+
+    This does not modify budgets, notification milestones, or expenses.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Sign in required."}, status=401)
+    ready = bool(
+        request.user.email
+        and settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+        and settings.EMAIL_HOST and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD
+    )
+    if not ready:
+        return JsonResponse({
+            "error": "Real email sending is not configured on this Django server. "
+                     "Mac email.json is not available to online deployments."
+        }, status=503)
+
+    from django.core.cache import cache
+    throttle_key = f"tracknest-email-check-{request.user.pk}"
+    if not cache.add(throttle_key, "pending", timeout=300):
+        return JsonResponse({"error": "A test email was recently requested. Try again in five minutes."}, status=429)
+    try:
+        accepted = send_mail(
+            "TrackNest: email delivery test",
+            "This is a test of TrackNest budget notification email delivery. "
+            "When you reach 91% or 100% of your monthly budget, "
+            "TrackNest will request an email alert if enabled in Settings.",
+            settings.DEFAULT_FROM_EMAIL,
+            [request.user.email],
+            fail_silently=False,
+        )
+        if accepted != 1:
+            raise RuntimeError("Mail backend did not accept the message")
+    except Exception:
+        logger.exception("TrackNest authenticated test email failed for user %s", request.user.pk)
+        cache.delete(throttle_key)
+        return JsonResponse({
+            "error": "The mail server did not accept the test email. "
+                     "Check the Django server terminal for the SMTP error."
+        }, status=503)
+    return JsonResponse({"ok": True, "message": "SMTP accepted the test email. Check your inbox and Spam folder."})
+
+
 def send_limit_email(email, limit, month):
     send_mail(
         "TrackNest: Monthly expense limit reached",
